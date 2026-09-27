@@ -1,0 +1,6 @@
+{
+  "name": "ZenMath",
+  "description": "Minimalist mental arithmetic trainer featuring 14 game modes, adaptive difficulty, custom numeric keypad, and statistics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
