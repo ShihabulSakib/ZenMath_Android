@@ -57,6 +57,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val preferencesManager = PreferencesManager(application)
     private val repository = ZenMathRepository(db.dao(), preferencesManager)
 
+    init {
+        val settings = preferencesManager.loadSettings()
+        if (settings.notificationsEnabled) {
+            NotificationScheduler.scheduleReminders(application, settings.notificationTimes)
+        }
+    }
+
     // Navigation state
     private val _currentScreen = MutableStateFlow(ZenScreen.MENU)
     val currentScreen: StateFlow<ZenScreen> = _currentScreen.asStateFlow()

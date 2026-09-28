@@ -9,8 +9,13 @@ package com.example.ui.screens
  */
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +40,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LightMode
@@ -548,6 +554,85 @@ fun SettingsScreen(
                                     .height(44.dp)
                             ) {
                                 Text("Send Test Reminder", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            // Background Optimization / Battery Exemption Prompt
+                            val powerManager = remember(context) {
+                                context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                            }
+                            val isIgnoringBatteryOptimizations = remember(context, settings.notificationsEnabled) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+                                } else {
+                                    true
+                                }
+                            }
+
+                            if (!isIgnoringBatteryOptimizations) {
+                                val bannerShape = RoundedCornerShape(14.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(bannerShape)
+                                        .background(colors.primary.copy(alpha = 0.06f))
+                                        .border(1.dp, colors.primary.copy(alpha = 0.2f), bannerShape)
+                                        .padding(14.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Bolt,
+                                                contentDescription = null,
+                                                tint = colors.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = "Allow background activity for timely reminders",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.textMain
+                                            )
+                                        }
+                                        Text(
+                                            text = "Deep sleep mode and OEM battery savers may suppress notifications when the app is idle. Whitelisting ZenMath ensures daily alarms fire promptly.",
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary,
+                                            lineHeight = 15.sp
+                                        )
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                                            data = Uri.parse("package:${context.packageName}")
+                                                        }
+                                                        context.startActivity(intent)
+                                                    }
+                                                } catch (e: Exception) {
+                                                    try {
+                                                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                                        context.startActivity(intent)
+                                                    } catch (_: Exception) {
+                                                        Toast.makeText(context, "Please allow background activity in system settings", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primary,
+                                                contentColor = colors.onPrimary
+                                            ),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(38.dp)
+                                        ) {
+                                            Text("Allow Background Activity", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

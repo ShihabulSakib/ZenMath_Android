@@ -24,6 +24,12 @@ class MainActivity : ComponentActivity() {
 
         setupTaskDescription()
 
+        // Ensure daily reminder alarms are synchronized on app startup
+        val settings = com.example.data.PreferencesManager(this).loadSettings()
+        if (settings.notificationsEnabled) {
+            com.example.notifications.NotificationScheduler.scheduleReminders(this, settings.notificationTimes)
+        }
+
         setContent {
             ZenMathApp()
         }
