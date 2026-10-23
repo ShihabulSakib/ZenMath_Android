@@ -1,5 +1,6 @@
 package com.example.domain
 
+import com.example.data.CourseValuesData
 import java.util.Locale
 import kotlin.random.Random
 
@@ -8,7 +9,10 @@ data class IrreducibleFraction(val n: Int, val d: Int)
 data class GeneratedFractionQuestion(
     val question: String,
     val answer: String,
-    val isFractionToDecimal: Boolean
+    val isFractionToDecimal: Boolean,
+    val numerator: Int = 1,
+    val denominator: Int = 2,
+    val solutionSteps: List<String> = emptyList()
 )
 
 object FractionsPool {
@@ -38,7 +42,7 @@ object FractionsPool {
         for (d in minDenominator..maxDenominator) {
             val maxN = minOf(maxNumerator, d - 1)
             for (n in minNumerator..maxN) {
-                if (gcd(n, d) === 1) {
+                if (gcd(n, d) == 1) {
                     pool.add(IrreducibleFraction(n, d))
                 }
             }
@@ -54,7 +58,8 @@ object FractionsPool {
         minNumerator: Int,
         maxNumerator: Int,
         minDenominator: Int,
-        maxDenominator: Int
+        maxDenominator: Int,
+        useCourseValues: Boolean = false
     ): GeneratedFractionQuestion {
         val isFractionToDecimal = Random.nextBoolean()
         val pool = buildIrreduciblePool(minNumerator, maxNumerator, minDenominator, maxDenominator)
@@ -63,20 +68,51 @@ object FractionsPool {
         val den = selected.d
 
         val rawVal = num.toDouble() / den.toDouble()
-        // Format to 4 decimal places without trailing zeros if possible, matching JS parseFloat((rawVal).toFixed(4)).toString()
-        val formattedDecimal = String.format(Locale.US, "%.4f", rawVal).trimEnd('0').trimEnd('.')
+        val courseDecimals = CourseValuesData.getCourseDecimalsForFraction(num, den)
+        val primaryCourseDec = courseDecimals.firstOrNull() ?: rawVal
+
+        val formattedDecimal = if (useCourseValues) {
+            String.format(Locale.US, "%.4f", primaryCourseDec).trimEnd('0').trimEnd('.')
+        } else {
+            String.format(Locale.US, "%.4f", rawVal).trimEnd('0').trimEnd('.')
+        }
+
+        val unitDecimal = String.format(Locale.US, "%.4f", 1.0 / den.toDouble()).trimEnd('0').trimEnd('.')
+        val steps = if (isFractionToDecimal) {
+            if (num == 1) {
+                listOf(
+                    "Recall unit fraction 1/$den ≈ $formattedDecimal"
+                )
+            } else {
+                listOf(
+                    "Start from unit fraction: 1/$den ≈ $unitDecimal",
+                    "Multiply by $num: $num × (1/$den) ≈ $formattedDecimal"
+                )
+            }
+        } else {
+            listOf(
+                "Identify decimal $formattedDecimal as a multiple of 1/$den ≈ $unitDecimal",
+                "Simplify fraction to irreducible form: $num/$den"
+            )
+        }
 
         return if (isFractionToDecimal) {
             GeneratedFractionQuestion(
                 question = "$num/$den",
                 answer = formattedDecimal,
-                isFractionToDecimal = true
+                isFractionToDecimal = true,
+                numerator = num,
+                denominator = den,
+                solutionSteps = steps
             )
         } else {
             GeneratedFractionQuestion(
                 question = formattedDecimal,
                 answer = "$num/$den",
-                isFractionToDecimal = false
+                isFractionToDecimal = false,
+                numerator = num,
+                denominator = den,
+                solutionSteps = steps
             )
         }
     }

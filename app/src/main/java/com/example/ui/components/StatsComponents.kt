@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.SessionEntity
+import com.example.domain.DateBucketUtils
 import com.example.domain.DayBucket
 import com.example.domain.RecentPerformanceDay
 import com.example.ui.theme.ZenTheme
@@ -637,9 +638,9 @@ fun ActivityCalendar(
     val colors = ZenTheme.colors
     var monthOffset by remember { mutableIntStateOf(0) }
 
-    // Map sessions by date
+    // Map sessions by local date via shared day-bucketing utility
     val activityByDate = remember(sessions) {
-        sessions.groupBy { it.date.split("T").firstOrNull() ?: "" }
+        DateBucketUtils.groupSessionsByLocalDate(sessions)
             .mapValues { it.value.size }
     }
 

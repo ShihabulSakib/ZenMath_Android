@@ -37,9 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ZenTheme
@@ -50,8 +52,10 @@ fun Keypad(
     modifier: Modifier = Modifier,
     disabled: Boolean = false,
     negativeEnabled: Boolean = true,
-    showFraction: Boolean = true,
+    showFraction: Boolean = false,
     showDecimal: Boolean = true,
+    showScientific: Boolean = false,
+    isExponentActive: Boolean = false,
     hapticFeedbackEnabled: Boolean = true
 ) {
     val colors = ZenTheme.colors
@@ -121,13 +125,14 @@ fun Keypad(
                         text = "−",
                         onClick = { onKey("-") },
                         size = keySize,
-                        disabled = disabled || !negativeEnabled,
-                        enabledAlpha = if (negativeEnabled) 1f else 0.25f,
-                        hapticEnabled = hapticFeedbackEnabled
+                        disabled = disabled || (!negativeEnabled && !isExponentActive),
+                        enabledAlpha = if (negativeEnabled || isExponentActive) 1f else 0.25f,
+                        hapticEnabled = hapticFeedbackEnabled,
+                        modifier = Modifier.testTag("key_minus")
                     )
                 }
 
-                // Rows 3 & 4: Left 3 cols (7, 8, 9 / ., 0, /) + Right col Enter button
+                // Rows 3 & 4: Left 3 cols (7, 8, 9 / ., 0, / or ×10^n) + Right col Enter button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(gap)
@@ -145,28 +150,43 @@ fun Keypad(
                             KeyButton(text = "9", onClick = { onKey("9") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
                         }
 
-                        // Row 4: . or blank, 0, / or ÷ (all square)
+                        // Row 4: . (or dimmed), 0, / or ×10^n (all square)
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(gap)
                         ) {
-                            if (showDecimal) {
-                                KeyButton(text = ".", onClick = { onKey(".") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                            } else {
-                                Spacer(modifier = Modifier.size(keySize))
-                            }
+                            KeyButton(
+                                text = ".",
+                                onClick = { onKey(".") },
+                                size = keySize,
+                                disabled = disabled || !showDecimal || isExponentActive,
+                                enabledAlpha = if (showDecimal && !isExponentActive) 1f else 0.25f,
+                                hapticEnabled = hapticFeedbackEnabled,
+                                modifier = Modifier.testTag("key_decimal")
+                            )
 
                             KeyButton(text = "0", onClick = { onKey("0") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
 
                             if (showFraction) {
-                                KeyButton(text = "/", onClick = { onKey("/") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                            } else {
                                 KeyButton(
-                                    text = "÷",
-                                    onClick = {},
+                                    text = "/",
+                                    onClick = { onKey("/") },
                                     size = keySize,
-                                    disabled = true,
-                                    enabledAlpha = 0.25f,
-                                    hapticEnabled = hapticFeedbackEnabled
+                                    disabled = disabled,
+                                    hapticEnabled = hapticFeedbackEnabled,
+                                    modifier = Modifier.testTag("key_fraction")
+                                )
+                            } else {
+                                val sciLabel = remember { RichTextHelper.formatMathText("×10^{n}") }
+                                KeyButton(
+                                    annotatedText = sciLabel,
+                                    fontSize = 17.sp,
+                                    onClick = { onKey("sci") },
+                                    size = keySize,
+                                    disabled = disabled || !showScientific,
+                                    isHighlighted = isExponentActive,
+                                    enabledAlpha = if (showScientific) 1f else 0.25f,
+                                    hapticEnabled = hapticFeedbackEnabled,
+                                    modifier = Modifier.testTag("key_sci")
                                 )
                             }
                         }
@@ -187,7 +207,8 @@ fun Keypad(
                         height = enterHeight,
                         disabled = disabled,
                         isPrimary = true,
-                        hapticEnabled = hapticFeedbackEnabled
+                        hapticEnabled = hapticFeedbackEnabled,
+                        modifier = Modifier.testTag("key_enter")
                     )
                 }
             }
@@ -202,10 +223,13 @@ private fun KeyButton(
     width: Dp? = null,
     height: Dp? = null,
     text: String? = null,
+    annotatedText: AnnotatedString? = null,
+    fontSize: TextUnit = 24.sp,
     icon: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
     disabled: Boolean = false,
     isPrimary: Boolean = false,
+    isHighlighted: Boolean = false,
     enabledAlpha: Float = 1f,
     hapticEnabled: Boolean = true
 ) {
@@ -223,15 +247,17 @@ private fun KeyButton(
     }
     val shape = RoundedCornerShape(14.dp)
 
-    // Background color: clean keypad background or primary for enter
-    val bgColor = if (isPrimary) colors.primary else colors.keypadBtn
+    val bgColor = when {
+        isPrimary -> colors.primary
+        isHighlighted -> colors.primary.copy(alpha = 0.22f)
+        else -> colors.keypadBtn
+    }
     val contentColor = if (isPrimary) colors.onPrimary else colors.keypadText
 
-    // Sharp, thin black (theme invertable) border
-    val borderColor = if (isPrimary) {
-        colors.primary
-    } else {
-        if (colors.isDark) Color(0xFF52525B) else Color(0xFF000000)
+    val borderColor = when {
+        isPrimary || isHighlighted -> colors.primary
+        colors.isDark -> Color(0xFF52525B)
+        else -> Color(0xFF000000)
     }
 
     val actualWidth = width ?: size
@@ -243,7 +269,7 @@ private fun KeyButton(
             .height(actualHeight)
             .clip(shape)
             .background(bgColor.copy(alpha = if (disabled) 0.4f else enabledAlpha))
-            .border(1.dp, borderColor, shape)
+            .border(if (isHighlighted) 1.5.dp else 1.dp, borderColor, shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(color = contentColor.copy(alpha = 0.2f)),
@@ -252,10 +278,7 @@ private fun KeyButton(
                     if (hapticEnabled) {
                         try {
                             view.isHapticFeedbackEnabled = true
-                            view.performHapticFeedback(
-                                HapticFeedbackConstants.KEYBOARD_TAP,
-                                HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
-                            )
+                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                         } catch (_: Exception) {}
 
                         try {
@@ -272,16 +295,26 @@ private fun KeyButton(
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (icon != null) {
-            icon()
-        } else if (text != null) {
-            Text(
-                text = text,
-                color = contentColor.copy(alpha = if (disabled) 0.4f else enabledAlpha),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace
-            )
+        when {
+            icon != null -> icon()
+            annotatedText != null -> {
+                Text(
+                    text = annotatedText,
+                    color = contentColor.copy(alpha = if (disabled) 0.4f else enabledAlpha),
+                    fontSize = fontSize,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = RichTextHelper.MathFontFamily
+                )
+            }
+            text != null -> {
+                Text(
+                    text = text,
+                    color = contentColor.copy(alpha = if (disabled) 0.4f else enabledAlpha),
+                    fontSize = fontSize,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
         }
     }
 }

@@ -36,6 +36,9 @@ interface ZenMathDao {
     @Query("SELECT * FROM questions")
     suspend fun getAllQuestions(): List<QuestionRecordEntity>
 
+    @Query("SELECT * FROM questions ORDER BY id DESC")
+    fun getAllQuestionsFlow(): Flow<List<QuestionRecordEntity>>
+
     @Query("DELETE FROM sessions")
     suspend fun clearSessions()
 

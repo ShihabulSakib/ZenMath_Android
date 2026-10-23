@@ -12,28 +12,82 @@ enum class Difficulty(val key: String, val label: String) {
     }
 }
 
-enum class GameMode(val id: String, val displayName: String, val defaultSymbol: String) {
-    ADDITION("addition", "Addition", "+"),
-    SUBTRACTION("subtraction", "Subtraction", "−"),
-    MULTIPLICATION("multiplication", "Multiplication", "×"),
-    DIVISION("division", "Division", "÷"),
-    MIXED("mixed", "Mixed Operations", "shuffle"),
-    MULTIPLICATION_TABLE("multiplication-table", "Tables", "grid_on"),
-    FACTOR_FINDING("factor-finding", "Factors", "exposure"),
-    SQUARE("square", "Squares", "x²"),
-    FRACTION("fraction", "Fractions", "½"),
-    PERCENTAGE("percentage", "Percent", "%"),
-    SQUARE_ROOT("square-root", "Roots", "√"),
-    APPROXIMATION("approximation", "Estimation", "≈"),
-    NUMBER_SERIES("number-series", "Series", "linear_scale"),
-    RATIO("ratio", "Ratio", "::"),
-    CHAIN_CALCULATION("chain-calculation", "Chain", "multiple_stop");
+enum class GameMode(
+    val id: String,
+    val displayName: String,
+    val defaultSymbol: String,
+    val usesDifficulty: Boolean = true,
+    val supportsMcqOption: Boolean = false
+) {
+    ADDITION("addition", "Addition", "+", usesDifficulty = true),
+    SUBTRACTION("subtraction", "Subtraction", "−", usesDifficulty = true),
+    MULTIPLICATION("multiplication", "Multiplication", "×", usesDifficulty = true),
+    DIVISION("division", "Division", "÷", usesDifficulty = true),
+    MIXED("mixed", "Mixed Operations", "shuffle", usesDifficulty = true),
+    MULTIPLICATION_TABLE("multiplication-table", "Tables", "grid_on", usesDifficulty = false),
+    FACTOR_FINDING("factor-finding", "Factors", "exposure", usesDifficulty = false),
+    SQUARE("square", "Squares", "x²", usesDifficulty = false),
+    FRACTION("fraction", "Fractions", "½", usesDifficulty = false),
+    PERCENTAGE("percentage", "Percent", "%", usesDifficulty = true),
+    SQUARE_ROOT("square-root", "Roots", "√", usesDifficulty = true),
+    APPROXIMATION("approximation", "Estimation", "≈", usesDifficulty = true, supportsMcqOption = true),
+    NUMBER_SERIES("number-series", "Series", "linear_scale", usesDifficulty = true),
+    RATIO("ratio", "Ratio", "::", usesDifficulty = true),
+    CHAIN_CALCULATION("chain-calculation", "Chain", "multiple_stop", usesDifficulty = true),
+
+    // Section 3, 4, 5 new modes
+    MEMORY_TABLES("memory-tables", "Memory Tables", "log/√", usesDifficulty = false, supportsMcqOption = true),
+    SCIENTIFIC_NOTATION("scientific-notation", "Sci. Notation", "×10ⁿ", usesDifficulty = false, supportsMcqOption = true),
+    PH_POH("ph-poh", "pH & pOH", "pH", usesDifficulty = false, supportsMcqOption = true),
+    COMPOSITE_LOGS_ROOTS("composite-logs-roots", "Logs & Roots", "log k", usesDifficulty = true, supportsMcqOption = true),
+    CUBES_AND_POWERS("cubes-and-powers", "Cubes & Powers", "x³", usesDifficulty = false, supportsMcqOption = true),
+    CONSTANTS("constants", "Constants", "kₑ", usesDifficulty = false, supportsMcqOption = true),
+    SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = false),
+    WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false);
 
     companion object {
         fun fromId(id: String): GameMode {
             return entries.find { it.id == id } ?: ADDITION
         }
     }
+}
+
+enum class DrillDirection(val key: String, val label: String) {
+    FORWARD("forward", "Forward"),
+    REVERSE("reverse", "Reverse"),
+    MIXED("mixed", "Mixed")
+}
+
+enum class SciNotationSubtype(val key: String, val label: String) {
+    ALL("all", "All Subtypes"),
+    NORMALIZE("normalize", "Normalize Decimal"),
+    DECIMAL_SHIFT("shift", "Shift Direction Rule"),
+    MULTIPLY_DIVIDE("mul_div", "Multiply & Divide"),
+    ROOT_POWER_TEN("root_ten", "Roots of 10ⁿ")
+}
+
+enum class PhDrillSubtype(val key: String, val label: String) {
+    ALL("all", "All Subtypes"),
+    CONC_TO_PH("conc_to_ph", "Concentration → pH"),
+    SCI_CONC_TO_PH("sci_conc_to_ph", "a×10⁻ⁿ M → pH"),
+    PH_TO_CONC("ph_to_conc", "pH → [H⁺]"),
+    PH_POH_CONV("ph_poh_conv", "pH ↔ pOH"),
+    PERCENT_WV_TO_PH("percent_wv_to_ph", "% w/v Base → pH")
+}
+
+enum class CubesPowersSubtype(val key: String, val label: String) {
+    ALL("all", "All Subtypes"),
+    CUBES("cubes", "Cubes (n³)"),
+    SMALL_POWERS("powers", "Small Powers (aᵇ)"),
+    CUBE_ROOTS("cube_roots", "Cube Roots (∛n)")
+}
+
+/**
+ * Monotonic millisecond clock (Section 1.7).
+ * Uses `System.nanoTime() / 1_000_000L` which is guaranteed monotonic across Android and JVM tests.
+ */
+object MonotonicClock {
+    fun nowMs(): Long = System.nanoTime() / 1_000_000L
 }
 
 data class QuestionResult(
@@ -43,8 +97,14 @@ data class QuestionResult(
     val correctAnswer: String,
     val userAnswer: String?,
     val isCorrect: Boolean,
-    val timeTaken: Int, // seconds
-    val timedOut: Boolean
+    val timeTaken: Int, // seconds (preserved for compatibility)
+    val timedOut: Boolean,
+    val timeTakenMs: Long = timeTaken.toLong() * 1000L,
+    val questionText: String = "",
+    val topicTag: String = "",
+    val hintUsed: Boolean = false,
+    val solutionSteps: List<String> = emptyList(),
+    val unitText: String? = null
 )
 
 data class ModeStats(
@@ -80,6 +140,36 @@ data class DayBucket(
     val sessions: Int
 )
 
+/**
+ * Aggregated weak-spot item by topicTag or questionText (Section 4.2).
+ */
+data class WeakSpotEntry(
+    val key: String,
+    val displayLabel: String,
+    val topicTag: String,
+    val modeId: String,
+    val attempts: Int,
+    val errors: Int,
+    val errorRate: Double, // 0.0 to 100.0
+    val avgTimeMs: Double,
+    val lastSeenSessionId: String
+)
+
+data class WeakSpotsSummary(
+    val worstTopics: List<WeakSpotEntry> = emptyList(),
+    val worstQuestions: List<WeakSpotEntry> = emptyList()
+)
+
+data class TopicBreakdown(
+    val topicTag: String,
+    val total: Int,
+    val correct: Int,
+    val avgTimeMs: Double
+) {
+    val accuracyPercent: Double
+        get() = if (total > 0) (correct.toDouble() / total.toDouble()) * 100.0 else 0.0
+}
+
 data class GameSettings(
     val totalQuestions: Int = 5,
     val timeLimit: Int = 20,
@@ -89,5 +179,7 @@ data class GameSettings(
     val hapticFeedback: Boolean = true,
     val notificationsEnabled: Boolean = false,
     val notificationTimes: Set<String> = emptySet(),
-    val isDarkTheme: Boolean = true
+    val isDarkTheme: Boolean = true,
+    val tolerancePreset: TolerancePreset = TolerancePreset.NORMAL,
+    val requireManualNextOnWrong: Boolean = true
 )

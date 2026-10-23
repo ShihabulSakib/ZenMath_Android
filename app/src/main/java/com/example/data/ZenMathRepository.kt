@@ -1,15 +1,15 @@
 package com.example.data
 
+import com.example.domain.DateBucketUtils
+import com.example.domain.DayBucket
 import com.example.domain.ModeStats
 import com.example.domain.RecentPerformanceDay
 import com.example.domain.StatsData
+import com.example.domain.WeakSpotEntry
+import com.example.domain.WeakSpotsSummary
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONArray
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import java.util.TimeZone
 
 class ZenMathRepository(
@@ -26,6 +26,10 @@ class ZenMathRepository(
     suspend fun getQuestionsForSession(sessionId: String): List<QuestionRecordEntity> =
         dao.getQuestionsForSession(sessionId)
 
+    suspend fun getAllQuestions(): List<QuestionRecordEntity> = dao.getAllQuestions()
+
+    fun getAllQuestionsFlow(): Flow<List<QuestionRecordEntity>> = dao.getAllQuestionsFlow()
+
     suspend fun insertSession(session: SessionEntity, questions: List<QuestionRecordEntity>) {
         dao.insertSessionWithQuestions(session, questions)
     }
@@ -35,46 +39,12 @@ class ZenMathRepository(
         preferencesManager.clearAllPreferences()
     }
 
-    fun calculateStreak(sessions: List<SessionEntity>): Int {
-        if (sessions.isEmpty()) return 0
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
-            timeZone = TimeZone.getDefault()
-        }
-        val uniqueDates = sessions.mapNotNull {
-            try {
-                it.date.split("T").firstOrNull()
-            } catch (e: Exception) {
-                null
-            }
-        }.distinct().sortedDescending()
-
-        if (uniqueDates.isEmpty()) return 0
-
-        var streak = 0
-        val today = dateFormat.format(Date())
-        val yesterday = dateFormat.format(Date(System.currentTimeMillis() - 86400000L))
-
-        // Check if user practiced today or yesterday to maintain active streak
-        if (uniqueDates.first() != today && uniqueDates.first() != yesterday) {
-            return 0
-        }
-
-        var expectedDateMs = if (uniqueDates.first() == today) {
-            System.currentTimeMillis()
-        } else {
-            System.currentTimeMillis() - 86400000L
-        }
-
-        for (dateStr in uniqueDates) {
-            val expectedStr = dateFormat.format(Date(expectedDateMs))
-            if (dateStr == expectedStr) {
-                streak++
-                expectedDateMs -= 86400000L
-            } else {
-                break
-            }
-        }
-        return streak
+    fun calculateStreak(
+        sessions: List<SessionEntity>,
+        nowMs: Long = System.currentTimeMillis(),
+        timeZone: TimeZone? = null
+    ): Int {
+        return DateBucketUtils.calculateStreak(sessions, nowMs, timeZone)
     }
 
     fun computeStats(sessions: List<SessionEntity>): StatsData {
@@ -124,76 +94,129 @@ class ZenMathRepository(
         )
     }
 
-    fun getRecentPerformance(sessions: List<SessionEntity>, days: Int = 7): List<RecentPerformanceDay> {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val cal = Calendar.getInstance()
-
-        // Generate full list of the last `days` calendar dates ending today
-        val dateList = mutableListOf<String>()
-        for (i in (days - 1) downTo 0) {
-            val c = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -i) }
-            dateList.add(dateFormat.format(c.time))
-        }
-
-        // Map sessions by date
-        val sessionsByDate = mutableMapOf<String, Triple<Int, Int, Int>>() // date -> (correct, totalQuestions, sessionsCount)
-        for (s in sessions) {
-            val dateKey = s.date.split("T").firstOrNull() ?: continue
-            val current = sessionsByDate.getOrDefault(dateKey, Triple(0, 0, 0))
-            sessionsByDate[dateKey] = Triple(current.first + s.correct, current.second + s.totalQuestions, current.third + 1)
-        }
+    fun getRecentPerformance(
+        sessions: List<SessionEntity>,
+        days: Int = 7,
+        nowMs: Long = System.currentTimeMillis(),
+        timeZone: TimeZone = TimeZone.getDefault()
+    ): List<RecentPerformanceDay> {
+        val dateList = DateBucketUtils.lastNDates(days, nowMs, timeZone)
+        val grouped = DateBucketUtils.groupSessionsByLocalDate(sessions)
 
         return dateList.map { dateStr ->
-            val data = sessionsByDate[dateStr] ?: Triple(0, 0, 0)
+            val daySessions = grouped[dateStr] ?: emptyList()
+            val correct = daySessions.sumOf { it.correct }
+            val totalQ = daySessions.sumOf { it.totalQuestions }
+            val sessionsCount = daySessions.size
             RecentPerformanceDay(
                 date = dateStr,
-                accuracy = if (data.second > 0) (data.first.toDouble() / data.second.toDouble()) * 100.0 else 0.0,
-                count = data.second,
-                sessionsCount = data.third
+                accuracy = if (totalQ > 0) (correct.toDouble() / totalQ.toDouble()) * 100.0 else 0.0,
+                count = totalQ,
+                sessionsCount = sessionsCount
             )
         }
     }
 
-    fun getHorizonWaveBuckets(sessions: List<SessionEntity>, daysCount: Int = 10): List<com.example.domain.DayBucket> {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val dayLabelFormat = SimpleDateFormat("EEE", Locale.US)
+    fun getHorizonWaveBuckets(
+        sessions: List<SessionEntity>,
+        daysCount: Int = 10,
+        nowMs: Long = System.currentTimeMillis(),
+        timeZone: TimeZone = TimeZone.getDefault()
+    ): List<DayBucket> {
+        val dateList = DateBucketUtils.lastNDates(daysCount, nowMs, timeZone)
+        val grouped = DateBucketUtils.groupSessionsByLocalDate(sessions)
 
-        val buckets = mutableListOf<com.example.domain.DayBucket>()
-        for (i in (daysCount - 1) downTo 0) {
-            val c = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -i) }
-            val dateStr = dateFormat.format(c.time)
-            val label = dayLabelFormat.format(c.time)
-
-            var qCount = 0
-            var cCount = 0
-            var sCount = 0
-            var totalTimeSec = 0.0
-
-            for (s in sessions) {
-                if (s.date.startsWith(dateStr)) {
-                    qCount += s.totalQuestions
-                    cCount += s.correct
-                    sCount += 1
-                    totalTimeSec += (s.avgTimeMs / 1000.0) * s.totalQuestions
-                }
-            }
+        return dateList.map { dateStr ->
+            val label = DateBucketUtils.formatDayLabel(dateStr, timeZone)
+            val daySessions = grouped[dateStr] ?: emptyList()
+            val qCount = daySessions.sumOf { it.totalQuestions }
+            val cCount = daySessions.sumOf { it.correct }
+            val sCount = daySessions.size
+            val totalTimeSec = daySessions.sumOf { (it.avgTimeMs / 1000.0) * it.totalQuestions }
 
             val accuracy = if (qCount > 0) ((cCount.toDouble() / qCount.toDouble()) * 100.0).toInt() else 0
             val avgSpeed = if (qCount > 0) totalTimeSec / qCount.toDouble() else 0.0
 
-            buckets.add(
-                com.example.domain.DayBucket(
-                    date = dateStr,
-                    label = label,
-                    questions = qCount,
-                    correct = cCount,
-                    accuracy = accuracy,
-                    avgSpeed = avgSpeed,
-                    sessions = sCount
-                )
+            DayBucket(
+                date = dateStr,
+                label = label,
+                questions = qCount,
+                correct = cCount,
+                accuracy = accuracy,
+                avgSpeed = avgSpeed,
+                sessions = sCount
             )
         }
-        return buckets
+    }
+
+    /**
+     * Aggregates saved question records by `topicTag` and by `questionText` (Section 4.2).
+     */
+    fun computeWeakSpots(questions: List<QuestionRecordEntity>): WeakSpotsSummary {
+        if (questions.isEmpty()) return WeakSpotsSummary()
+
+        // Group by topicTag
+        val byTopic = questions.groupBy { q ->
+            q.topicTag.ifBlank { q.mode.ifBlank { "general" } }
+        }
+        val worstTopics = byTopic.map { (tag, records) ->
+            val attempts = records.size
+            val errors = records.count { !it.isCorrect || it.hintUsed }
+            val errorRate = if (attempts > 0) (errors.toDouble() / attempts.toDouble()) * 100.0 else 0.0
+            val avgTimeMs = if (attempts > 0) records.sumOf { it.timeMs }.toDouble() / attempts.toDouble() else 0.0
+            val latest = records.maxByOrNull { it.id } ?: records.first()
+            WeakSpotEntry(
+                key = tag,
+                displayLabel = tag.replace("_", " ").replace("-", " ").replaceFirstChar { it.uppercase() },
+                topicTag = tag,
+                modeId = latest.mode,
+                attempts = attempts,
+                errors = errors,
+                errorRate = errorRate,
+                avgTimeMs = avgTimeMs,
+                lastSeenSessionId = latest.sessionId
+            )
+        }
+            .sortedWith(compareByDescending<WeakSpotEntry> { it.errorRate }.thenByDescending { it.avgTimeMs })
+            .take(8)
+
+        // Group by individual questionText
+        val byQuestion = questions.groupBy { q ->
+            q.questionText.ifBlank {
+                if (q.operation in listOf("+", "−", "-", "×", "*", "÷", "/")) {
+                    "${q.num1.toLong()} ${q.operation} ${q.num2.toLong()}"
+                } else {
+                    "${q.operation} (${q.correctAnswer})"
+                }
+            }
+        }
+        val worstQuestions = byQuestion.map { (qText, records) ->
+            val attempts = records.size
+            val errors = records.count { !it.isCorrect || it.hintUsed }
+            val errorRate = if (attempts > 0) (errors.toDouble() / attempts.toDouble()) * 100.0 else 0.0
+            val avgTimeMs = if (attempts > 0) records.sumOf { it.timeMs }.toDouble() / attempts.toDouble() else 0.0
+            val latest = records.maxByOrNull { it.id } ?: records.first()
+            val tag = latest.topicTag.ifBlank { latest.mode.ifBlank { "general" } }
+            WeakSpotEntry(
+                key = qText,
+                displayLabel = qText,
+                topicTag = tag,
+                modeId = latest.mode,
+                attempts = attempts,
+                errors = errors,
+                errorRate = errorRate,
+                avgTimeMs = avgTimeMs,
+                lastSeenSessionId = latest.sessionId
+            )
+        }
+            .filter { it.errors > 0 || it.avgTimeMs > 5000.0 }
+            .sortedWith(compareByDescending<WeakSpotEntry> { it.errorRate }.thenByDescending { it.errors }.thenByDescending { it.avgTimeMs })
+            .take(10)
+
+        return WeakSpotsSummary(
+            worstTopics = worstTopics,
+            worstQuestions = worstQuestions
+        )
     }
 
     suspend fun exportBackupJson(): String {
@@ -202,16 +225,17 @@ class ZenMathRepository(
 
         val root = JSONObject()
         root.put("type", "zenmath-backup")
-        root.put("version", 1)
-        root.put("exportedAt", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }.format(Date()))
+        root.put("version", 2)
+        root.put("exportedAt", DateBucketUtils.nowUtcIso())
 
         val sessionsArray = JSONArray()
         for (s in sessions) {
+            val resolvedLocalDate = DateBucketUtils.resolveSessionLocalDate(s)
             val sObj = JSONObject().apply {
                 put("id", s.id)
                 put("date", s.date)
+                put("localDate", resolvedLocalDate)
+                put("sessionType", s.sessionType.ifBlank { SessionEntity.SESSION_TYPE_NORMAL })
                 put("mode", s.mode)
                 put("totalQuestions", s.totalQuestions)
                 put("correct", s.correct)
@@ -237,6 +261,9 @@ class ZenMathRepository(
                 put("isCorrect", q.isCorrect)
                 put("mode", q.mode)
                 put("difficulty", q.difficulty)
+                put("questionText", q.questionText)
+                put("topicTag", q.topicTag)
+                put("hintUsed", q.hintUsed)
             }
             questionsArray.put(qObj)
         }
@@ -245,9 +272,14 @@ class ZenMathRepository(
         return root.toString(2)
     }
 
+    /**
+     * Imports a JSON backup file. Supports both legacy v1 backup files (where `localDate`,
+     * `sessionType`, `questionText`, `topicTag`, `hintUsed` are omitted) and v2 backup files.
+     */
     suspend fun importBackupJson(jsonStr: String) {
         val root = JSONObject(jsonStr)
-        if (root.optString("type") != "zenmath-backup" || root.optInt("version", 0) != 1) {
+        val version = root.optInt("version", 0)
+        if (root.optString("type") != "zenmath-backup" || version !in 1..2) {
             throw IllegalArgumentException("Invalid backup file format.")
         }
 
@@ -257,16 +289,25 @@ class ZenMathRepository(
         val sessionsList = mutableListOf<SessionEntity>()
         for (i in 0 until sessionsArray.length()) {
             val s = sessionsArray.getJSONObject(i)
+            val utcDate = s.getString("date")
+            val localDate = s.optString("localDate", "").ifBlank {
+                DateBucketUtils.utcIsoToLocalDate(utcDate)
+            }
+            val sessionType = s.optString("sessionType", SessionEntity.SESSION_TYPE_NORMAL)
+                .ifBlank { SessionEntity.SESSION_TYPE_NORMAL }
+
             sessionsList.add(
                 SessionEntity(
                     id = s.getString("id"),
-                    date = s.getString("date"),
+                    date = utcDate,
                     mode = s.getString("mode"),
                     totalQuestions = s.getInt("totalQuestions"),
                     correct = s.getInt("correct"),
                     avgTimeMs = s.getDouble("avgTimeMs"),
                     difficulty = s.getString("difficulty"),
-                    duration = s.getDouble("duration")
+                    duration = s.getDouble("duration"),
+                    localDate = localDate,
+                    sessionType = sessionType
                 )
             )
         }
@@ -274,19 +315,35 @@ class ZenMathRepository(
         val questionsList = mutableListOf<QuestionRecordEntity>()
         for (i in 0 until questionsArray.length()) {
             val q = questionsArray.getJSONObject(i)
+            val num1 = q.optDouble("num1", 0.0)
+            val num2 = q.optDouble("num2", 0.0)
+            val operation = q.optString("operation", "")
+            val mode = q.optString("mode", "addition")
+            val fallbackQuestionText = if (operation in listOf("+", "−", "-", "×", "*", "÷", "/")) {
+                "${num1.toLong()} $operation ${num2.toLong()}"
+            } else {
+                operation
+            }
+            val questionText = q.optString("questionText", "").ifBlank { fallbackQuestionText }
+            val topicTag = q.optString("topicTag", "").ifBlank { mode }
+            val hintUsed = q.optBoolean("hintUsed", false)
+
             questionsList.add(
                 QuestionRecordEntity(
                     id = q.optLong("id", 0L),
                     sessionId = q.getString("sessionId"),
-                    num1 = q.getDouble("num1"),
-                    num2 = q.getDouble("num2"),
-                    operation = q.getString("operation"),
+                    num1 = num1,
+                    num2 = num2,
+                    operation = operation,
                     correctAnswer = q.getString("correctAnswer"),
-                    userAnswer = if (q.isNull("userAnswer")) null else q.getString("userAnswer"),
+                    userAnswer = if (q.isNull("userAnswer")) null else q.optString("userAnswer"),
                     timeMs = q.getLong("timeMs"),
                     isCorrect = q.getBoolean("isCorrect"),
-                    mode = q.getString("mode"),
-                    difficulty = q.getString("difficulty")
+                    mode = mode,
+                    difficulty = q.optString("difficulty", "medium"),
+                    questionText = questionText,
+                    topicTag = topicTag,
+                    hintUsed = hintUsed
                 )
             )
         }

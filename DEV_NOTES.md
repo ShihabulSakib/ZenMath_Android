@@ -86,4 +86,11 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 ---
 
 ## Progress Log
-- **Step 0 (Recon)**: Completed exploration of codebase, verified architecture, Room v1 schema, and build/test setup. Created `feature/next-release` branch and `DEV_NOTES.md`. Next step: Phase 1 (Foundations).
+- **Step 0 (Recon)**: Completed exploration of codebase, verified architecture, Room v1 schema, and build/test setup. Created `feature/next-release` branch and `DEV_NOTES.md`.
+- **Phase 1 (Foundations — Section 1)**:
+  - Extended `MathProblem` with `topicTag`, `answerSpec`, `unitText`, `subjectLabel`, `solutionSteps`, `mcqOptions`, `confusableIds`, `constantSymbol`, and `structuredUnit`.
+  - Created `AnswerChecker`, `AnswerSpec`, `TolerancePreset` (`STRICT` 0.5%, `NORMAL` 1.0%, `LENIENT` 2.0%), and `ScientificInputParser`.
+  - Extended `Keypad` with `×10ⁿ` exponent-entry key, raised input length cap to 20, and created `RichTextHelper` using Compose `AnnotatedString` (`SpanStyle` with `BaselineShift.Superscript` / `Subscript`) for scientific notation, units, and symbols.
+  - Enabled Room schema export (`app/schemas`), bumped `ZenMathDatabase` to v2 with non-destructive `MIGRATION_1_2`, created `DateBucketUtils` for local-date bucketing across timezones, updated backup JSON export/import (v1-compatible), and switched timing to monotonic milliseconds (`MonotonicClock`).
+  - Added dedicated data files `CourseValuesData.kt`, `PhSpeciesData.kt`, `ConstantsSchema.kt`, and `ConstantsData.kt`.
+  - Next step: Phase 2 (Fixes to Existing Behavior).

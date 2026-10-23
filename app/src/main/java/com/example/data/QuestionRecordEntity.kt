@@ -15,5 +15,8 @@ data class QuestionRecordEntity(
     val timeMs: Long,
     val isCorrect: Boolean,
     val mode: String,
-    val difficulty: String
+    val difficulty: String,
+    val questionText: String = "",
+    val topicTag: String = "",
+    val hintUsed: Boolean = false
 )

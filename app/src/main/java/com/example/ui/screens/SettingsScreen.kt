@@ -77,6 +77,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.R
 import com.example.domain.GameSettings
+import com.example.domain.TolerancePreset
 import com.example.notifications.NotificationScheduler
 import com.example.ui.components.ZenSlider
 import com.example.ui.components.ZenToggle
@@ -343,6 +344,56 @@ fun SettingsScreen(
                                 }
                             }
                         }
+
+                        // Answer Tolerance Preset (Strict / Normal / Lenient)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Answer Tolerance Preset",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textMain
+                                    )
+                                    Text(
+                                        text = "Relative error: Strict 0.5%, Normal 1%, Lenient 2%",
+                                        fontSize = 10.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                TolerancePreset.entries.forEach { preset ->
+                                    val isSelected = settings.tolerancePreset == preset
+                                    val pillShape = RoundedCornerShape(10.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(pillShape)
+                                            .background(if (isSelected) colors.primary else colors.surface)
+                                            .border(1.dp, if (isSelected) colors.primary else colors.cardBorder, pillShape)
+                                            .clickable { onSaveSettings(settings.copy(tolerancePreset = preset)) }
+                                            .padding(vertical = 8.dp)
+                                            .testTag("preset_${preset.key}"),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = preset.label,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) colors.onPrimary else colors.textSecondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -382,12 +433,51 @@ fun SettingsScreen(
                                 }
                                 Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
                                     Text("Adaptive Difficulty", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.textMain)
-                                    Text("Auto-escalate digits when accuracy ≥ 85%", fontSize = 11.sp, color = colors.textSecondary)
+                                    Text("Adjust difficulty up (≥ 85%) or down (< 50%)", fontSize = 11.sp, color = colors.textSecondary)
                                 }
                             }
                             ZenToggle(
                                 checked = settings.adaptiveDifficulty,
                                 onCheckedChange = { onSaveSettings(settings.copy(adaptiveDifficulty = it)) }
+                            )
+                        }
+                    }
+
+                    // Solution Steps Card on Wrong/Timeout toggle
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(cardShape)
+                            .background(colors.card)
+                            .border(1.dp, colors.cardBorder, cardShape)
+                            .padding(18.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(CircleShape)
+                                        .background(colors.primary.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Bolt, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
+                                }
+                                Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
+                                    Text("Pause on Wrong Answer", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.textMain)
+                                    Text("Show step-by-step solution card until you tap Next", fontSize = 11.sp, color = colors.textSecondary)
+                                }
+                            }
+                            ZenToggle(
+                                checked = settings.requireManualNextOnWrong,
+                                onCheckedChange = { onSaveSettings(settings.copy(requireManualNextOnWrong = it)) }
                             )
                         }
                     }

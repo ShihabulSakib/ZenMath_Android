@@ -8,14 +8,19 @@ import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
 import com.example.data.ZenMathDatabase
 import com.example.data.ZenMathRepository
+import com.example.domain.AnswerChecker
+import com.example.domain.AnswerSpec
+import com.example.domain.DateBucketUtils
 import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
 import com.example.domain.GameMode
 import com.example.domain.GameSettings
 import com.example.domain.MathProblem
+import com.example.domain.MonotonicClock
 import com.example.domain.QuestionGenerator
 import com.example.domain.QuestionResult
 import com.example.domain.RecentPerformanceDay
+import com.example.domain.ScientificInputParser
 import com.example.domain.StatsData
 import com.example.notifications.NotificationScheduler
 import com.example.ui.components.MainTab
@@ -236,7 +241,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     private fun startTimer() {
         timerJob?.cancel()
-        questionStartTimeMs = System.currentTimeMillis()
+        questionStartTimeMs = MonotonicClock.nowMs()
         val limit = settingsFlow.value.timeLimit
         _timeRemaining.value = limit
         _currentQuestionElapsedMs.value = 0L
@@ -244,9 +249,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         timerJob = viewModelScope.launch {
             while (true) {
                 delay(100L)
-                val elapsed = System.currentTimeMillis() - questionStartTimeMs
+                val elapsed = (MonotonicClock.nowMs() - questionStartTimeMs).coerceAtLeast(0L)
                 _currentQuestionElapsedMs.value = elapsed
-                val remaining = (limit - (elapsed / 1000).toInt()).coerceAtLeast(0)
+                val remaining = (limit - (elapsed / 1000L).toInt()).coerceAtLeast(0)
                 _timeRemaining.value = remaining
 
                 if (remaining == 0 && _feedback.value == FeedbackType.NONE && !isProcessingAnswer) {
@@ -264,37 +269,72 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     fun handleKeyPress(key: String) {
         if (_feedback.value != FeedbackType.NONE || isProcessingAnswer) return
+        val marker = ScientificInputParser.SCI_MARKER
 
         when (key) {
             "enter" -> submitAnswer()
             "backspace" -> {
-                if (_userInput.value.isNotEmpty()) {
-                    _userInput.value = _userInput.value.dropLast(1)
+                val current = _userInput.value
+                if (current.isNotEmpty()) {
+                    _userInput.value = if (current.endsWith(marker)) {
+                        current.dropLast(marker.length)
+                    } else {
+                        current.dropLast(1)
+                    }
+                }
+            }
+            "sci" -> {
+                val current = _userInput.value
+                if (!current.contains(marker) && !current.contains("/") && current.length + marker.length <= ScientificInputParser.MAX_INPUT_LENGTH) {
+                    _userInput.value = current + marker
                 }
             }
             "-" -> {
-                val mode = _selectedMode.value
-                val allowNeg = _allowNegativeResults.value
-                if ((mode == GameMode.SUBTRACTION && allowNeg) ||
-                    mode in listOf(GameMode.CHAIN_CALCULATION, GameMode.APPROXIMATION, GameMode.NUMBER_SERIES)
-                ) {
-                    val current = _userInput.value
-                    _userInput.value = if (current.startsWith("-")) current.drop(1) else "-$current"
+                val current = _userInput.value
+                val markerIdx = current.indexOf(marker)
+                if (markerIdx >= 0) {
+                    // Toggle minus on the exponent part
+                    val mantissaPart = current.substring(0, markerIdx + marker.length)
+                    val expPart = current.substring(markerIdx + marker.length)
+                    _userInput.value = if (expPart.startsWith("-")) {
+                        mantissaPart + expPart.drop(1)
+                    } else {
+                        "$mantissaPart-$expPart"
+                    }
+                } else {
+                    val mode = _selectedMode.value
+                    val allowNeg = _allowNegativeResults.value
+                    if ((mode == GameMode.SUBTRACTION && allowNeg) ||
+                        (mode == GameMode.MIXED && allowNeg) ||
+                        mode in listOf(
+                            GameMode.CHAIN_CALCULATION,
+                            GameMode.APPROXIMATION,
+                            GameMode.NUMBER_SERIES,
+                            GameMode.SCIENTIFIC_NOTATION,
+                            GameMode.COMPOSITE_LOGS_ROOTS,
+                            GameMode.CONSTANTS,
+                            GameMode.SPEED_ROUND,
+                            GameMode.WEAK_SPOTS
+                        )
+                    ) {
+                        _userInput.value = if (current.startsWith("-")) current.drop(1) else "-$current"
+                    }
                 }
             }
             "/" -> {
-                if (_selectedMode.value == GameMode.FRACTION && !_userInput.value.contains("/") && _userInput.value.isNotEmpty()) {
+                if (_selectedMode.value == GameMode.FRACTION && !_userInput.value.contains("/") && !_userInput.value.contains(marker) && _userInput.value.isNotEmpty()) {
                     _userInput.value = _userInput.value + "/"
                 }
             }
             "." -> {
-                if (!_userInput.value.contains(".") && !_userInput.value.contains("/")) {
-                    _userInput.value = _userInput.value + "."
+                val current = _userInput.value
+                if (!current.contains(marker) && !current.contains(".") && !current.contains("/")) {
+                    _userInput.value = current + "."
                 }
             }
             else -> {
                 if (key.length == 1 && key[0].isDigit()) {
-                    if (_userInput.value.length < 12) {
+                    if (_userInput.value.length < ScientificInputParser.MAX_INPUT_LENGTH) {
                         _userInput.value = _userInput.value + key
                     }
                 }
@@ -304,44 +344,31 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     fun submitAnswer() {
         if (isProcessingAnswer || _feedback.value != FeedbackType.NONE || _userInput.value.isEmpty()) return
+        val problem = _currentProblem.value ?: return
+        val input = _userInput.value.trim()
+
+        // Ignore malformed numeric/scientific input rather than crashing or penalizing an incomplete exponent
+        val isMalformed = when (val spec = problem.answerSpec) {
+            is AnswerSpec.Choice -> input.isEmpty()
+            is AnswerSpec.FractionSpec -> {
+                if (spec.isFractionToDecimal) {
+                    ScientificInputParser.parse(input) == null
+                } else {
+                    input.endsWith("/") || input.startsWith("/")
+                }
+            }
+            else -> ScientificInputParser.parse(input) == null
+        }
+        if (isMalformed) return
+
         isProcessingAnswer = true
         stopTimer()
 
-        val problem = _currentProblem.value ?: return
-        val input = _userInput.value.trim()
-        val mode = _selectedMode.value
-
-        var isCorrect = false
-        if (mode == GameMode.FRACTION) {
-            if (!problem.answer.contains("/")) {
-                // Expected answer is decimal
-                val u = input.toDoubleOrNull()
-                val c = problem.answer.toDoubleOrNull()
-                isCorrect = u != null && c != null && abs(u - c) < 0.001
-            } else {
-                // Expected answer is fraction string (e.g. "3/4")
-                if (input == problem.answer) {
-                    isCorrect = true
-                } else if (input.contains("/")) {
-                    val partsU = input.split("/")
-                    val partsC = problem.answer.split("/")
-                    val uNum = partsU.getOrNull(0)?.toDoubleOrNull()
-                    val uDen = partsU.getOrNull(1)?.toDoubleOrNull()
-                    val cNum = partsC.getOrNull(0)?.toDoubleOrNull()
-                    val cDen = partsC.getOrNull(1)?.toDoubleOrNull()
-                    if (uNum != null && uDen != null && cNum != null && cDen != null && uDen != 0.0 && cDen != 0.0) {
-                        isCorrect = abs((uNum / uDen) - (cNum / cDen)) < 0.0001
-                    }
-                }
-            }
-        } else if (mode == GameMode.DIVISION && _allowRemainder.value) {
-            val u = input.toDoubleOrNull()
-            isCorrect = u != null && abs(u - problem.numericAnswer) < 0.001
-        } else {
-            val u = input.toLongOrNull()
-            val c = problem.numericAnswer.toLong()
-            isCorrect = u != null && u == c
-        }
+        val isCorrect = AnswerChecker.check(
+            userInput = input,
+            spec = problem.answerSpec,
+            preset = settingsFlow.value.tolerancePreset
+        )
 
         recordResult(isCorrect, input, timedOut = false)
         _feedback.value = if (isCorrect) FeedbackType.CORRECT else FeedbackType.INCORRECT
@@ -377,11 +404,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     private fun recordResult(isCorrect: Boolean, userAns: String?, timedOut: Boolean) {
         val problem = _currentProblem.value ?: return
-        val elapsedSec = if (timedOut) {
-            settingsFlow.value.timeLimit
+        val elapsedMs = if (timedOut) {
+            settingsFlow.value.timeLimit.toLong() * 1000L
         } else {
-            ((System.currentTimeMillis() - questionStartTimeMs) / 1000).toInt().coerceAtLeast(1)
+            (MonotonicClock.nowMs() - questionStartTimeMs).coerceAtLeast(1L)
         }
+        val elapsedSec = ((elapsedMs + 500L) / 1000L).toInt().coerceAtLeast(1)
 
         val result = QuestionResult(
             num1 = problem.num1,
@@ -391,7 +419,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             userAnswer = userAns,
             isCorrect = isCorrect,
             timeTaken = elapsedSec,
-            timedOut = timedOut
+            timedOut = timedOut,
+            timeTakenMs = elapsedMs,
+            questionText = problem.questionDisplay,
+            topicTag = problem.topicTag,
+            hintUsed = false,
+            solutionSteps = problem.solutionSteps,
+            unitText = problem.unitText
         )
         _questionResults.value = _questionResults.value + result
         if (isCorrect) {
@@ -417,13 +451,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         val results = _questionResults.value
         val totalQ = results.size
         val correctCount = results.count { it.isCorrect }
-        val avgTimeMs = if (totalQ > 0) results.sumOf { it.timeTaken.toLong() * 1000L } / totalQ.toDouble() else 0.0
-        val durationTotal = results.sumOf { it.timeTaken.toDouble() }
+        val avgTimeMs = if (totalQ > 0) results.sumOf { it.timeTakenMs }.toDouble() / totalQ.toDouble() else 0.0
+        val durationTotal = results.sumOf { it.timeTakenMs }.toDouble() / 1000.0
 
         val sessionId = UUID.randomUUID().toString()
-        val isoDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }.format(Date())
+        val nowMs = System.currentTimeMillis()
+        val isoDate = DateBucketUtils.nowUtcIso(nowMs)
+        val localDate = DateBucketUtils.formatLocalDate(nowMs)
 
         val sessionEntity = SessionEntity(
             id = sessionId,
@@ -433,7 +467,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             correct = correctCount,
             avgTimeMs = avgTimeMs,
             difficulty = _difficulty.value.key,
-            duration = durationTotal
+            duration = durationTotal,
+            localDate = localDate,
+            sessionType = SessionEntity.SESSION_TYPE_NORMAL
         )
 
         val questionEntities = results.map { r ->
@@ -444,10 +480,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 operation = r.operation,
                 correctAnswer = r.correctAnswer,
                 userAnswer = r.userAnswer,
-                timeMs = (r.timeTaken * 1000).toLong(),
+                timeMs = r.timeTakenMs,
                 isCorrect = r.isCorrect,
                 mode = _selectedMode.value.id,
-                difficulty = _difficulty.value.key
+                difficulty = _difficulty.value.key,
+                questionText = r.questionText,
+                topicTag = r.topicTag,
+                hintUsed = r.hintUsed
             )
         }
 
@@ -513,14 +552,22 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     _fractionDenRange.value.first, _fractionDenRange.value.second
                 )
                 MathProblem(
-                    num1 = 0.0,
-                    num2 = 0.0,
+                    num1 = gen.numerator.toDouble(),
+                    num2 = gen.denominator.toDouble(),
                     operation = if (gen.isFractionToDecimal) "Fraction to Decimal" else "Decimal to Fraction",
                     questionDisplay = gen.question,
                     answer = gen.answer,
-                    numericAnswer = 0.0
+                    numericAnswer = gen.numerator.toDouble() / gen.denominator.toDouble(),
+                    topicTag = "fraction",
+                    answerSpec = AnswerSpec.FractionSpec(
+                        numerator = gen.numerator,
+                        denominator = gen.denominator,
+                        isFractionToDecimal = gen.isFractionToDecimal
+                    ),
+                    solutionSteps = gen.solutionSteps
                 )
             }
+            else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
         }
 
         _currentProblem.value = problem

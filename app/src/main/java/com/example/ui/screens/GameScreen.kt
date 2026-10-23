@@ -44,8 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.GameMode
 import com.example.domain.MathProblem
+import com.example.domain.ScientificInputParser
 import com.example.ui.FeedbackType
 import com.example.ui.components.Keypad
+import com.example.ui.components.RichTextHelper
 import com.example.ui.components.ZenProgressBar
 import com.example.ui.theme.ZenTheme
 
@@ -74,9 +76,42 @@ fun GameScreen(
     val isTimeLow = timeRemaining in 1..5
 
     val negativeEnabled = (mode == GameMode.SUBTRACTION && allowNegativeResults) ||
-            mode in listOf(GameMode.CHAIN_CALCULATION, GameMode.APPROXIMATION, GameMode.NUMBER_SERIES)
+            (mode == GameMode.MIXED && allowNegativeResults) ||
+            mode in listOf(
+                GameMode.CHAIN_CALCULATION,
+                GameMode.APPROXIMATION,
+                GameMode.NUMBER_SERIES,
+                GameMode.SCIENTIFIC_NOTATION,
+                GameMode.COMPOSITE_LOGS_ROOTS,
+                GameMode.CONSTANTS,
+                GameMode.SPEED_ROUND,
+                GameMode.WEAK_SPOTS
+            )
     val showFraction = mode == GameMode.FRACTION
-    val showDecimal = mode in listOf(GameMode.FRACTION, GameMode.DIVISION, GameMode.PERCENTAGE)
+    val showDecimal = mode in listOf(
+        GameMode.FRACTION,
+        GameMode.DIVISION,
+        GameMode.MIXED,
+        GameMode.PERCENTAGE,
+        GameMode.APPROXIMATION,
+        GameMode.MEMORY_TABLES,
+        GameMode.SCIENTIFIC_NOTATION,
+        GameMode.PH_POH,
+        GameMode.COMPOSITE_LOGS_ROOTS,
+        GameMode.CONSTANTS,
+        GameMode.SPEED_ROUND,
+        GameMode.WEAK_SPOTS
+    )
+    val showScientific = mode in listOf(
+        GameMode.APPROXIMATION,
+        GameMode.SCIENTIFIC_NOTATION,
+        GameMode.PH_POH,
+        GameMode.COMPOSITE_LOGS_ROOTS,
+        GameMode.CONSTANTS,
+        GameMode.SPEED_ROUND,
+        GameMode.WEAK_SPOTS
+    )
+    val isExponentActive = userInput.contains(ScientificInputParser.SCI_MARKER)
 
     // Flash background on feedback
     val feedbackBgColor by animateColorAsState(
@@ -240,10 +275,10 @@ fun GameScreen(
                     }
 
                     Text(
-                        text = questionText,
+                        text = RichTextHelper.formatMathText(questionText),
                         fontSize = textSize,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = RichTextHelper.MathFontFamily,
                         textAlign = TextAlign.Center,
                         color = colors.textMain,
                         letterSpacing = (-0.5).sp,
@@ -263,10 +298,10 @@ fun GameScreen(
                             FeedbackType.NONE -> {
                                 if (userInput.isNotEmpty()) {
                                     Text(
-                                        text = userInput,
+                                        text = RichTextHelper.formatInputDisplay(userInput),
                                         fontSize = 38.sp,
                                         fontWeight = FontWeight.Bold,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = colors.primary,
                                         modifier = Modifier.testTag("user_input_display")
                                     )
@@ -321,9 +356,9 @@ fun GameScreen(
                                         )
                                     }
                                     Text(
-                                        text = "Answer: ${problem?.answer ?: ""}",
+                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}"),
                                         fontSize = 14.sp,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = colors.textSecondary,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
@@ -342,17 +377,17 @@ fun GameScreen(
                                             modifier = Modifier.size(24.dp)
                                         )
                                         Text(
-                                            text = userInput,
+                                            text = RichTextHelper.formatInputDisplay(userInput),
                                             fontSize = 22.sp,
                                             fontWeight = FontWeight.Bold,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = RichTextHelper.MathFontFamily,
                                             color = colors.incorrect
                                         )
                                     }
                                     Text(
-                                        text = "Answer: ${problem?.answer ?: ""}",
+                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}"),
                                         fontSize = 14.sp,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = colors.textSecondary,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
@@ -371,6 +406,8 @@ fun GameScreen(
             negativeEnabled = negativeEnabled,
             showFraction = showFraction,
             showDecimal = showDecimal,
+            showScientific = showScientific,
+            isExponentActive = isExponentActive,
             hapticFeedbackEnabled = hapticFeedbackEnabled,
             modifier = Modifier.fillMaxWidth()
         )

@@ -2,13 +2,12 @@ package com.example.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.domain.DateBucketUtils
 import com.example.domain.GameSettings
+import com.example.domain.TolerancePreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class PreferencesManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("zenmath_prefs", Context.MODE_PRIVATE)
@@ -32,6 +31,8 @@ class PreferencesManager(context: Context) {
         val notificationsEnabled = prefs.getBoolean(KEY_NOTIF_ENABLED, false)
         val notificationTimes = prefs.getStringSet(KEY_NOTIF_TIMES, null)?.toSet() ?: setOf("08:00", "12:00", "18:00")
         val isDarkTheme = prefs.getBoolean(KEY_THEME_DARK, true)
+        val tolerancePreset = TolerancePreset.fromKey(prefs.getString(KEY_TOLERANCE_PRESET, TolerancePreset.NORMAL.key) ?: TolerancePreset.NORMAL.key)
+        val requireManualNextOnWrong = prefs.getBoolean(KEY_MANUAL_NEXT_ON_WRONG, true)
 
         return GameSettings(
             totalQuestions = totalQuestions,
@@ -42,7 +43,9 @@ class PreferencesManager(context: Context) {
             hapticFeedback = hapticFeedback,
             notificationsEnabled = notificationsEnabled,
             notificationTimes = notificationTimes,
-            isDarkTheme = isDarkTheme
+            isDarkTheme = isDarkTheme,
+            tolerancePreset = tolerancePreset,
+            requireManualNextOnWrong = requireManualNextOnWrong
         )
     }
 
@@ -57,6 +60,8 @@ class PreferencesManager(context: Context) {
             .putBoolean(KEY_NOTIF_ENABLED, settings.notificationsEnabled)
             .putStringSet(KEY_NOTIF_TIMES, HashSet(settings.notificationTimes))
             .putBoolean(KEY_THEME_DARK, settings.isDarkTheme)
+            .putString(KEY_TOLERANCE_PRESET, settings.tolerancePreset.key)
+            .putBoolean(KEY_MANUAL_NEXT_ON_WRONG, settings.requireManualNextOnWrong)
             .apply()
         _settingsFlow.value = settings
     }
@@ -75,7 +80,7 @@ class PreferencesManager(context: Context) {
     }
 
     private fun getTodayDateString(): String {
-        return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        return DateBucketUtils.formatLocalDate()
     }
 
     fun getTodayProgress(): Int {
@@ -129,5 +134,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_DAILY_DATE = "zenmath_daily_date"
         private const val KEY_DAILY_COUNT = "zenmath_daily_count"
         private const val KEY_BEST_STREAK = "zenmath_best_streak"
+        private const val KEY_TOLERANCE_PRESET = "zenmath_tolerance_preset"
+        private const val KEY_MANUAL_NEXT_ON_WRONG = "zenmath_manual_next_on_wrong"
     }
 }
