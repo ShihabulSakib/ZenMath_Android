@@ -832,40 +832,23 @@ fun SettingsScreen(
                                         Button(
                                             onClick = {
                                                 var launched = false
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                                    try {
-                                                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                                            data = Uri.parse("package:${context.packageName}")
-                                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                        }
-                                                        context.startActivity(intent)
-                                                        launched = true
-                                                    } catch (_: Exception) {
-                                                        // OEM ROMs (or devices without support) might reject direct whitelist prompt
+                                                try {
+                                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                        data = Uri.parse("package:${context.packageName}")
+                                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                     }
-                                                }
-
-                                                if (!launched) {
-                                                    // Fallback 1: App Info settings (where battery/background permission can be toggled)
+                                                    context.startActivity(intent)
+                                                    Toast.makeText(context, "Tap Battery > Unrestricted / Allow background activity", Toast.LENGTH_LONG).show()
+                                                    launched = true
+                                                } catch (_: Exception) {
                                                     try {
-                                                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                            data = Uri.parse("package:${context.packageName}")
+                                                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
                                                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                                         }
                                                         context.startActivity(intent)
-                                                        Toast.makeText(context, "Tap Battery > Allow background activity", Toast.LENGTH_LONG).show()
                                                         launched = true
                                                     } catch (_: Exception) {
-                                                        // Fallback 2: General battery optimization settings
-                                                        try {
-                                                            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                            }
-                                                            context.startActivity(intent)
-                                                            launched = true
-                                                        } catch (_: Exception) {
-                                                            Toast.makeText(context, "Please allow background activity in system settings", Toast.LENGTH_SHORT).show()
-                                                        }
+                                                        Toast.makeText(context, "Please allow background activity in system settings", Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             },
@@ -916,7 +899,7 @@ fun SettingsScreen(
                     )
 
                     Text(
-                        text = "v1.0.4 • Native Android Edition",
+                        text = "v1.0.5 • Native Android Edition",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.textSecondary.copy(alpha = 0.7f),
