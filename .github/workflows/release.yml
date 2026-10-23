@@ -62,8 +62,12 @@ jobs:
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-upload-key.jks
             echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
             echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          elif [ -f my-upload-key.jks ]; then
+            echo "Using committed release keystore (my-upload-key.jks) for consistent app signature..."
+            echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD || 'zenmathpass123' }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD || 'zenmathpass123' }}" >> $GITHUB_ENV
           else
-            echo "No custom keystore secret detected; generating automated release keystore..."
+            echo "No keystore found; generating release keystore..."
             keytool -genkeypair -v \
               -keystore my-upload-key.jks \
               -alias upload \
