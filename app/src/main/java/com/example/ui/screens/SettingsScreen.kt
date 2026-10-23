@@ -82,14 +82,36 @@ import com.example.ui.components.ZenSlider
 import com.example.ui.components.ZenToggle
 import com.example.ui.theme.ZenTheme
 
-private val TIME_SLOTS = listOf(
-    Pair("08:00", "8:00 AM"),
-    Pair("12:00", "12:00 PM"),
-    Pair("15:00", "3:00 PM"),
-    Pair("18:00", "6:00 PM"),
-    Pair("20:00", "8:00 PM")
+import android.app.TimePickerDialog
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import java.util.Calendar
+import java.util.Locale
+
+private val DEFAULT_TIME_SLOTS = listOf(
+    Pair("08:00", "8AM"),
+    Pair("12:00", "12PM"),
+    Pair("15:00", "3PM"),
+    Pair("18:00", "6PM"),
+    Pair("20:00", "8PM")
 )
 
+private fun formatTimeChipLabel(timeStr: String): String {
+    val parts = timeStr.split(":")
+    if (parts.size != 2) return timeStr
+    val h24 = parts[0].toIntOrNull() ?: return timeStr
+    val m = parts[1].toIntOrNull() ?: return timeStr
+    val amPm = if (h24 >= 12) "PM" else "AM"
+    val h12 = when {
+        h24 == 0 -> 12
+        h24 > 12 -> h24 - 12
+        else -> h24
+    }
+    return if (m == 0) "${h12}${amPm}" else String.format(Locale.US, "%d:%02d%s", h12, m, amPm)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     settings: GameSettings,
@@ -104,6 +126,17 @@ fun SettingsScreen(
     ) { isGranted ->
         if (isGranted) {
             onSaveSettings(settings.copy(notificationsEnabled = true))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !NotificationScheduler.canScheduleExactAlarms(context)) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                } catch (_: Exception) {
+                    // Fallback handled by banner in UI
+                }
+            }
         } else {
             Toast.makeText(context, "Notification permission was denied", Toast.LENGTH_SHORT).show()
             onSaveSettings(settings.copy(notificationsEnabled = false))
@@ -488,6 +521,17 @@ fun SettingsScreen(
                                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                         } else {
                                             onSaveSettings(settings.copy(notificationsEnabled = true))
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !NotificationScheduler.canScheduleExactAlarms(context)) {
+                                                try {
+                                                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                                        data = Uri.parse("package:${context.packageName}")
+                                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    }
+                                                    context.startActivity(intent)
+                                                } catch (_: Exception) {
+                                                    // Fallback handled by banner in UI
+                                                }
+                                            }
                                         }
                                     } else {
                                         onSaveSettings(settings.copy(notificationsEnabled = false))
@@ -497,6 +541,18 @@ fun SettingsScreen(
                         }
 
                         if (settings.notificationsEnabled) {
+                            val nextAlarmSummary = remember(settings.notificationTimes) {
+                                NotificationScheduler.getNextAlarmSummary(settings.notificationTimes)
+                            }
+                            if (nextAlarmSummary != null) {
+                                Text(
+                                    text = "Next scheduled reminder: $nextAlarmSummary",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.primary
+                                )
+                            }
+
                             Text(
                                 text = "REMINDER TIMES",
                                 fontSize = 10.sp,
@@ -506,12 +562,12 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(top = 4.dp)
                             )
 
-                            // Time slot chips
+                            // Preset Time slot chips
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                TIME_SLOTS.forEach { (timeVal, timeLabel) ->
+                                DEFAULT_TIME_SLOTS.forEach { (timeVal, timeLabel) ->
                                     val isSelected = settings.notificationTimes.contains(timeVal)
                                     val chipShape = RoundedCornerShape(10.dp)
 
@@ -530,12 +586,93 @@ fun SettingsScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = timeLabel.replace(":00", "").replace(" ", ""),
+                                            text = timeLabel,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isSelected) colors.onPrimary else colors.textSecondary
                                         )
                                     }
+                                }
+                            }
+
+                            // Custom time slots + Add Custom Time chip
+                            val customTimes = settings.notificationTimes
+                                .filter { time -> DEFAULT_TIME_SLOTS.none { it.first == time } }
+                                .sorted()
+
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                customTimes.forEach { customTime ->
+                                    val chipShape = RoundedCornerShape(10.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier
+                                            .clip(chipShape)
+                                            .background(colors.primary)
+                                            .border(1.dp, colors.primary, chipShape)
+                                            .clickable {
+                                                val updated = settings.notificationTimes.toMutableSet()
+                                                updated.remove(customTime)
+                                                onSaveSettings(settings.copy(notificationTimes = updated))
+                                            }
+                                            .padding(horizontal = 10.dp, vertical = 7.dp)
+                                    ) {
+                                        Text(
+                                            text = formatTimeChipLabel(customTime),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.onPrimary
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove custom time",
+                                            tint = colors.onPrimary,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
+
+                                val addChipShape = RoundedCornerShape(10.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier
+                                        .clip(addChipShape)
+                                        .background(colors.surface)
+                                        .border(1.dp, colors.cardBorder, addChipShape)
+                                        .clickable {
+                                            val cal = Calendar.getInstance()
+                                            TimePickerDialog(
+                                                context,
+                                                { _, hourOfDay, minute ->
+                                                    val formatted = String.format(Locale.US, "%02d:%02d", hourOfDay, minute)
+                                                    val updated = settings.notificationTimes.toMutableSet()
+                                                    updated.add(formatted)
+                                                    onSaveSettings(settings.copy(notificationTimes = updated))
+                                                },
+                                                cal.get(Calendar.HOUR_OF_DAY),
+                                                cal.get(Calendar.MINUTE),
+                                                false
+                                            ).show()
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 7.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Add custom reminder time",
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Text(
+                                        text = "Custom Time",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary
+                                    )
                                 }
                             }
 
@@ -557,7 +694,7 @@ fun SettingsScreen(
                                 Text("Send Test Reminder", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
 
-                            // Background Optimization / Battery Exemption Prompt
+                            // Background Optimization / Battery Exemption & Exact Alarm Prompt
                             val powerManager = remember(context) {
                                 context.getSystemService(Context.POWER_SERVICE) as? PowerManager
                             }
@@ -570,14 +707,92 @@ fun SettingsScreen(
                                     }
                                 )
                             }
+                            var canScheduleExactAlarms by remember(context, settings.notificationsEnabled) {
+                                mutableStateOf(NotificationScheduler.canScheduleExactAlarms(context))
+                            }
 
-                            // Re-check whitelist state whenever returning to Settings screen
+                            // Re-check whitelist & exact alarm state whenever returning to Settings screen
                             LifecycleResumeEffect(Unit) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     isIgnoringBatteryOptimizations =
                                         powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: true
                                 }
+                                canScheduleExactAlarms = NotificationScheduler.canScheduleExactAlarms(context)
+                                if (settings.notificationsEnabled) {
+                                    NotificationScheduler.scheduleReminders(context, settings.notificationTimes)
+                                }
                                 onPauseOrDispose { }
+                            }
+
+                            if (!canScheduleExactAlarms) {
+                                val bannerShape = RoundedCornerShape(14.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(bannerShape)
+                                        .background(colors.primary.copy(alpha = 0.06f))
+                                        .border(1.dp, colors.primary.copy(alpha = 0.2f), bannerShape)
+                                        .padding(14.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.NotificationsActive,
+                                                contentDescription = null,
+                                                tint = colors.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = "Allow exact alarms for on-time reminders",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.textMain
+                                            )
+                                        }
+                                        Text(
+                                            text = "Android 12+ requires Alarms & Reminders permission so scheduled practice notifications arrive at your exact chosen times.",
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary,
+                                            lineHeight = 15.sp
+                                        )
+                                        Button(
+                                            onClick = {
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                    try {
+                                                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                                            data = Uri.parse("package:${context.packageName}")
+                                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                        }
+                                                        context.startActivity(intent)
+                                                    } catch (_: Exception) {
+                                                        try {
+                                                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                                data = Uri.parse("package:${context.packageName}")
+                                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                            }
+                                                            context.startActivity(intent)
+                                                        } catch (_: Exception) {
+                                                            Toast.makeText(context, "Please enable Alarms & Reminders in system settings", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primary,
+                                                contentColor = colors.onPrimary
+                                            ),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(38.dp)
+                                        ) {
+                                            Text("Allow Exact Alarms", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
 
                             if (!isIgnoringBatteryOptimizations) {
@@ -701,7 +916,7 @@ fun SettingsScreen(
                     )
 
                     Text(
-                        text = "v1.0.0 • Native Android Edition",
+                        text = "v1.0.4 • Native Android Edition",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.textSecondary.copy(alpha = 0.7f),

@@ -17,16 +17,24 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
 
-        // 1. Device boot / Package replaced actions -> Re-arm alarms without showing notification
+        // 1. Device boot / Package replaced / Time change / Exact alarm permission change -> Re-arm alarms without showing notification
         if (action == Intent.ACTION_BOOT_COMPLETED ||
+            action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
             action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+            action == Intent.ACTION_TIME_CHANGED ||
+            action == Intent.ACTION_TIMEZONE_CHANGED ||
+            action == "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" ||
             action == "android.intent.action.QUICKBOOT_POWERON" ||
             action == "com.htc.intent.action.QUICKBOOT_POWERON"
         ) {
-            val prefs = PreferencesManager(context)
-            val settings = prefs.loadSettings()
-            if (settings.notificationsEnabled) {
-                NotificationScheduler.scheduleReminders(context, settings.notificationTimes)
+            try {
+                val prefs = PreferencesManager(context)
+                val settings = prefs.loadSettings()
+                if (settings.notificationsEnabled) {
+                    NotificationScheduler.scheduleReminders(context, settings.notificationTimes)
+                }
+            } catch (_: Exception) {
+                // Ignore if credential-encrypted storage is not yet unlocked during LOCKED_BOOT_COMPLETED
             }
             return
         }
@@ -65,7 +73,7 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val CHANNEL_ID = "zenmath_daily_reminders"
+        const val CHANNEL_ID = "zenmath_daily_reminders_v2"
         const val CHANNEL_NAME = "Daily Reminders"
 
         fun showNotification(
@@ -81,7 +89,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
                     CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "ZenMath daily practice and streak reminders"
                     enableVibration(true)
@@ -104,7 +112,10 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .build()
