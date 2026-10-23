@@ -95,7 +95,7 @@ class ExampleRobolectricTest {
         )
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        shadowOf(notificationManager).cancelAll()
+        notificationManager.cancelAll()
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val shadowAlarmManager = shadowOf(alarmManager)
