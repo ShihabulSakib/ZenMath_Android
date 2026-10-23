@@ -28,6 +28,7 @@ import com.example.domain.RecentPerformanceDay
 import com.example.domain.SciNotationSubtype
 import com.example.domain.ScientificInputParser
 import com.example.domain.StatsData
+import com.example.domain.WeakSpotsSummary
 import com.example.notifications.NotificationScheduler
 import com.example.ui.components.MainTab
 import kotlinx.coroutines.Job
@@ -155,6 +156,25 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _mcqEnabled = MutableStateFlow(false)
     val mcqEnabled: StateFlow<Boolean> = _mcqEnabled.asStateFlow()
 
+    private val _speedRoundDurationMin = MutableStateFlow(1)
+    val speedRoundDurationMin: StateFlow<Int> = _speedRoundDurationMin.asStateFlow()
+
+    private val _speedRoundTopics = MutableStateFlow(
+        setOf(
+            GameMode.ADDITION,
+            GameMode.SUBTRACTION,
+            GameMode.MULTIPLICATION,
+            GameMode.DIVISION,
+            GameMode.MEMORY_TABLES,
+            GameMode.SCIENTIFIC_NOTATION,
+            GameMode.PH_POH
+        )
+    )
+    val speedRoundTopics: StateFlow<Set<GameMode>> = _speedRoundTopics.asStateFlow()
+
+    private val _constantSubjects = MutableStateFlow<Set<String>>(emptySet())
+    val constantSubjects: StateFlow<Set<String>> = _constantSubjects.asStateFlow()
+
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
@@ -174,6 +194,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _feedback = MutableStateFlow(FeedbackType.NONE)
     val feedback: StateFlow<FeedbackType> = _feedback.asStateFlow()
 
+    private val _hintRevealed = MutableStateFlow(false)
+    val hintRevealed: StateFlow<Boolean> = _hintRevealed.asStateFlow()
+
+    private val _waitingForManualNext = MutableStateFlow(false)
+    val waitingForManualNext: StateFlow<Boolean> = _waitingForManualNext.asStateFlow()
+
     private val _score = MutableStateFlow(0)
     val score: StateFlow<Int> = _score.asStateFlow()
 
@@ -186,6 +212,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     // Sessions & Stats State
     private val _sessions = MutableStateFlow<List<SessionEntity>>(emptyList())
     val sessions: StateFlow<List<SessionEntity>> = _sessions.asStateFlow()
+
+    private val _allQuestions = MutableStateFlow<List<QuestionRecordEntity>>(emptyList())
+    val allQuestions: StateFlow<List<QuestionRecordEntity>> = _allQuestions.asStateFlow()
+
+    private val _weakSpotsSummary = MutableStateFlow(WeakSpotsSummary(emptyList(), emptyList()))
+    val weakSpotsSummary: StateFlow<WeakSpotsSummary> = _weakSpotsSummary.asStateFlow()
 
     private val _statsData = MutableStateFlow(
         StatsData(0, 0, 0, 0.0, 0.0, 0, emptyMap())
@@ -204,6 +236,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     // Timers
     private var timerJob: Job? = null
     private var questionStartTimeMs: Long = 0L
+    private var sessionStartTimeMs: Long = 0L
     private var isProcessingAnswer: Boolean = false
 
     init {
@@ -214,6 +247,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 _statsData.value = repository.computeStats(sessionList)
                 _recentPerformance.value = repository.getRecentPerformance(sessionList, 7)
                 _horizonWaveBuckets.value = repository.getHorizonWaveBuckets(sessionList, 10)
+                _weakSpotsSummary.value = repository.computeWeakSpots(_allQuestions.value, sessionList)
+            }
+        }
+        viewModelScope.launch {
+            repository.getAllQuestionsFlow().collect { qList ->
+                _allQuestions.value = qList
+                _weakSpotsSummary.value = repository.computeWeakSpots(qList, _sessions.value)
             }
         }
     }
@@ -270,7 +310,30 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setCubesPowersSubtype(sub: CubesPowersSubtype) { _cubesPowersSubtype.value = sub }
     fun setCubeRange(range: Pair<Int, Int>) { _cubeRange.value = range }
     fun setMcqEnabled(enabled: Boolean) { _mcqEnabled.value = enabled }
+    fun setSpeedRoundDurationMin(mins: Int) { _speedRoundDurationMin.value = mins.coerceIn(1, 5) }
+    fun setSpeedRoundTopics(topics: Set<GameMode>) {
+        if (topics.isNotEmpty()) _speedRoundTopics.value = topics
+    }
+    fun setConstantSubjects(subjects: Set<String>) { _constantSubjects.value = subjects }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
+
+    fun revealHint() {
+        _hintRevealed.value = true
+    }
+
+    fun onManualNextClicked() {
+        if (!_waitingForManualNext.value) return
+        _waitingForManualNext.value = false
+        advanceToNext()
+    }
+
+    fun startWeakSpotsPractice() {
+        _selectedMode.value = GameMode.WEAK_SPOTS
+        _allowRemainder.value = false
+        _allowNegativeResults.value = false
+        _mcqEnabled.value = false
+        startGame()
+    }
 
     fun selectMcqOption(option: String) {
         if (isProcessingAnswer || _feedback.value != FeedbackType.NONE) return
@@ -286,8 +349,11 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         _currentQuestionIndex.value = 1
         _userInput.value = ""
         _feedback.value = FeedbackType.NONE
+        _hintRevealed.value = false
+        _waitingForManualNext.value = false
         isProcessingAnswer = false
 
+        sessionStartTimeMs = MonotonicClock.nowMs()
         generateNextQuestion(1)
         _currentScreen.value = ZenScreen.PLAYING
         startTimer()
@@ -296,21 +362,42 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private fun startTimer() {
         timerJob?.cancel()
         questionStartTimeMs = MonotonicClock.nowMs()
-        val limit = settingsFlow.value.timeLimit
-        _timeRemaining.value = limit
         _currentQuestionElapsedMs.value = 0L
 
-        timerJob = viewModelScope.launch {
-            while (true) {
-                delay(100L)
-                val elapsed = (MonotonicClock.nowMs() - questionStartTimeMs).coerceAtLeast(0L)
-                _currentQuestionElapsedMs.value = elapsed
-                val remaining = (limit - (elapsed / 1000L).toInt()).coerceAtLeast(0)
-                _timeRemaining.value = remaining
+        if (_selectedMode.value == GameMode.SPEED_ROUND) {
+            val totalSec = _speedRoundDurationMin.value * 60
+            _timeRemaining.value = totalSec
+            timerJob = viewModelScope.launch {
+                while (true) {
+                    delay(100L)
+                    val now = MonotonicClock.nowMs()
+                    val qElapsed = (now - questionStartTimeMs).coerceAtLeast(0L)
+                    _currentQuestionElapsedMs.value = qElapsed
+                    val sessionElapsedSec = ((now - sessionStartTimeMs).coerceAtLeast(0L) / 1000L).toInt()
+                    val remaining = (totalSec - sessionElapsedSec).coerceAtLeast(0)
+                    _timeRemaining.value = remaining
+                    if (remaining == 0) {
+                        stopTimer()
+                        completeSession()
+                        break
+                    }
+                }
+            }
+        } else {
+            val limit = settingsFlow.value.timeLimit
+            _timeRemaining.value = limit
+            timerJob = viewModelScope.launch {
+                while (true) {
+                    delay(100L)
+                    val elapsed = (MonotonicClock.nowMs() - questionStartTimeMs).coerceAtLeast(0L)
+                    _currentQuestionElapsedMs.value = elapsed
+                    val remaining = (limit - (elapsed / 1000L).toInt()).coerceAtLeast(0)
+                    _timeRemaining.value = remaining
 
-                if (remaining == 0 && _feedback.value == FeedbackType.NONE && !isProcessingAnswer) {
-                    handleTimeout()
-                    break
+                    if (remaining == 0 && _feedback.value == FeedbackType.NONE && !isProcessingAnswer) {
+                        handleTimeout()
+                        break
+                    }
                 }
             }
         }
@@ -415,8 +502,11 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         }
         if (isMalformed) return
 
+        val isSpeedRound = _selectedMode.value == GameMode.SPEED_ROUND
         isProcessingAnswer = true
-        stopTimer()
+        if (!isSpeedRound) {
+            stopTimer()
+        }
 
         val isCorrect = AnswerChecker.check(
             userInput = input,
@@ -435,9 +525,24 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             _streak.value = 0
         }
 
-        viewModelScope.launch {
-            delay(800L)
-            advanceToNext()
+        if (isSpeedRound) {
+            viewModelScope.launch {
+                delay(200L)
+                if (_currentScreen.value == ZenScreen.PLAYING) {
+                    val nextIdx = _currentQuestionIndex.value + 1
+                    _currentQuestionIndex.value = nextIdx
+                    questionStartTimeMs = MonotonicClock.nowMs()
+                    _currentQuestionElapsedMs.value = 0L
+                    generateNextQuestion(nextIdx)
+                }
+            }
+        } else if (!isCorrect && settingsFlow.value.requireManualNextOnWrong) {
+            _waitingForManualNext.value = true
+        } else {
+            viewModelScope.launch {
+                delay(800L)
+                advanceToNext()
+            }
         }
     }
 
@@ -450,9 +555,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         _feedback.value = FeedbackType.TIMEOUT
         _streak.value = 0
 
-        viewModelScope.launch {
-            delay(1200L)
-            advanceToNext()
+        if (settingsFlow.value.requireManualNextOnWrong) {
+            _waitingForManualNext.value = true
+        } else {
+            viewModelScope.launch {
+                delay(1200L)
+                advanceToNext()
+            }
         }
     }
 
@@ -477,7 +586,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             timeTakenMs = elapsedMs,
             questionText = problem.questionDisplay,
             topicTag = problem.topicTag,
-            hintUsed = false,
+            hintUsed = _hintRevealed.value,
             solutionSteps = problem.solutionSteps,
             unitText = problem.unitText
         )
@@ -513,6 +622,17 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         val isoDate = DateBucketUtils.nowUtcIso(nowMs)
         val localDate = DateBucketUtils.formatLocalDate(nowMs)
 
+        val sessionType = when (_selectedMode.value) {
+            GameMode.SPEED_ROUND -> SessionEntity.SESSION_TYPE_SPEED_ROUND
+            GameMode.WEAK_SPOTS -> SessionEntity.SESSION_TYPE_WEAK_SPOTS
+            else -> SessionEntity.SESSION_TYPE_NORMAL
+        }
+        val finalDuration = if (_selectedMode.value == GameMode.SPEED_ROUND) {
+            _speedRoundDurationMin.value * 60.0
+        } else {
+            durationTotal
+        }
+
         val sessionEntity = SessionEntity(
             id = sessionId,
             date = isoDate,
@@ -521,9 +641,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             correct = correctCount,
             avgTimeMs = avgTimeMs,
             difficulty = _difficulty.value.key,
-            duration = durationTotal,
+            duration = finalDuration,
             localDate = localDate,
-            sessionType = SessionEntity.SESSION_TYPE_NORMAL
+            sessionType = sessionType
         )
 
         val questionEntities = results.map { r ->
@@ -584,11 +704,19 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun generateNextQuestion(index: Int) {
-        val mode = _selectedMode.value
+        val outerMode = _selectedMode.value
+        val effectiveMode = when (outerMode) {
+            GameMode.SPEED_ROUND -> {
+                val pool = _speedRoundTopics.value.ifEmpty { setOf(GameMode.ADDITION) }
+                pool.random()
+            }
+            GameMode.WEAK_SPOTS -> pickWeakSpotMode()
+            else -> outerMode
+        }
         val diff = _difficulty.value
         val digitsVal = _digits.value
 
-        val baseProblem: MathProblem = when (mode) {
+        val baseProblem: MathProblem = when (effectiveMode) {
             GameMode.ADDITION -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.SUBTRACTION -> QuestionGenerator.generateStandardQuestion("-", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.MULTIPLICATION -> QuestionGenerator.generateStandardQuestion("*", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
@@ -655,11 +783,20 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 subtype = _cubesPowersSubtype.value,
                 cubeRange = _cubeRange.value
             )
-            GameMode.CONSTANTS -> QuestionGenerator.generateConstantQuestion()
+            GameMode.CONSTANTS -> {
+                val missedMap = _allQuestions.value
+                    .filter { !it.isCorrect && it.topicTag.startsWith("constant-") }
+                    .groupingBy { it.topicTag.removePrefix("constant-") }
+                    .eachCount()
+                QuestionGenerator.generateConstantQuestion(
+                    subjects = _constantSubjects.value,
+                    missedCounts = missedMap
+                )
+            }
             else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
         }
 
-        val problem = if (_mcqEnabled.value && mode.supportsMcq) {
+        val problem = if (_mcqEnabled.value && outerMode.supportsMcq) {
             QuestionGenerator.attachMcqOptions(baseProblem, settingsFlow.value.tolerancePreset)
         } else {
             baseProblem
@@ -668,7 +805,43 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         _currentProblem.value = problem
         _userInput.value = ""
         _feedback.value = FeedbackType.NONE
+        _hintRevealed.value = false
+        _waitingForManualNext.value = false
         isProcessingAnswer = false
+    }
+
+    private fun pickWeakSpotMode(): GameMode {
+        val worst = _weakSpotsSummary.value.worstTopics
+        if (worst.isEmpty()) {
+            return listOf(
+                GameMode.MEMORY_TABLES,
+                GameMode.SCIENTIFIC_NOTATION,
+                GameMode.PH_POH,
+                GameMode.FRACTION,
+                GameMode.PERCENTAGE
+            ).random()
+        }
+        val tag = worst.random().key.lowercase()
+        return when {
+            tag.startsWith("memory") -> GameMode.MEMORY_TABLES
+            tag.startsWith("sci") -> GameMode.SCIENTIFIC_NOTATION
+            tag.startsWith("ph") -> GameMode.PH_POH
+            tag.startsWith("composite") -> GameMode.COMPOSITE_LOGS_ROOTS
+            tag.startsWith("cube") || tag.startsWith("powers") -> GameMode.CUBES_AND_POWERS
+            tag.startsWith("constant") -> GameMode.CONSTANTS
+            tag.contains("fraction") -> GameMode.FRACTION
+            tag.contains("percentage") -> GameMode.PERCENTAGE
+            tag.contains("square-root") -> GameMode.SQUARE_ROOT
+            tag.contains("square") -> GameMode.SQUARE
+            tag.contains("approximation") -> GameMode.APPROXIMATION
+            tag.contains("series") -> GameMode.NUMBER_SERIES
+            tag.contains("ratio") -> GameMode.RATIO
+            tag.contains("chain") -> GameMode.CHAIN_CALCULATION
+            tag.contains("sub") -> GameMode.SUBTRACTION
+            tag.contains("mul") -> GameMode.MULTIPLICATION
+            tag.contains("div") -> GameMode.DIVISION
+            else -> GameMode.MIXED
+        }
     }
 
     fun onQuitGame() {

@@ -51,6 +51,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.ConstantsData
+import com.example.data.ConstantsLoader
 import com.example.data.MemoryTableCategory
 import com.example.domain.CompositeLogRootSubtype
 import com.example.domain.CubesPowersSubtype
@@ -86,6 +88,9 @@ fun GameSetupScreen(
     cubesPowersSubtype: CubesPowersSubtype = CubesPowersSubtype.ALL,
     cubeRange: Pair<Int, Int> = Pair(1, 15),
     mcqEnabled: Boolean = false,
+    speedRoundDurationMin: Int = 1,
+    speedRoundTopics: Set<GameMode> = setOf(GameMode.ADDITION, GameMode.SUBTRACTION, GameMode.MULTIPLICATION, GameMode.DIVISION),
+    constantSubjects: Set<String> = emptySet(),
     onDigitsChange: (Int) -> Unit,
     onDifficultyChange: (Difficulty) -> Unit,
     onAllowRemainderChange: (Boolean) -> Unit,
@@ -106,6 +111,9 @@ fun GameSetupScreen(
     onCubesPowersSubtypeChange: (CubesPowersSubtype) -> Unit = {},
     onCubeRangeChange: (Pair<Int, Int>) -> Unit = {},
     onMcqEnabledChange: (Boolean) -> Unit = {},
+    onSpeedRoundDurationMinChange: (Int) -> Unit = {},
+    onSpeedRoundTopicsChange: (Set<GameMode>) -> Unit = {},
+    onConstantSubjectsChange: (Set<String>) -> Unit = {},
     onStart: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -751,6 +759,151 @@ fun GameSetupScreen(
                                     onRangeChange = onCubeRangeChange,
                                     testTagPrefix = "cube_custom"
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // 5.4 Constants Subject Filter
+                if (mode == GameMode.CONSTANTS) {
+                    item {
+                        val allSubjects = remember {
+                            ConstantsLoader.subjects(
+                                ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
+                            )
+                        }
+                        SectionHeader(title = "SUBJECT FILTER (EMPTY = ALL)")
+                        val cardShape = RoundedCornerShape(20.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(cardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, cardShape)
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Column {
+                                allSubjects.forEach { subj ->
+                                    val checked = constantSubjects.isEmpty() || subj in constantSubjects
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = subj,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = colors.textMain
+                                        )
+                                        ZenToggle(
+                                            checked = checked,
+                                            onCheckedChange = { newVal ->
+                                                val currentActive = if (constantSubjects.isEmpty()) allSubjects.toSet() else constantSubjects
+                                                val updated = if (newVal) currentActive + subj else currentActive - subj
+                                                if (updated.isNotEmpty()) {
+                                                    onConstantSubjectsChange(if (updated.size == allSubjects.size) emptySet() else updated)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 4.3 Speed Round Setup (Duration 1, 2, 3, or 5 minutes + Topic Pool)
+                if (mode == GameMode.SPEED_ROUND) {
+                    item {
+                        SectionHeader(title = "DURATION (MINUTES)")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            listOf(1, 2, 3, 5).forEach { mins ->
+                                val isSelected = speedRoundDurationMin == mins
+                                val shape = RoundedCornerShape(14.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp)
+                                        .clip(shape)
+                                        .background(if (isSelected) colors.primary else colors.card)
+                                        .border(1.dp, if (isSelected) colors.primary else colors.cardBorder, shape)
+                                        .clickable { onSpeedRoundDurationMinChange(mins) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${mins}m",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isSelected) colors.onPrimary else colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SectionHeader(title = "TOPIC POOL")
+                        val selectableModes = remember {
+                            listOf(
+                                GameMode.ADDITION,
+                                GameMode.SUBTRACTION,
+                                GameMode.MULTIPLICATION,
+                                GameMode.DIVISION,
+                                GameMode.SQUARE,
+                                GameMode.CUBES_AND_POWERS,
+                                GameMode.FRACTION,
+                                GameMode.PERCENTAGE,
+                                GameMode.SQUARE_ROOT,
+                                GameMode.APPROXIMATION,
+                                GameMode.MEMORY_TABLES,
+                                GameMode.SCIENTIFIC_NOTATION,
+                                GameMode.PH_POH,
+                                GameMode.COMPOSITE_LOGS_ROOTS,
+                                GameMode.CONSTANTS
+                            )
+                        }
+                        val cardShape = RoundedCornerShape(20.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(cardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, cardShape)
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Column {
+                                selectableModes.forEach { topicMode ->
+                                    val checked = topicMode in speedRoundTopics
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = topicMode.displayName,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = colors.textMain
+                                        )
+                                        ZenToggle(
+                                            checked = checked,
+                                            onCheckedChange = { newVal ->
+                                                val updated = if (newVal) speedRoundTopics + topicMode else speedRoundTopics - topicMode
+                                                if (updated.isNotEmpty()) {
+                                                    onSpeedRoundTopicsChange(updated)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

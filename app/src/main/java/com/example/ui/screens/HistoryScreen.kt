@@ -34,11 +34,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
+import com.example.ui.components.RichTextHelper
 import com.example.ui.theme.ZenTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 private val MODE_FILTERS = listOf(
     "all",
@@ -50,13 +56,21 @@ private val MODE_FILTERS = listOf(
     "multiplication-table",
     "factor-finding",
     "square",
+    "cubes-powers",
     "fraction",
     "percentage",
     "square-root",
     "approximation",
     "number-series",
     "ratio",
-    "chain-calculation"
+    "chain-calculation",
+    "memory-tables",
+    "scientific-notation",
+    "ph-poh",
+    "composite-logs-roots",
+    "constants",
+    "speed-round",
+    "weak-spots"
 )
 
 @Composable
@@ -64,9 +78,12 @@ fun HistoryScreen(
     sessions: List<SessionEntity>,
     selectedFilter: String,
     onFilterChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    allQuestions: List<QuestionRecordEntity> = emptyList()
 ) {
     val colors = ZenTheme.colors
+    var expandedSessionId by remember { mutableStateOf<String?>(null) }
+    val questionsBySession = remember(allQuestions) { allQuestions.groupBy { it.sessionId } }
 
     val filteredSessions = remember(sessions, selectedFilter) {
         if (selectedFilter == "all") sessions else sessions.filter { it.mode == selectedFilter }
@@ -173,12 +190,18 @@ fun HistoryScreen(
                     }
 
                     val cardShape = RoundedCornerShape(18.dp)
+                    val isExpanded = expandedSessionId == session.id
+                    val sessionQuestions = questionsBySession[session.id].orEmpty()
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(cardShape)
                             .background(colors.card)
                             .border(1.dp, colors.cardBorder, cardShape)
+                            .clickable {
+                                expandedSessionId = if (isExpanded) null else session.id
+                            }
                             .padding(16.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -254,6 +277,39 @@ fun HistoryScreen(
                                     fontFamily = FontFamily.Monospace,
                                     color = colors.textSecondary
                                 )
+                            }
+
+                            AnimatedVisibility(visible = isExpanded && sessionQuestions.isNotEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    sessionQuestions.forEach { q ->
+                                        val qDisplay = q.questionText.ifBlank { "${q.num1.toInt()} ${q.operation} ${q.num2.toInt()}" }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = RichTextHelper.formatMathText(qDisplay),
+                                                fontSize = 12.sp,
+                                                fontFamily = RichTextHelper.MathFontFamily,
+                                                color = colors.textMain,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Text(
+                                                text = if (q.isCorrect) "✓ ${q.correctAnswer}" else "✗ ${q.userAnswer ?: "—"} (${q.correctAnswer})",
+                                                fontSize = 11.sp,
+                                                fontFamily = RichTextHelper.MathFontFamily,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (q.isCorrect) colors.correct else colors.incorrect
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added pH & pOH drill (Concentration M/mM to pH, Scientific `[H+]` course rounding to pH, Reverse pH to `[H+]`, pH ↔ pOH, and `% w/v` of strong base to pH) and Revision tab with worked examples.
 - Added Composite Logs & Roots (`log(k×10^n)`, `log(a×b)`, `√(a×10^n)`) and Cubes & Powers (`n^3` 1..15, `2^n/3^n/5^n`, `∛(n^3)`) drills and Revision sections.
 - Added 4-option 2×2 Multiple Choice mode toggle for Approximation and new scientific/table drills with options spaced at least `3 × tolerance` apart.
+- Added in-game `Hint` button and post-mistake `Solution Steps` card with configurable manual `Next Question` advancement.
+- Added **Weak Spots Review** section in Statistics (worst topics and toughest individual questions) with a one-tap **Practice Weak Spots** mode, plus expandable question records in History.
+- Added **Speed Round** mode (1, 2, 3, or 5 minutes with custom multi-select topic pool, total countdown timer, questions-per-minute metric, and per-topic breakdown).
+- Added modular **Constants** framework (`ConstantsData.kt`, `ConstantsSchema.kt`, debug/release validation, Revision tab with subject filter & search, and Constants Drill with subject chip, symbol, unit, confusable warnings, and missed-constant weighting) shipping with 3 clearly flagged sample entries.
 
 ### Fixed
 - Hid Difficulty slider on setup screens for modes that do not use difficulty.

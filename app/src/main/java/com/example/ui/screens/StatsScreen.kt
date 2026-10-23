@@ -54,8 +54,10 @@ import com.example.data.SessionEntity
 import com.example.domain.DayBucket
 import com.example.domain.RecentPerformanceDay
 import com.example.domain.StatsData
+import com.example.domain.WeakSpotsSummary
 import com.example.ui.components.ActivityCalendar
 import com.example.ui.components.HorizonWaveChart
+import com.example.ui.components.RichTextHelper
 import com.example.ui.components.SevenDayQuestionsChart
 import com.example.ui.theme.ZenTheme
 import kotlinx.coroutines.launch
@@ -73,7 +75,9 @@ fun StatsScreen(
     onClearAllData: () -> Unit,
     onExportBackup: suspend () -> String,
     onImportBackup: suspend (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    weakSpotsSummary: WeakSpotsSummary = WeakSpotsSummary(emptyList(), emptyList()),
+    onPracticeWeakSpots: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
@@ -214,6 +218,127 @@ fun StatsScreen(
             if (sessions.isNotEmpty()) {
                 item {
                     ActivityCalendar(sessions = sessions, goal = dailyGoal)
+                }
+            }
+
+            // 4.2 Weak Spots Section (worst topics & worst individual questions + Practice Weak Spots button)
+            item {
+                val cardShape = RoundedCornerShape(20.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(cardShape)
+                        .background(colors.card)
+                        .border(1.dp, colors.cardBorder, cardShape)
+                        .padding(20.dp)
+                        .testTag("weak_spots_card")
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = "WEAK SPOTS REVIEW",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp,
+                            color = colors.textSecondary.copy(alpha = 0.6f)
+                        )
+
+                        if (weakSpotsSummary.worstTopics.isEmpty() && weakSpotsSummary.worstQuestions.isEmpty()) {
+                            Text(
+                                text = "Complete a few sessions to see your weakest topics and questions here.",
+                                fontSize = 12.sp,
+                                color = colors.textSecondary
+                            )
+                        } else {
+                            if (weakSpotsSummary.worstTopics.isNotEmpty()) {
+                                Text(
+                                    text = "TOPICS NEEDING FOCUS",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                                weakSpotsSummary.worstTopics.take(4).forEach { entry ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = entry.label,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.textMain
+                                            )
+                                            Text(
+                                                text = "${entry.attempts} attempts • ${String.format(Locale.US, "%.1fs avg", entry.avgTimeMs / 1000.0)}",
+                                                fontSize = 11.sp,
+                                                color = colors.textSecondary
+                                            )
+                                        }
+                                        Text(
+                                            text = "${entry.errorRate.toInt()}% err",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Black,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = if (entry.errorRate > 35.0) colors.incorrect else colors.primary
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (weakSpotsSummary.worstQuestions.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "TOUGHEST QUESTIONS",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                                weakSpotsSummary.worstQuestions.take(4).forEach { entry ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = RichTextHelper.formatMathText(entry.label),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontFamily = RichTextHelper.MathFontFamily,
+                                            color = colors.textMain,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${entry.errors}/${entry.attempts} missed",
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.incorrect
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Button(
+                            onClick = onPracticeWeakSpots,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .testTag("practice_weak_spots_btn")
+                        ) {
+                            Text(
+                                text = "Practice Weak Spots",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 

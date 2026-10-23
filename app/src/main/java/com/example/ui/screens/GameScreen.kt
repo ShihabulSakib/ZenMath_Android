@@ -22,16 +22,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TimerOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.ConstantsData
+import com.example.data.ConstantsLoader
 import com.example.domain.GameMode
 import com.example.domain.MathProblem
 import com.example.domain.ScientificInputParser
@@ -68,7 +75,11 @@ fun GameScreen(
     onQuit: () -> Unit,
     modifier: Modifier = Modifier,
     hapticFeedbackEnabled: Boolean = true,
-    onSelectMcqOption: (String) -> Unit = {}
+    onSelectMcqOption: (String) -> Unit = {},
+    hintRevealed: Boolean = false,
+    onRevealHint: () -> Unit = {},
+    waitingForManualNext: Boolean = false,
+    onManualNext: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
 
@@ -144,34 +155,71 @@ fun GameScreen(
                     .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Full width progress bar
-                ZenProgressBar(
-                    value = currentQuestion,
-                    max = totalQuestions,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Full width progress bar (hidden in open-ended Speed Round)
+                if (mode != GameMode.SPEED_ROUND) {
+                    ZenProgressBar(
+                        value = currentQuestion,
+                        max = totalQuestions,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 // Subheader: Q counter (Left), Centered Timer (Center), Stats & Quit (Right)
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Left: Q counter
+                    // Left: Q counter + Hint button
                     Row(
                         modifier = Modifier.align(Alignment.CenterStart),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Q $currentQuestion/$totalQuestions",
+                            text = if (mode == GameMode.SPEED_ROUND) "Q $currentQuestion" else "Q $currentQuestion/$totalQuestions",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             color = colors.textSecondary.copy(alpha = 0.7f),
                             letterSpacing = 1.sp
                         )
+
+                        if (problem?.solutionSteps?.isNotEmpty() == true && feedback == FeedbackType.NONE && mode != GameMode.SPEED_ROUND) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (hintRevealed) colors.primary.copy(alpha = 0.18f) else colors.card)
+                                    .border(1.dp, if (hintRevealed) colors.primary else colors.cardBorder, RoundedCornerShape(8.dp))
+                                    .clickable { onRevealHint() }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .testTag("hint_btn"),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Lightbulb,
+                                    contentDescription = "Hint",
+                                    tint = colors.primary,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = "Hint",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                            }
+                        }
                     }
 
-                    // CENTER: The Stopwatch (counts up 0.0s, 0.1s... to per-question target)
+                    // CENTER: Stopwatch or Speed Round Countdown
+                    val centerTimerText = if (mode == GameMode.SPEED_ROUND) {
+                        val m = timeRemaining / 60
+                        val s = timeRemaining % 60
+                        String.format(java.util.Locale.US, "%d:%02d", m, s)
+                    } else {
+                        stopwatchStr
+                    }
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -191,12 +239,12 @@ fun GameScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Timer,
-                                contentDescription = "Stopwatch",
+                                contentDescription = "Timer",
                                 tint = if (isTimeLow) colors.incorrect else colors.primary,
                                 modifier = Modifier.size(13.dp)
                             )
                             Text(
-                                text = stopwatchStr,
+                                text = centerTimerText,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = FontFamily.Monospace,
@@ -268,10 +316,43 @@ fun GameScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // Subject chip for Constants drill (Section 5.4: always show subject chip, full name, and symbol together)
+                    problem?.subjectLabel?.let { subj ->
+                        Box(
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.primary.copy(alpha = 0.14f))
+                                .border(1.dp, colors.primary.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                .testTag("subject_chip")
+                        ) {
+                            Text(
+                                text = subj.uppercase(),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                                color = colors.primary
+                            )
+                        }
+                    }
+
+                    problem?.constantSymbol?.let { sym ->
+                        Text(
+                            text = RichTextHelper.formatSymbol(sym),
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = RichTextHelper.MathFontFamily,
+                            color = colors.primary,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+
                     val questionText = problem?.questionDisplay ?: ""
                     val textSize = when {
-                        mode in listOf(GameMode.RATIO, GameMode.CHAIN_CALCULATION, GameMode.NUMBER_SERIES) -> 28.sp
-                        questionText.length > 10 -> 34.sp
+                        problem?.constantSymbol != null -> 22.sp
+                        mode in listOf(GameMode.RATIO, GameMode.CHAIN_CALCULATION, GameMode.NUMBER_SERIES, GameMode.PH_POH) -> 26.sp
+                        questionText.length > 10 -> 32.sp
                         else -> 52.sp
                     }
 
@@ -286,15 +367,15 @@ fun GameScreen(
                         modifier = Modifier.testTag("question_text")
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Answer / Feedback Display
                     Box(
                         modifier = Modifier
-                            .height(64.dp)
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
+                        val unitSuffix = problem?.unitText?.let { " $it" } ?: ""
                         when (feedback) {
                             FeedbackType.NONE -> {
                                 if (userInput.isNotEmpty()) {
@@ -317,23 +398,33 @@ fun GameScreen(
                                 }
                             }
                             FeedbackType.CORRECT -> {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "Correct",
-                                        tint = colors.correct,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Text(
-                                        text = "Correct!",
-                                        fontSize = 28.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = colors.correct
-                                    )
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "Correct",
+                                            tint = colors.correct,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                        Text(
+                                            text = "Correct!",
+                                            fontSize = 28.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colors.correct
+                                        )
+                                    }
+                                    if (unitSuffix.isNotEmpty()) {
+                                        Text(
+                                            text = RichTextHelper.formatMathText("${problem?.answer ?: ""}$unitSuffix"),
+                                            fontSize = 13.sp,
+                                            fontFamily = RichTextHelper.MathFontFamily,
+                                            color = colors.textSecondary
+                                        )
+                                    }
                                 }
                             }
                             FeedbackType.TIMEOUT -> {
@@ -357,7 +448,7 @@ fun GameScreen(
                                         )
                                     }
                                     Text(
-                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}"),
+                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}$unitSuffix"),
                                         fontSize = 14.sp,
                                         fontFamily = RichTextHelper.MathFontFamily,
                                         color = colors.textSecondary,
@@ -386,7 +477,7 @@ fun GameScreen(
                                         )
                                     }
                                     Text(
-                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}"),
+                                        text = RichTextHelper.formatMathText("Answer: ${problem?.answer ?: ""}$unitSuffix"),
                                         fontSize = 14.sp,
                                         fontFamily = RichTextHelper.MathFontFamily,
                                         color = colors.textSecondary,
@@ -394,6 +485,90 @@ fun GameScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    // Solution Steps Card (shown when Hint tapped OR on wrong answer / timeout)
+                    val steps = problem?.solutionSteps.orEmpty()
+                    val showStepsCard = steps.isNotEmpty() && (hintRevealed || feedback == FeedbackType.INCORRECT || feedback == FeedbackType.TIMEOUT)
+                    if (showStepsCard) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        val cardShape = RoundedCornerShape(16.dp)
+                        val allConstants = remember {
+                            ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
+                        }
+                        val confusableNotes = remember(problem?.confusableIds) {
+                            problem?.confusableIds.orEmpty().mapNotNull { cid ->
+                                allConstants.find { it.id == cid }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(cardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, cardShape)
+                                .padding(14.dp)
+                                .testTag("solution_steps_card")
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = if (feedback == FeedbackType.NONE) "HINT / STEPS" else "SOLUTION STEPS",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.2.sp,
+                                    color = colors.primary
+                                )
+                                steps.forEachIndexed { idx, step ->
+                                    Text(
+                                        text = RichTextHelper.formatMathText("${idx + 1}. $step"),
+                                        fontSize = 12.sp,
+                                        fontFamily = RichTextHelper.MathFontFamily,
+                                        color = colors.textMain
+                                    )
+                                }
+                                if (confusableNotes.isNotEmpty() && feedback != FeedbackType.NONE) {
+                                    val cText = confusableNotes.joinToString("; ") { c ->
+                                        "${c.name} (${c.symbol.toPlainString()}, ${c.subject})"
+                                    }
+                                    Text(
+                                        text = "Do not confuse with: $cText",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFF59E0B),
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (waitingForManualNext) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = onManualNext,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .height(46.dp)
+                                .testTag("next_question_btn")
+                        ) {
+                            Text(
+                                text = "Next Question",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Next",
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }

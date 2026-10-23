@@ -45,13 +45,23 @@ fun ResultsScreen(
     results: List<QuestionResult>,
     onPlayAgain: () -> Unit,
     onMenu: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSpeedRound: Boolean = false,
+    speedRoundDurationMin: Int = 1
 ) {
     val colors = ZenTheme.colors
 
-    val percentage = if (totalQuestions > 0) (score.toFloat() / totalQuestions.toFloat()) * 100f else 0f
+    val effectiveTotal = if (isSpeedRound) results.size else totalQuestions
+    val percentage = if (effectiveTotal > 0) (score.toFloat() / effectiveTotal.toFloat()) * 100f else 0f
     val totalTime = results.sumOf { it.timeTaken }
     val avgTime = if (results.isNotEmpty()) totalTime.toFloat() / results.size.toFloat() else 0f
+    val qpm = if (isSpeedRound && speedRoundDurationMin > 0) {
+        results.size.toFloat() / speedRoundDurationMin.toFloat()
+    } else if (totalTime > 0) {
+        (results.size.toFloat() * 60f) / totalTime.toFloat()
+    } else {
+        0f
+    }
 
     Column(
         modifier = modifier
@@ -105,7 +115,7 @@ fun ResultsScreen(
                     lineHeight = 72.sp
                 )
                 Text(
-                    text = " / $totalQuestions",
+                    text = " / $effectiveTotal",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace,
@@ -151,40 +161,101 @@ fun ResultsScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Total Time Card
-            StatCard(
-                icon = Icons.Default.Timer,
-                title = "TOTAL TIME",
-                value = "${totalTime}s",
-                modifier = Modifier.weight(1f)
-            )
+            if (isSpeedRound) {
+                StatCard(
+                    icon = Icons.Default.Speed,
+                    title = "QUESTIONS / MIN",
+                    value = String.format(java.util.Locale.US, "%.1f", qpm),
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                // Total Time Card
+                StatCard(
+                    icon = Icons.Default.Timer,
+                    title = "TOTAL TIME",
+                    value = "${totalTime}s",
+                    modifier = Modifier.weight(1f)
+                )
+            }
             // Avg Time Card
             StatCard(
                 icon = Icons.Default.Speed,
                 title = "AVG. TIME",
-                value = String.format("%.1fs", avgTime),
+                value = String.format(java.util.Locale.US, "%.1fs", avgTime),
                 modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Question results mini bar visualization
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(CircleShape)
-                .background(colors.cardBorder),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            results.forEach { r ->
+        // Per-topic breakdown card
+        if (results.isNotEmpty()) {
+            val byTopic = results.groupBy { it.topicTag }
+            if (isSpeedRound || byTopic.size > 1) {
+                val cardShape = RoundedCornerShape(16.dp)
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .background(if (r.isCorrect) colors.correct else colors.incorrect.copy(alpha = 0.4f))
-                )
+                        .fillMaxWidth()
+                        .clip(cardShape)
+                        .background(colors.card)
+                        .border(1.dp, colors.cardBorder, cardShape)
+                        .padding(14.dp)
+                        .testTag("topic_breakdown_card")
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "TOPIC BREAKDOWN",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp,
+                            color = colors.textSecondary.copy(alpha = 0.7f)
+                        )
+                        byTopic.entries.take(5).forEach { (tag, list) ->
+                            val c = list.count { it.isCorrect }
+                            val t = list.size
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = tag.replace("-", " ").replaceFirstChar { it.uppercase() },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textMain
+                                )
+                                Text(
+                                    text = "$c/$t (${(c * 100) / t}%)",
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        // Question results mini bar visualization
+        if (results.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(colors.cardBorder),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                results.forEach { r ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp)
+                            .background(if (r.isCorrect) colors.correct else colors.incorrect.copy(alpha = 0.4f))
+                    )
+                }
             }
         }
 

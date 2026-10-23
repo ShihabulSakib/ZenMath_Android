@@ -109,4 +109,12 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
   - Implemented `generateCubesPowersQuestion` (`n^3` configurable 1..15, `2^1..10`, `3^1..6`, `5^1..4`, and `∛(n^3)`).
   - Implemented `attachMcqOptions` and 2×2 Multiple Choice UI (`GameScreen`) with options spaced `>= 3 × tolerance` apart.
   - Extended `RevisionScreen` with tabs for Powers (Squares + `(10+b)^2` trick, Cubes, Small Powers), Course Values (Memory Tables), pH & Logs (Formulas, Worked Examples, Species Table), and Constants.
-  - Next step: Phase 4 (Learning Aids).
+- **Phase 4 (Learning Aids — Section 4)**:
+  - Added `Hint` button (`GameScreen`) revealing `solutionSteps` during a question and recording `hintUsed = true`.
+  - Added solution steps card on wrong answer / timeout with manual `Next Question` button when `requireManualNextOnWrong` is enabled in Settings.
+  - Wired `repository.getAllQuestionsFlow()` to compute `WeakSpotsSummary` (aggregating error rate, avg time, and last seen by `topicTag` and `questionText`), rendered the **Weak Spots Review** card and **Practice Weak Spots** button in `StatsScreen`, and added expandable per-session question history in `HistoryScreen`.
+  - Implemented **Speed Round** mode (`GameMode.SPEED_ROUND`) with duration selector (1, 2, 3, or 5 minutes) and multi-select topic pool, single total countdown timer, instant next question, and results screen breakdown (score, accuracy, questions/minute, per-topic breakdown) saved with `sessionType = "speed_round"`.
+- **Phase 5 (Constants Module — Section 5)**:
+  - Completed `ConstantsSchema.kt` (loader/validator failing loudly in debug on duplicate IDs or blank required fields, skipping/logging in release) and `ConstantsData.kt` (how-to-add header comment + 3 clearly flagged `isSample = true` sample entries: `sample_coulomb_k`, `sample_gas_constant_r` with alternate `L·atm·mol⁻¹·K⁻¹` unit, and `sample_spring_k_ref`).
+  - Wired Constants Revision tab (grouped by subject, filter chips, search box, rich symbol/unit rendering, expandable notes/alternates/confusables) and Constants Drill (`GameMode.CONSTANTS`) showing subject chip + descriptive name + symbol together, unit & confusable feedback after answering, subject filtering in setup, and weighting toward previously missed constants.
+  - Next step: Phase 6 (Comprehensive Unit & Robolectric Tests, Version Bump to `1.1.0` / `versionCode = 4`, and Tag).

@@ -68,6 +68,9 @@ fun ZenMathApp(
     val cubesPowersSubtype by viewModel.cubesPowersSubtype.collectAsState()
     val cubeRange by viewModel.cubeRange.collectAsState()
     val mcqEnabled by viewModel.mcqEnabled.collectAsState()
+    val speedRoundDurationMin by viewModel.speedRoundDurationMin.collectAsState()
+    val speedRoundTopics by viewModel.speedRoundTopics.collectAsState()
+    val constantSubjects by viewModel.constantSubjects.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -76,12 +79,16 @@ fun ZenMathApp(
     val timeRemaining by viewModel.timeRemaining.collectAsState()
     val currentQuestionElapsedMs by viewModel.currentQuestionElapsedMs.collectAsState()
     val feedback by viewModel.feedback.collectAsState()
+    val hintRevealed by viewModel.hintRevealed.collectAsState()
+    val waitingForManualNext by viewModel.waitingForManualNext.collectAsState()
     val score by viewModel.score.collectAsState()
     val streak by viewModel.streak.collectAsState()
     val questionResults by viewModel.questionResults.collectAsState()
 
     // Stats & History
     val sessions by viewModel.sessions.collectAsState()
+    val allQuestions by viewModel.allQuestions.collectAsState()
+    val weakSpotsSummary by viewModel.weakSpotsSummary.collectAsState()
     val statsData by viewModel.statsData.collectAsState()
     val recentPerformance by viewModel.recentPerformance.collectAsState()
     val horizonWaveBuckets by viewModel.horizonWaveBuckets.collectAsState()
@@ -147,6 +154,9 @@ fun ZenMathApp(
                         cubesPowersSubtype = cubesPowersSubtype,
                         cubeRange = cubeRange,
                         mcqEnabled = mcqEnabled,
+                        speedRoundDurationMin = speedRoundDurationMin,
+                        speedRoundTopics = speedRoundTopics,
+                        constantSubjects = constantSubjects,
                         onDigitsChange = { viewModel.setDigits(it) },
                         onDifficultyChange = { viewModel.setDifficulty(it) },
                         onAllowRemainderChange = { viewModel.setAllowRemainder(it) },
@@ -167,6 +177,9 @@ fun ZenMathApp(
                         onCubesPowersSubtypeChange = { viewModel.setCubesPowersSubtype(it) },
                         onCubeRangeChange = { viewModel.setCubeRange(it) },
                         onMcqEnabledChange = { viewModel.setMcqEnabled(it) },
+                        onSpeedRoundDurationMinChange = { viewModel.setSpeedRoundDurationMin(it) },
+                        onSpeedRoundTopicsChange = { viewModel.setSpeedRoundTopics(it) },
+                        onConstantSubjectsChange = { viewModel.setConstantSubjects(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )
@@ -199,7 +212,11 @@ fun ZenMathApp(
                         onKey = { key -> viewModel.handleKeyPress(key) },
                         onQuit = { viewModel.onQuitGame() },
                         hapticFeedbackEnabled = settings.hapticFeedback,
-                        onSelectMcqOption = { opt -> viewModel.selectMcqOption(opt) }
+                        onSelectMcqOption = { opt -> viewModel.selectMcqOption(opt) },
+                        hintRevealed = hintRevealed,
+                        onRevealHint = { viewModel.revealHint() },
+                        waitingForManualNext = waitingForManualNext,
+                        onManualNext = { viewModel.onManualNextClicked() }
                     )
                 }
 
@@ -209,7 +226,9 @@ fun ZenMathApp(
                         totalQuestions = settings.totalQuestions,
                         results = questionResults,
                         onPlayAgain = { viewModel.onPlayAgain() },
-                        onMenu = { viewModel.navigateTo(ZenScreen.MENU) }
+                        onMenu = { viewModel.navigateTo(ZenScreen.MENU) },
+                        isSpeedRound = selectedMode == com.example.domain.GameMode.SPEED_ROUND,
+                        speedRoundDurationMin = speedRoundDurationMin
                     )
                 }
 
@@ -226,7 +245,9 @@ fun ZenMathApp(
                         dailyGoal = settings.dailyGoal,
                         onClearAllData = { viewModel.clearAllData() },
                         onExportBackup = { viewModel.exportBackup() },
-                        onImportBackup = { json -> viewModel.importBackup(json) }
+                        onImportBackup = { json -> viewModel.importBackup(json) },
+                        weakSpotsSummary = weakSpotsSummary,
+                        onPracticeWeakSpots = { viewModel.startWeakSpotsPractice() }
                     )
                 }
 
@@ -234,7 +255,8 @@ fun ZenMathApp(
                     HistoryScreen(
                         sessions = sessions,
                         selectedFilter = historyFilter,
-                        onFilterChange = { viewModel.setHistoryFilter(it) }
+                        onFilterChange = { viewModel.setHistoryFilter(it) },
+                        allQuestions = allQuestions
                     )
                 }
 
