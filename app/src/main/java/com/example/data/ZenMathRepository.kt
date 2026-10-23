@@ -152,7 +152,10 @@ class ZenMathRepository(
     /**
      * Aggregates saved question records by `topicTag` and by `questionText` (Section 4.2).
      */
-    fun computeWeakSpots(questions: List<QuestionRecordEntity>): WeakSpotsSummary {
+    fun computeWeakSpots(
+        questions: List<QuestionRecordEntity>,
+        sessions: List<SessionEntity> = emptyList()
+    ): WeakSpotsSummary {
         if (questions.isEmpty()) return WeakSpotsSummary()
 
         // Group by topicTag
@@ -278,8 +281,10 @@ class ZenMathRepository(
      */
     suspend fun importBackupJson(jsonStr: String) {
         val root = JSONObject(jsonStr)
-        val version = root.optInt("version", 0)
-        if (root.optString("type") != "zenmath-backup" || version !in 1..2) {
+        val version = root.optInt("version", 1)
+        val type = root.optString("type", "")
+        val hasSessionsOrQuestions = root.has("sessions") || root.has("questions")
+        if ((type.isNotEmpty() && type != "zenmath-backup") || !hasSessionsOrQuestions || version !in 1..2) {
             throw IllegalArgumentException("Invalid backup file format.")
         }
 

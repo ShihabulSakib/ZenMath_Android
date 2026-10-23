@@ -43,8 +43,12 @@ sealed class AnswerSpec {
     data class AbsoluteTolerance(
         val expected: Double,
         val tolerance: Double,
-        val exactCourseValues: List<Double> = emptyList()
-    ) : AnswerSpec()
+        val exactCourseValues: List<Double> = emptyList(),
+        val alsoAcceptExact: List<Double> = emptyList()
+    ) : AnswerSpec() {
+        val allAcceptedExact: List<Double>
+            get() = (exactCourseValues + alsoAcceptExact).distinct()
+    }
 
     /**
      * Relative tolerance checking (e.g. approximation, composite values).
@@ -53,8 +57,12 @@ sealed class AnswerSpec {
     data class RelativeTolerance(
         val expected: Double,
         val relativeToleranceOverride: Double? = null,
-        val exactCourseValues: List<Double> = emptyList()
-    ) : AnswerSpec()
+        val exactCourseValues: List<Double> = emptyList(),
+        val alsoAcceptExact: List<Double> = emptyList()
+    ) : AnswerSpec() {
+        val allAcceptedExact: List<Double>
+            get() = (exactCourseValues + alsoAcceptExact).distinct()
+    }
 
     /**
      * Scientific value checking (mantissa × 10^exponent), compared by relative error.
@@ -65,11 +73,18 @@ sealed class AnswerSpec {
         val mantissa: Double,
         val exponent: Int,
         val relativeToleranceOverride: Double? = null,
+        val mantissaRelativeTol: Double? = null,
         val alternateValues: List<Pair<Double, Int>> = emptyList(),
-        val requireNormalizedMantissa: Boolean = false
+        val alsoAcceptDoubles: List<Double> = emptyList(),
+        val requireNormalizedMantissa: Boolean = false,
+        val requireNormalized: Boolean = false
     ) : AnswerSpec() {
         val numericValue: Double
             get() = mantissa * 10.0.pow(exponent.toDouble())
+        val effectiveRelTolOverride: Double?
+            get() = relativeToleranceOverride ?: mantissaRelativeTol
+        val mustNormalize: Boolean
+            get() = requireNormalizedMantissa || requireNormalized
     }
 
     /**
@@ -77,8 +92,19 @@ sealed class AnswerSpec {
      */
     data class Choice(
         val correctOption: String,
-        val options: List<String>
-    ) : AnswerSpec()
+        val options: List<String>,
+        val correctIndex: Int = 0
+    ) : AnswerSpec() {
+        constructor(
+            options: List<String>,
+            correctIndex: Int,
+            correctValue: String
+        ) : this(
+            correctOption = correctValue,
+            options = options,
+            correctIndex = correctIndex
+        )
+    }
 
     /**
      * Fraction / Decimal conversion checking (supports both "n/d" and decimal answers,
@@ -89,8 +115,12 @@ sealed class AnswerSpec {
         val denominator: Int,
         val isFractionToDecimal: Boolean,
         val acceptCourseValues: Boolean = false,
+        val useCourseValues: Boolean = false,
         val toleranceOverride: Double? = null
-    ) : AnswerSpec()
+    ) : AnswerSpec() {
+        val effectiveCourseValues: Boolean
+            get() = acceptCourseValues || useCourseValues
+    }
 
     companion object {
         const val DEFAULT_TABLE_TOLERANCE = 0.05
@@ -163,7 +193,10 @@ data class ParsedScientificInput(
     val mantissa: Double,
     val exponent: Int?,
     val isScientific: Boolean
-)
+) {
+    val numericValue: Double get() = value
+    val hasExplicitExponent: Boolean get() = isScientific
+}
 
 object ScientificInputParser {
 
@@ -182,7 +215,7 @@ object ScientificInputParser {
             .trim()
             .replace("−", "-")
             .replace(" ", "")
-        if (cleaned.isEmpty()) return null
+        if (cleaned.isEmpty() || cleaned.length > MAX_INPUT_LENGTH) return null
 
         // Check for scientific separator
         val matchedSep = SCI_SEPARATORS.firstOrNull { cleaned.contains(it) }
@@ -257,10 +290,15 @@ object AnswerChecker {
                 if (trimmed.equals(spec.correctOption.trim(), ignoreCase = true)) {
                     true
                 } else {
-                    // If both are numeric/scientific, also compare parsed values within 1e-6
-                    val uVal = ScientificInputParser.parseToDouble(trimmed)
-                    val cVal = ScientificInputParser.parseToDouble(spec.correctOption)
-                    uVal != null && cVal != null && abs(uVal - cVal) <= maxOf(EXACT_FLOAT_EPSILON, abs(cVal) * 1e-6)
+                    val asIndex = trimmed.toIntOrNull()
+                    if (asIndex != null && asIndex == spec.correctIndex && trimmed !in spec.options) {
+                        true
+                    } else {
+                        // If both are numeric/scientific, also compare parsed values within 1e-6
+                        val uVal = ScientificInputParser.parseToDouble(trimmed)
+                        val cVal = ScientificInputParser.parseToDouble(spec.correctOption)
+                        uVal != null && cVal != null && abs(uVal - cVal) <= maxOf(EXACT_FLOAT_EPSILON, abs(cVal) * 1e-6)
+                    }
                 }
             }
 
@@ -275,37 +313,41 @@ object AnswerChecker {
 
             is AnswerSpec.AbsoluteTolerance -> {
                 val userVal = ScientificInputParser.parseToDouble(trimmed) ?: return false
+                val allExact = spec.allAcceptedExact
                 // 1. Check exact match with any stored course value
-                if (spec.exactCourseValues.any { abs(userVal - it) <= EXACT_FLOAT_EPSILON }) {
+                if (allExact.any { abs(userVal - it) <= EXACT_FLOAT_EPSILON }) {
                     return true
                 }
                 // 2. Check within absolute tolerance of expected or any stored course value
                 val tol = spec.tolerance + EXACT_FLOAT_EPSILON
                 if (abs(userVal - spec.expected) <= tol) return true
-                spec.exactCourseValues.any { abs(userVal - it) <= tol }
+                allExact.any { abs(userVal - it) <= tol }
             }
 
             is AnswerSpec.RelativeTolerance -> {
                 val userVal = ScientificInputParser.parseToDouble(trimmed) ?: return false
-                if (spec.exactCourseValues.any { abs(userVal - it) <= EXACT_FLOAT_EPSILON }) {
+                val allExact = spec.allAcceptedExact
+                if (allExact.any { abs(userVal - it) <= EXACT_FLOAT_EPSILON }) {
                     return true
                 }
                 val relTol = spec.relativeToleranceOverride ?: preset.relativeTolerance
                 isWithinRelativeTolerance(userVal, spec.expected, relTol) ||
-                    spec.exactCourseValues.any { isWithinRelativeTolerance(userVal, it, relTol) }
+                    allExact.any { isWithinRelativeTolerance(userVal, it, relTol) }
             }
 
             is AnswerSpec.ScientificValue -> {
                 val parsed = ScientificInputParser.parse(trimmed) ?: return false
-                if (spec.requireNormalizedMantissa) {
-                    // For normalization drills, require scientific entry with 1 <= |mantissa| < 10 and matching exponent
-                    if (!parsed.isScientific || parsed.exponent == null) return false
+                if (spec.mustNormalize && parsed.isScientific) {
+                    if (parsed.exponent == null) return false
                     val absM = abs(parsed.mantissa)
                     if (absM < 1.0 - EXACT_FLOAT_EPSILON || absM >= 10.0 - EXACT_FLOAT_EPSILON) return false
                     if (parsed.exponent != spec.exponent) return false
                 }
-                val relTol = spec.relativeToleranceOverride ?: preset.relativeTolerance
+                val relTol = spec.effectiveRelTolOverride ?: preset.relativeTolerance
                 if (isWithinRelativeTolerance(parsed.value, spec.numericValue, relTol)) {
+                    return true
+                }
+                if (spec.alsoAcceptDoubles.any { isWithinRelativeTolerance(parsed.value, it, relTol) }) {
                     return true
                 }
                 spec.alternateValues.any { (altM, altE) ->
@@ -316,15 +358,16 @@ object AnswerChecker {
 
             is AnswerSpec.FractionSpec -> {
                 val expectedVal = spec.numerator.toDouble() / spec.denominator.toDouble()
+                val useCourse = spec.effectiveCourseValues
                 if (spec.isFractionToDecimal) {
                     val userVal = ScientificInputParser.parseToDouble(trimmed) ?: return false
-                    val baseTol = spec.toleranceOverride ?: if (spec.acceptCourseValues) {
+                    val baseTol = spec.toleranceOverride ?: if (useCourse) {
                         if (spec.denominator in 11..15) AnswerSpec.DEFAULT_RECIPROCAL_TOLERANCE else AnswerSpec.DEFAULT_TABLE_TOLERANCE
                     } else {
                         0.001
                     }
                     if (abs(userVal - expectedVal) <= baseTol + EXACT_FLOAT_EPSILON) return true
-                    if (spec.acceptCourseValues) {
+                    if (useCourse) {
                         val courseDecimals = CourseValuesData.getCourseDecimalsForFraction(spec.numerator, spec.denominator)
                         return courseDecimals.any { cv ->
                             abs(userVal - cv) <= baseTol + EXACT_FLOAT_EPSILON
@@ -335,6 +378,10 @@ object AnswerChecker {
                     // Expected answer is a fraction string "n/d"
                     val normalized = trimmed.replace(" ", "")
                     if (normalized == "${spec.numerator}/${spec.denominator}") return true
+                    // In course-values mode, 1/13 and 1/14 share the same course decimal 0.07
+                    if (useCourse && spec.numerator == 1 && (spec.denominator == 13 || spec.denominator == 14)) {
+                        if (normalized == "1/13" || normalized == "1/14") return true
+                    }
                     if (normalized.contains("/")) {
                         val parts = normalized.split("/")
                         if (parts.size == 2) {
@@ -348,6 +395,29 @@ object AnswerChecker {
                     false
                 }
             }
+        }
+    }
+
+    /**
+     * Computes the minimum numeric spacing (`3 × tolerance`) required between MCQ options (Section 3.6).
+     */
+    fun minimumMcqSpacing(
+        spec: AnswerSpec,
+        preset: TolerancePreset = TolerancePreset.NORMAL
+    ): Double {
+        return when (spec) {
+            is AnswerSpec.Exact -> 1.0
+            is AnswerSpec.AbsoluteTolerance -> maxOf(3.0 * spec.tolerance, 0.015)
+            is AnswerSpec.RelativeTolerance -> {
+                val rel = spec.relativeToleranceOverride ?: preset.relativeTolerance
+                maxOf(3.0 * abs(spec.expected) * rel, 0.05)
+            }
+            is AnswerSpec.ScientificValue -> {
+                val rel = spec.effectiveRelTolOverride ?: preset.relativeTolerance
+                maxOf(3.0 * abs(spec.numericValue) * rel, abs(spec.numericValue) * 0.015)
+            }
+            is AnswerSpec.FractionSpec -> 0.15
+            is AnswerSpec.Choice -> 0.15
         }
     }
 

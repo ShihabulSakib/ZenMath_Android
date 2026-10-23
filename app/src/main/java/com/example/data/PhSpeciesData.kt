@@ -15,7 +15,10 @@ data class ChemicalSpecies(
     val type: SpeciesType,
     val ionsReleased: Int, // number of H+ or OH- ions released per formula unit
     val molarMass: Double // g/mol
-)
+) {
+    val valence: Int get() = ionsReleased
+    val isAcid: Boolean get() = type == SpeciesType.ACID
+}
 
 object PhSpeciesData {
 
@@ -91,4 +94,13 @@ object PhSpeciesData {
 
     val BASES: List<ChemicalSpecies>
         get() = SPECIES_LIST.filter { it.type == SpeciesType.BASE }
+
+    val allSpecies: List<ChemicalSpecies>
+        get() = SPECIES_LIST
+
+    val acids: List<ChemicalSpecies>
+        get() = ACIDS
+
+    val bases: List<ChemicalSpecies>
+        get() = BASES
 }

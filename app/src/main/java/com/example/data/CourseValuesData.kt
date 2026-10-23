@@ -21,13 +21,19 @@ data class MemoryTableEntry(
     val trueValue: Double,
     val defaultTolerance: Double,
     val alternateReverseInputs: Set<Long> = emptySet()
-)
+) {
+    val argument: Int get() = inputNumber
+    val forwardPrompt: String get() = displayPrompt.removeSuffix(" = ?")
+}
 
 enum class MemoryTableCategory(val key: String, val title: String) {
     SQUARE_ROOT("sqrt_table", "Square Roots (√2 – √10)"),
     CUBE_ROOT("cbrt_table", "Cube Roots (∛2 – ∛10)"),
     LOG_10("log_table", "Base-10 Logs (log 1 – log 10)"),
-    RECIPROCAL("reciprocal_table", "Reciprocals (1/11 – 1/15)")
+    RECIPROCAL("reciprocal_table", "Reciprocals (1/11 – 1/15)");
+
+    val id: String get() = key
+    val displayName: String get() = title
 }
 
 object CourseValuesData {
@@ -249,4 +255,13 @@ object CourseValuesData {
 
         list
     }
+
+    val allEntries: List<MemoryTableEntry>
+        get() = ALL_MEMORY_TABLE_ENTRIES
+
+    fun byCategory(category: MemoryTableCategory): List<MemoryTableEntry> =
+        ALL_MEMORY_TABLE_ENTRIES.filter { it.category == category }
+
+    fun lookup(category: MemoryTableCategory, argument: Int): MemoryTableEntry? =
+        ALL_MEMORY_TABLE_ENTRIES.find { it.category == category && it.inputNumber == argument }
 }

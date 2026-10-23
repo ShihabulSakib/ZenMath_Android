@@ -1,6 +1,7 @@
 package com.example.data
 
 import com.example.BuildConfig
+import kotlin.math.pow
 
 /**
  * Schema and loader/validator for the modular Constants feature (Section 5.1 & 5.2).
@@ -85,20 +86,69 @@ data class ConstantEntry(
     val toleranceOverride: Double? = null,
     val enabled: Boolean = true,
     val isSample: Boolean = false
-)
+) {
+    constructor(
+        id: String,
+        name: String,
+        symbol: StructuredSymbol,
+        subject: String,
+        mantissa: Double,
+        exponent: Int,
+        unit: StructuredUnit,
+        notes: String? = null,
+        alternateValue: AlternateConstantValue? = null,
+        confusableIds: List<String> = emptyList(),
+        toleranceOverride: Double? = null,
+        enabled: Boolean = true,
+        isSample: Boolean = false
+    ) : this(
+        id = id,
+        name = name,
+        symbol = symbol,
+        subject = ConstantSubject.entries.find {
+            it.displayName.equals(subject, ignoreCase = true) || it.id.equals(subject, ignoreCase = true)
+        } ?: ConstantSubject.MECHANICS,
+        mantissa = mantissa,
+        exponent = exponent,
+        unit = unit,
+        notes = notes,
+        alternateValue = alternateValue,
+        confusableIds = confusableIds,
+        toleranceOverride = toleranceOverride,
+        enabled = enabled,
+        isSample = isSample
+    )
+
+    val numericValue: Double
+        get() = mantissa * 10.0.pow(exponent.toDouble())
+
+    val alternateValues: List<AlternateConstantValue>
+        get() = listOfNotNull(alternateValue)
+
+    val relativeToleranceOverride: Double?
+        get() = toleranceOverride
+
+    val confusableWith: List<String>
+        get() = confusableIds
+
+    val subjectLabel: String
+        get() = subject.displayName
+}
 
 object ConstantsLoader {
 
     /**
      * Validates and returns the list of valid constant entries.
-     * In debug builds ([isDebug] = true), throws [IllegalStateException] on duplicate IDs
+     * In debug builds ([isDebug] / [failLoudly] = true), throws [IllegalStateException] on duplicate IDs
      * or missing required fields.
-     * In release builds ([isDebug] = false), skips invalid or duplicate entries and carries on.
+     * In release builds ([isDebug] / [failLoudly] = false), skips invalid or duplicate entries and carries on.
      */
     fun validateAndLoad(
         entries: List<ConstantEntry> = ConstantsData.ENTRIES,
-        isDebug: Boolean = BuildConfig.DEBUG
+        isDebug: Boolean = BuildConfig.DEBUG,
+        failLoudly: Boolean? = null
     ): List<ConstantEntry> {
+        val shouldFailLoudly = failLoudly ?: isDebug
         val seenIds = mutableSetOf<String>()
         val validEntries = mutableListOf<ConstantEntry>()
 
@@ -114,7 +164,7 @@ object ConstantsLoader {
             }
 
             if (errorReason != null) {
-                if (isDebug) {
+                if (shouldFailLoudly) {
                     throw IllegalStateException("ConstantsLoader validation failed: $errorReason")
                 } else {
                     continue
@@ -125,6 +175,10 @@ object ConstantsLoader {
         }
 
         return validEntries
+    }
+
+    fun subjects(entries: List<ConstantEntry> = validateAndLoad(failLoudly = false)): List<String> {
+        return entries.filter { it.enabled }.map { it.subject.displayName }.distinct()
     }
 
     fun getEnabledEntries(

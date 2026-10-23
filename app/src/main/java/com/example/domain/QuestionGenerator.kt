@@ -1649,7 +1649,7 @@ object QuestionGenerator {
             } else {
                 formatCleanDouble((dVal * 100.0).roundToInt() / 100.0)
             }
-            val actualVal = ScientificInputParser.parse(dStr) ?: dVal
+            val actualVal = ScientificInputParser.parseToDouble(dStr) ?: dVal
             if (chosen.none { it.second == dStr } && chosen.all { abs(it.first - actualVal) >= minSpacing - 1e-9 }) {
                 chosen.add(Pair(actualVal, dStr))
             }
@@ -1680,7 +1680,9 @@ object QuestionGenerator {
         val filtered = if (subjects.isEmpty()) {
             allLoaded
         } else {
-            allLoaded.filter { it.subject in subjects }.ifEmpty { allLoaded }
+            allLoaded.filter {
+                it.subject.displayName in subjects || it.subject.id in subjects
+            }.ifEmpty { allLoaded }
         }
         val entry: ConstantEntry = selectWeightedConstant(filtered, missedCounts)
         val expectedVal = entry.numericValue
@@ -1727,7 +1729,7 @@ object QuestionGenerator {
                 alsoAcceptDoubles = alternateDoubles
             ),
             unitText = unitPlain,
-            subjectLabel = entry.subject,
+            subjectLabel = entry.subject.displayName,
             solutionSteps = steps,
             confusableIds = entry.confusableWith,
             constantSymbol = entry.symbol,

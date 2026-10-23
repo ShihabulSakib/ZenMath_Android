@@ -19,6 +19,7 @@ enum class GameMode(
     val usesDifficulty: Boolean = true,
     val supportsMcqOption: Boolean = false
 ) {
+    val supportsMcq: Boolean get() = supportsMcqOption
     ADDITION("addition", "Addition", "+", usesDifficulty = true),
     SUBTRACTION("subtraction", "Subtraction", "−", usesDifficulty = true),
     MULTIPLICATION("multiplication", "Multiplication", "×", usesDifficulty = true),
@@ -58,6 +59,8 @@ enum class DrillDirection(val key: String, val label: String) {
     MIXED("mixed", "Mixed")
 }
 
+typealias MemoryDirection = DrillDirection
+
 enum class SciNotationSubtype(val key: String, val label: String) {
     ALL("all", "All Subtypes"),
     NORMALIZE("normalize", "Normalize Decimal"),
@@ -75,11 +78,25 @@ enum class PhDrillSubtype(val key: String, val label: String) {
     PERCENT_WV_TO_PH("percent_wv_to_ph", "% w/v Base → pH")
 }
 
+typealias PhSubType = PhDrillSubtype
+
+enum class CompositeLogRootSubtype(val key: String, val label: String) {
+    ALL("all", "All Subtypes"),
+    LOG_SCI("log_sci", "log₁₀(k × 10ⁿ)"),
+    LOG_PRODUCT("log_prod", "log₁₀(a × b) Composite"),
+    ROOT_SCI("root_sci", "√(a × 10ⁿ)")
+}
+
 enum class CubesPowersSubtype(val key: String, val label: String) {
     ALL("all", "All Subtypes"),
     CUBES("cubes", "Cubes (n³)"),
-    SMALL_POWERS("powers", "Small Powers (aᵇ)"),
-    CUBE_ROOTS("cube_roots", "Cube Roots (∛n)")
+    POWERS("powers", "Small Powers (aᵇ)"),
+    PERFECT_CUBE_ROOTS("cube_roots", "Cube Roots (∛n)");
+
+    companion object {
+        val SMALL_POWERS = POWERS
+        val CUBE_ROOTS = PERFECT_CUBE_ROOTS
+    }
 }
 
 /**
@@ -128,7 +145,9 @@ data class RecentPerformanceDay(
     val accuracy: Double,
     val count: Int,
     val sessionsCount: Int = 0
-)
+) {
+    val totalQuestions: Int get() = count
+}
 
 data class DayBucket(
     val date: String,
@@ -153,7 +172,9 @@ data class WeakSpotEntry(
     val errorRate: Double, // 0.0 to 100.0
     val avgTimeMs: Double,
     val lastSeenSessionId: String
-)
+) {
+    val label: String get() = displayLabel
+}
 
 data class WeakSpotsSummary(
     val worstTopics: List<WeakSpotEntry> = emptyList(),

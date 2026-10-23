@@ -15,6 +15,9 @@ interface ZenMathDao {
     @Query("SELECT * FROM sessions ORDER BY date DESC")
     suspend fun getAllSessions(): List<SessionEntity>
 
+    @Query("SELECT * FROM sessions ORDER BY date DESC")
+    suspend fun getAllSessionsList(): List<SessionEntity>
+
     @Query("SELECT * FROM sessions ORDER BY date DESC LIMIT :limit")
     suspend fun getRecentSessions(limit: Int): List<SessionEntity>
 
@@ -35,6 +38,9 @@ interface ZenMathDao {
 
     @Query("SELECT * FROM questions")
     suspend fun getAllQuestions(): List<QuestionRecordEntity>
+
+    @Query("SELECT * FROM questions")
+    suspend fun getAllQuestionsList(): List<QuestionRecordEntity>
 
     @Query("SELECT * FROM questions ORDER BY id DESC")
     fun getAllQuestionsFlow(): Flow<List<QuestionRecordEntity>>

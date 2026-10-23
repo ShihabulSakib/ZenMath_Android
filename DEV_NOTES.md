@@ -117,4 +117,15 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 - **Phase 5 (Constants Module — Section 5)**:
   - Completed `ConstantsSchema.kt` (loader/validator failing loudly in debug on duplicate IDs or blank required fields, skipping/logging in release) and `ConstantsData.kt` (how-to-add header comment + 3 clearly flagged `isSample = true` sample entries: `sample_coulomb_k`, `sample_gas_constant_r` with alternate `L·atm·mol⁻¹·K⁻¹` unit, and `sample_spring_k_ref`).
   - Wired Constants Revision tab (grouped by subject, filter chips, search box, rich symbol/unit rendering, expandable notes/alternates/confusables) and Constants Drill (`GameMode.CONSTANTS`) showing subject chip + descriptive name + symbol together, unit & confusable feedback after answering, subject filtering in setup, and weighting toward previously missed constants.
-  - Next step: Phase 6 (Comprehensive Unit & Robolectric Tests, Version Bump to `1.1.0` / `versionCode = 4`, and Tag).
+- **Phase 6 (Testing, Versioning, and Tag — Section 6)**:
+  - Added comprehensive JUnit4 and Robolectric unit tests (`ExampleUnitTest.kt`, `ExampleRobolectricTest.kt`) covering:
+    - Central `AnswerChecker` across all `AnswerSpec` variants and `TolerancePreset` presets (`STRICT`, `NORMAL`, `LENIENT`).
+    - `×10ⁿ` input parser (`ScientificInputParser`) on valid and malformed inputs.
+    - All existing and new generators (`MemoryTables`, `ScientificNotation`, `PhPoh`, `CompositeLogsRoots`, `CubesAndPowers`, `Constants`, `Percentage`, `NumberSeries`, `Ratio`, `ChainCalculation`, `FractionsPool`) with independent recomputation checks.
+    - 2×2 Multiple Choice option spacing (`>= 3 × tolerance` between all option pairs).
+    - `DateBucketUtils` across `UTC`, `Asia/Dhaka` (`+06:00`), and `America/Los_Angeles` (`-07:00`).
+    - Non-destructive Room migration `MIGRATION_1_2` on a sample v1 SQLite database and v1/v2 JSON backup import/export.
+  - Bumped `versionCode` to `4` and `versionName` to `"1.1.0"`, updated `CHANGELOG.md`, and tagged final commit `v1.1.0`.
+
+## Deferred Items
+- **Real Constants Dataset**: As specified in the prompt and Section 5.5 of `ZENMATH_FEATURE_PLAN.md`, the full constants list will be provided in a follow-up prompt. The app ships with the complete modular framework and the 3 clearly flagged sample entries (`isSample = true`) in `ConstantsData.kt`.

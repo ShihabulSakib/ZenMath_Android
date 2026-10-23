@@ -26,6 +26,8 @@ package com.example.data
  */
 object ConstantsData {
 
+    val entries: List<ConstantEntry> get() = ENTRIES
+
     val ENTRIES: List<ConstantEntry> = listOf(
         ConstantEntry(
             id = "sample_coulomb_k",

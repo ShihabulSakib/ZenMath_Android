@@ -837,17 +837,17 @@ private fun ConstantsRevisionTab() {
 
     val filteredEntries = remember(allEntries, selectedSubject, searchQuery) {
         allEntries.filter { entry ->
-            val matchesSubject = selectedSubject == "All" || entry.subject == selectedSubject
+            val matchesSubject = selectedSubject == "All" || entry.subject.displayName == selectedSubject || entry.subject.id == selectedSubject
             val q = searchQuery.trim().lowercase()
             val matchesSearch = q.isEmpty() ||
                 entry.name.lowercase().contains(q) ||
                 entry.symbol.toPlainString().lowercase().contains(q) ||
-                entry.subject.lowercase().contains(q)
+                entry.subject.displayName.lowercase().contains(q)
             matchesSubject && matchesSearch
         }
     }
 
-    val grouped = remember(filteredEntries) { filteredEntries.groupBy { it.subject } }
+    val grouped = remember(filteredEntries) { filteredEntries.groupBy { it.subject.displayName } }
 
     Column(
         modifier = Modifier
@@ -1088,7 +1088,7 @@ private fun ConstantCard(
                         }
                         if (confusables.isNotEmpty()) {
                             val desc = confusables.joinToString("; ") { c ->
-                                "${c.name} (${c.symbol.toPlainString()}, ${c.subject})"
+                                "${c.name} (${c.symbol.toPlainString()}, ${c.subject.displayName})"
                             }
                             Text(
                                 text = "Do not confuse with: $desc",

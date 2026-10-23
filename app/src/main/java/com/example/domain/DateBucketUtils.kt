@@ -66,6 +66,8 @@ object DateBucketUtils {
         return null
     }
 
+    fun parseUtcIsoMillis(isoStr: String): Long? = parseUtcIsoToEpochMs(isoStr)
+
     /**
      * Converts a UTC ISO-8601 timestamp string (e.g. "2026-10-23T20:15:00.000Z")
      * into a local calendar date string "yyyy-MM-dd" in the given [timeZone].
@@ -171,6 +173,48 @@ object DateBucketUtils {
             }
         }
         return streak
+    }
+
+    fun calculateStreakDays(
+        localDates: Set<String>,
+        nowMillis: Long = System.currentTimeMillis(),
+        timeZone: TimeZone = TimeZone.getDefault()
+    ): Int {
+        val dummySessions = localDates.mapIndexed { idx, d ->
+            SessionEntity(
+                id = "s_$idx",
+                date = d,
+                mode = "addition",
+                totalQuestions = 1,
+                correct = 1,
+                avgTimeMs = 1000.0,
+                difficulty = "medium",
+                duration = 1.0,
+                localDate = d
+            )
+        }
+        return calculateStreak(dummySessions, nowMillis, timeZone)
+    }
+
+    fun buildRecentPerformanceDays(
+        sessions: List<SessionEntity>,
+        days: Int = 7,
+        nowMillis: Long = System.currentTimeMillis(),
+        timeZone: TimeZone = TimeZone.getDefault()
+    ): List<RecentPerformanceDay> {
+        val dateList = lastNDates(days, nowMillis, timeZone)
+        val grouped = groupSessionsByLocalDate(sessions, timeZone)
+        return dateList.map { dateStr ->
+            val daySessions = grouped[dateStr] ?: emptyList()
+            val correct = daySessions.sumOf { it.correct }
+            val totalQ = daySessions.sumOf { it.totalQuestions }
+            RecentPerformanceDay(
+                date = dateStr,
+                accuracy = if (totalQ > 0) (correct.toDouble() / totalQ.toDouble()) * 100.0 else 0.0,
+                count = totalQ,
+                sessionsCount = daySessions.size
+            )
+        }
     }
 
     /**
