@@ -30,7 +30,7 @@ class PreferencesManager(context: Context) {
         val showStreak = prefs.getBoolean(KEY_SHOW_STREAK, true)
         val hapticFeedback = prefs.getBoolean(KEY_HAPTIC, true)
         val notificationsEnabled = prefs.getBoolean(KEY_NOTIF_ENABLED, false)
-        val notificationTimes = prefs.getStringSet(KEY_NOTIF_TIMES, setOf("08:00", "12:00", "18:00")) ?: setOf("08:00", "12:00", "18:00")
+        val notificationTimes = prefs.getStringSet(KEY_NOTIF_TIMES, null)?.toSet() ?: setOf("08:00", "12:00", "18:00")
         val isDarkTheme = prefs.getBoolean(KEY_THEME_DARK, true)
 
         return GameSettings(
@@ -55,7 +55,7 @@ class PreferencesManager(context: Context) {
             .putBoolean(KEY_SHOW_STREAK, settings.showStreak)
             .putBoolean(KEY_HAPTIC, settings.hapticFeedback)
             .putBoolean(KEY_NOTIF_ENABLED, settings.notificationsEnabled)
-            .putStringSet(KEY_NOTIF_TIMES, settings.notificationTimes)
+            .putStringSet(KEY_NOTIF_TIMES, HashSet(settings.notificationTimes))
             .putBoolean(KEY_THEME_DARK, settings.isDarkTheme)
             .apply()
         _settingsFlow.value = settings
