@@ -121,6 +121,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _fractionNumRange = MutableStateFlow(Pair(1, 9))
     val fractionNumRange: StateFlow<Pair<Int, Int>> = _fractionNumRange.asStateFlow()
 
+    private val _fractionUseCourseValues = MutableStateFlow(false)
+    val fractionUseCourseValues: StateFlow<Boolean> = _fractionUseCourseValues.asStateFlow()
+
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
@@ -203,6 +206,8 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     fun onSelectMode(mode: GameMode) {
         _selectedMode.value = mode
+        _allowRemainder.value = false
+        _allowNegativeResults.value = false
         if (mode == GameMode.MULTIPLICATION_TABLE || mode == GameMode.FACTOR_FINDING) {
             _currentScreen.value = ZenScreen.SPECIAL_MENU
         } else {
@@ -222,6 +227,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setCustomSqrtRange(range: Pair<Int, Int>) { _customSqrtRange.value = range }
     fun setFractionDenRange(range: Pair<Int, Int>) { _fractionDenRange.value = range }
     fun setFractionNumRange(range: Pair<Int, Int>) { _fractionNumRange.value = range }
+    fun setFractionUseCourseValues(v: Boolean) { _fractionUseCourseValues.value = v }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
 
     // Gameplay
@@ -496,23 +502,37 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
         preferencesManager.incrementDailyProgress()
 
-        // Adaptive Difficulty auto-escalation
+        // Adaptive Difficulty auto-escalation and step-down
         if (settingsFlow.value.adaptiveDifficulty && totalQ > 0) {
             val accuracy = correctCount.toDouble() / totalQ.toDouble()
-            if (accuracy >= 0.85) {
-                when (_difficulty.value) {
-                    Difficulty.EASY -> _difficulty.value = Difficulty.MEDIUM
-                    Difficulty.MEDIUM -> _difficulty.value = Difficulty.HARD
-                    Difficulty.HARD -> {
-                        if (_digits.value < 4) {
-                            _digits.value = _digits.value + 1
-                        }
+            applyAdaptiveDifficulty(accuracy)
+        }
+
+        _currentScreen.value = ZenScreen.RESULTS
+    }
+
+    internal fun applyAdaptiveDifficulty(accuracy: Double) {
+        if (accuracy >= 0.85) {
+            when (_difficulty.value) {
+                Difficulty.EASY -> _difficulty.value = Difficulty.MEDIUM
+                Difficulty.MEDIUM -> _difficulty.value = Difficulty.HARD
+                Difficulty.HARD -> {
+                    if (_digits.value < 4) {
+                        _digits.value = _digits.value + 1
+                    }
+                }
+            }
+        } else if (accuracy < 0.50) {
+            when (_difficulty.value) {
+                Difficulty.HARD -> _difficulty.value = Difficulty.MEDIUM
+                Difficulty.MEDIUM -> _difficulty.value = Difficulty.EASY
+                Difficulty.EASY -> {
+                    if (_digits.value > 1) {
+                        _digits.value = _digits.value - 1
                     }
                 }
             }
         }
-
-        _currentScreen.value = ZenScreen.RESULTS
     }
 
     private fun generateNextQuestion(index: Int) {
@@ -547,9 +567,11 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             GameMode.RATIO -> QuestionGenerator.generateRatioQuestion(diff)
             GameMode.CHAIN_CALCULATION -> QuestionGenerator.generateChainCalculationQuestion(diff)
             GameMode.FRACTION -> {
+                val useCourse = _fractionUseCourseValues.value
                 val gen = FractionsPool.generateFractionQuestion(
                     _fractionNumRange.value.first, _fractionNumRange.value.second,
-                    _fractionDenRange.value.first, _fractionDenRange.value.second
+                    _fractionDenRange.value.first, _fractionDenRange.value.second,
+                    useCourseValues = useCourse
                 )
                 MathProblem(
                     num1 = gen.numerator.toDouble(),
@@ -562,7 +584,8 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     answerSpec = AnswerSpec.FractionSpec(
                         numerator = gen.numerator,
                         denominator = gen.denominator,
-                        isFractionToDecimal = gen.isFractionToDecimal
+                        isFractionToDecimal = gen.isFractionToDecimal,
+                        useCourseValues = useCourse
                     ),
                     solutionSteps = gen.solutionSteps
                 )

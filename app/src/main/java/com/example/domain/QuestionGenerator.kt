@@ -216,63 +216,101 @@ object QuestionGenerator {
         val answer: Double
         val steps: List<String>
 
-        if (diff == Difficulty.EASY) {
-            val easyPcts = intArrayOf(10, 25, 50, 75)
-            val pct = easyPcts[randomInRange(0, easyPcts.size - 1)]
-            val baseValue: Int
-            when (pct) {
-                75 -> {
-                    val m = randomInRange(2, 12)
-                    baseValue = m * 4
-                    answer = (baseValue * 3.0) / 4.0
-                    steps = listOf("75% = 3/4", "$baseValue ÷ 4 = $m, then $m × 3 = ${answer.roundToLong()}")
+        when (diff) {
+            Difficulty.EASY -> {
+                val easyPcts = intArrayOf(10, 25, 50, 75)
+                val pct = easyPcts[randomInRange(0, easyPcts.size - 1)]
+                val baseValue: Int
+                when (pct) {
+                    75 -> {
+                        val m = randomInRange(2, 12)
+                        baseValue = m * 4
+                        answer = (baseValue * 3.0) / 4.0
+                        steps = listOf("75% = 3/4", "$baseValue ÷ 4 = $m, then $m × 3 = ${answer.roundToLong()}")
+                    }
+                    25 -> {
+                        val m = randomInRange(2, 10)
+                        baseValue = m * 4
+                        answer = baseValue / 4.0
+                        steps = listOf("25% = 1/4", "$baseValue ÷ 4 = ${answer.roundToLong()}")
+                    }
+                    50 -> {
+                        val m = randomInRange(2, 10)
+                        baseValue = m * 2
+                        answer = baseValue / 2.0
+                        steps = listOf("50% = 1/2", "$baseValue ÷ 2 = ${answer.roundToLong()}")
+                    }
+                    else -> {
+                        val m = randomInRange(2, 10)
+                        baseValue = m * 10
+                        answer = baseValue / 10.0
+                        steps = listOf("10% = 1/10", "$baseValue ÷ 10 = ${answer.roundToLong()}")
+                    }
                 }
-                25 -> {
-                    val m = randomInRange(2, 10)
-                    baseValue = m * 4
-                    answer = baseValue / 4.0
-                    steps = listOf("25% = 1/4", "$baseValue ÷ 4 = ${answer.roundToLong()}")
-                }
-                50 -> {
-                    val m = randomInRange(2, 10)
-                    baseValue = m * 2
-                    answer = baseValue / 2.0
-                    steps = listOf("50% = 1/2", "$baseValue ÷ 2 = ${answer.roundToLong()}")
-                }
-                else -> {
-                    val m = randomInRange(2, 10)
-                    baseValue = m * 10
-                    answer = baseValue / 10.0
-                    steps = listOf("10% = 1/10", "$baseValue ÷ 10 = ${answer.roundToLong()}")
+                question = "$pct% of $baseValue"
+            }
+
+            Difficulty.MEDIUM -> {
+                val isPercentOf = Random.nextBoolean()
+                val pct = randomInRange(1, 19) * 5
+                val multiplier = 100 / gcd(pct, 100)
+                val k = randomInRange(2, maxOf(2, 200 / multiplier))
+                val value = k * multiplier
+                if (isPercentOf) {
+                    answer = (pct.toDouble() * value.toDouble()) / 100.0
+                    question = "$pct% of $value"
+                    steps = listOf(
+                        "Write $pct% as ${pct / gcd(pct, 100)}/${100 / gcd(pct, 100)}",
+                        "($pct × $value) ÷ 100 = ${answer.roundToLong()}"
+                    )
+                } else {
+                    val result = (value.toDouble() * pct.toDouble()) / 100.0
+                    val resultInt = result.roundToInt()
+                    answer = pct.toDouble()
+                    question = "$resultInt is what % of $value"
+                    steps = listOf(
+                        "Compute ($resultInt ÷ $value) × 100",
+                        "Percentage = ${answer.roundToLong()}%"
+                    )
                 }
             }
-            question = "$pct% of $baseValue"
-        } else {
-            val isPercentOf = Random.nextBoolean()
-            if (isPercentOf) {
-                val pct = randomInRange(1, 20) * 5
-                val multiplier = 100 / gcd(pct, 100)
-                val k = randomInRange(1, maxOf(1, 100 / multiplier))
-                val value = k * multiplier
-                answer = (pct.toDouble() * value.toDouble()) / 100.0
-                question = "$pct% of $value"
-                steps = listOf(
-                    "Write $pct% as $pct / 100",
-                    "($pct × $value) / 100 = ${answer.roundToLong()}"
+
+            Difficulty.HARD -> {
+                // Hard: fractional percentages (12.5%, 37.5%, 62.5%, 87.5%) and larger bases
+                data class FractionalPct(val label: String, val num: Int, val den: Int)
+                val hardFractions = listOf(
+                    FractionalPct("12.5%", 1, 8),
+                    FractionalPct("37.5%", 3, 8),
+                    FractionalPct("62.5%", 5, 8),
+                    FractionalPct("87.5%", 7, 8)
                 )
-            } else {
-                val pct = randomInRange(1, 20) * 5
-                val multiplier = 100 / gcd(pct, 100)
-                val k = randomInRange(1, maxOf(1, 100 / multiplier))
-                val value = k * multiplier
-                val result = (value.toDouble() * pct.toDouble()) / 100.0
-                val resultInt = result.roundToInt()
-                answer = pct.toDouble()
-                question = "$resultInt is what % of $value"
-                steps = listOf(
-                    "Compute ($resultInt / $value) × 100",
-                    "Percentage = ${answer.roundToLong()}%"
-                )
+                if (Random.nextBoolean()) {
+                    val chosen = hardFractions[randomInRange(0, hardFractions.size - 1)]
+                    val k = randomInRange(12, 65)
+                    val baseValue = k * chosen.den
+                    val ansLong = k.toLong() * chosen.num.toLong()
+                    answer = ansLong.toDouble()
+                    question = "${chosen.label} of $baseValue"
+                    steps = listOf(
+                        "Recognize ${chosen.label} = ${chosen.num}/${chosen.den}",
+                        "Divide base by ${chosen.den}: $baseValue ÷ ${chosen.den} = $k",
+                        "Multiply by ${chosen.num}: $k × ${chosen.num} = $ansLong"
+                    )
+                } else {
+                    val hardPcts = intArrayOf(15, 35, 45, 65, 85, 115, 125, 135, 175)
+                    val pct = hardPcts[randomInRange(0, hardPcts.size - 1)]
+                    val multiplier = 100 / gcd(pct, 100)
+                    val k = randomInRange(12, 45)
+                    val baseValue = k * multiplier
+                    val ansLong = (pct.toLong() * baseValue.toLong()) / 100L
+                    answer = ansLong.toDouble()
+                    question = "$pct% of $baseValue"
+                    val tenPct = baseValue / 10.0
+                    steps = listOf(
+                        "Split $pct% into tens and fives on base $baseValue (10% = ${String.format(Locale.US, "%.1f", tenPct)})",
+                        "($pct × $baseValue) ÷ 100 = $ansLong"
+                    )
+                }
             }
         }
 
@@ -438,44 +476,77 @@ object QuestionGenerator {
         )
     }
 
-    fun generateNumberSeriesQuestion(diff: Difficulty): MathProblem {
-        val length = if (diff == Difficulty.EASY) 5 else 6
-        val patterns = arrayOf("arithmetic", "geometric", "square", "fibonacci")
-        val pattern = patterns[Random.nextInt(patterns.size)]
-        var series = mutableListOf<Int>()
+    fun generateNumberSeriesQuestion(diff: Difficulty, forcePattern: String? = null): MathProblem {
+        val length = when (diff) {
+            Difficulty.EASY -> 5
+            Difficulty.MEDIUM -> 6
+            Difficulty.HARD -> 7
+        }
+        val patterns = when (diff) {
+            Difficulty.EASY -> arrayOf("arithmetic", "geometric", "square", "fibonacci")
+            Difficulty.MEDIUM -> arrayOf("arithmetic", "geometric", "square", "fibonacci")
+            Difficulty.HARD -> arrayOf("second_order", "alternating", "fibonacci")
+        }
+        val pattern = forcePattern ?: patterns[Random.nextInt(patterns.size)]
+        val series = mutableListOf<Int>()
         var ruleDesc = ""
 
         when (pattern) {
             "arithmetic" -> {
                 val start = randomInRange(1, 20)
-                val diffVal = randomInRange(2, 10)
+                val diffVal = randomInRange(2, if (diff == Difficulty.EASY) 8 else 15)
                 for (i in 0 until length) series.add(start + i * diffVal)
                 ruleDesc = "Arithmetic progression with common difference +$diffVal"
             }
             "geometric" -> {
-                val start = randomInRange(1, 5)
+                val start = randomInRange(1, 4)
                 val ratio = randomInRange(2, 3)
                 var v = start
                 for (i in 0 until length) {
-                    if (v > 1000) {
-                        series = mutableListOf(1, 2, 4, 8, 16, 32).subList(0, length)
-                        ruleDesc = "Geometric progression multiplying by 2 each step"
-                        break
-                    }
                     series.add(v)
                     v *= ratio
                 }
-                if (ruleDesc.isEmpty()) ruleDesc = "Geometric progression multiplying by $ratio each step"
+                ruleDesc = "Geometric progression multiplying by $ratio each step"
             }
             "square" -> {
-                val start = randomInRange(1, 5)
+                val start = randomInRange(1, 6)
                 for (i in 0 until length) series.add((start + i) * (start + i))
                 ruleDesc = "Consecutive squares starting from $start^2"
             }
             "fibonacci" -> {
-                val fib = intArrayOf(1, 1, 2, 3, 5, 8, 13, 21)
-                for (i in 0 until length) series.add(fib[i])
-                ruleDesc = "Each term is the sum of the two preceding terms"
+                // Random start pair instead of a fixed array
+                val f0 = randomInRange(1, 7)
+                val f1 = randomInRange(2, 9)
+                series.add(f0)
+                series.add(f1)
+                for (i in 2 until length) {
+                    series.add(series[i - 2] + series[i - 1])
+                }
+                ruleDesc = "Fibonacci-like rule: each term is the sum of the two previous terms (start $f0, $f1)"
+            }
+            "second_order" -> {
+                val start = randomInRange(2, 12)
+                val firstDiff = randomInRange(2, 6)
+                val secondDiff = randomInRange(2, 5)
+                var curr = start
+                var stepDiff = firstDiff
+                for (i in 0 until length) {
+                    series.add(curr)
+                    curr += stepDiff
+                    stepDiff += secondDiff
+                }
+                ruleDesc = "Second-order differences: differences start at +$firstDiff and increase by +$secondDiff each step"
+            }
+            "alternating" -> {
+                val start = randomInRange(10, 25)
+                val addStep = randomInRange(5, 12)
+                val subStep = randomInRange(2, addStep - 2)
+                var curr = start
+                for (i in 0 until length) {
+                    series.add(curr)
+                    curr = if (i % 2 == 0) curr + addStep else curr - subStep
+                }
+                ruleDesc = "Alternating pattern: +$addStep, then −$subStep"
             }
         }
 
@@ -487,7 +558,8 @@ object QuestionGenerator {
             ruleDesc = "Arithmetic progression with difference +$d"
         }
 
-        val missingIndex = length / 2
+        // Vary the hidden position across indices 1..(length - 1)
+        val missingIndex = randomInRange(1, length - 1)
         val answer = series[missingIndex]
         val displayList = series.mapIndexed { idx, v -> if (idx == missingIndex) "?" else v.toString() }
 
@@ -508,48 +580,164 @@ object QuestionGenerator {
     }
 
     fun generateRatioQuestion(diff: Difficulty): MathProblem {
-        val isFindRatio = Random.nextBoolean()
-        return if (isFindRatio) {
-            val a = randomInRange(2, if (diff == Difficulty.HARD) 20 else 10)
-            val b = randomInRange(2, if (diff == Difficulty.HARD) 20 else 10)
-            val mult = randomInRange(2, 5)
-            val bVal = b * mult
-            val ans = a * mult
-            MathProblem(
-                num1 = 0.0,
-                num2 = 0.0,
-                operation = "Ratio",
-                questionDisplay = "If A:B = $a:$b & B = $bVal, A = ?",
-                answer = ans.toString(),
-                numericAnswer = ans.toDouble(),
-                topicTag = "ratio",
-                answerSpec = AnswerSpec.exact(ans.toLong()),
-                solutionSteps = listOf(
-                    "Scale factor = B / $b = $bVal / $b = $mult",
-                    "A = $a × $mult = $ans"
+        return when (diff) {
+            Difficulty.EASY -> {
+                val isFindRatio = Random.nextBoolean()
+                if (isFindRatio) {
+                    val a = randomInRange(2, 8)
+                    val b = randomInRange(2, 8)
+                    val mult = randomInRange(2, 5)
+                    val bVal = b * mult
+                    val ans = a * mult
+                    MathProblem(
+                        num1 = 0.0,
+                        num2 = 0.0,
+                        operation = "Ratio",
+                        questionDisplay = "If A:B = $a:$b & B = $bVal, A = ?",
+                        answer = ans.toString(),
+                        numericAnswer = ans.toDouble(),
+                        topicTag = "ratio",
+                        answerSpec = AnswerSpec.exact(ans.toLong()),
+                        solutionSteps = listOf(
+                            "Scale factor = B ÷ $b = $bVal ÷ $b = $mult",
+                            "A = $a × $mult = $ans"
+                        )
+                    )
+                } else {
+                    val ratio = randomInRange(2, 5)
+                    val a = randomInRange(2, 10) * ratio
+                    val ans = a / ratio
+                    MathProblem(
+                        num1 = 0.0,
+                        num2 = 0.0,
+                        operation = "Ratio",
+                        questionDisplay = "In ratio $ratio:1, if 1st = $a, 2nd = ?",
+                        answer = ans.toString(),
+                        numericAnswer = ans.toDouble(),
+                        topicTag = "ratio",
+                        answerSpec = AnswerSpec.exact(ans.toLong()),
+                        solutionSteps = listOf(
+                            "Divide 1st term by $ratio: $a ÷ $ratio = $ans"
+                        )
+                    )
+                }
+            }
+
+            Difficulty.MEDIUM -> {
+                // Medium: Three-term ratios A:B:C
+                val a = randomInRange(1, 5)
+                val b = randomInRange(2, 6)
+                val c = randomInRange(2, 7)
+                val mult = randomInRange(2, 6)
+                if (Random.nextBoolean()) {
+                    val bVal = b * mult
+                    val cVal = c * mult
+                    MathProblem(
+                        num1 = 0.0,
+                        num2 = 0.0,
+                        operation = "Ratio",
+                        questionDisplay = "If A:B:C = $a:$b:$c & B = $bVal, C = ?",
+                        answer = cVal.toString(),
+                        numericAnswer = cVal.toDouble(),
+                        topicTag = "ratio",
+                        answerSpec = AnswerSpec.exact(cVal.toLong()),
+                        solutionSteps = listOf(
+                            "Find scale factor from B: $bVal ÷ $b = $mult",
+                            "C = $c × $mult = $cVal"
+                        )
+                    )
+                } else {
+                    val sumParts = a + b + c
+                    val total = sumParts * mult
+                    val aVal = a * mult
+                    MathProblem(
+                        num1 = 0.0,
+                        num2 = 0.0,
+                        operation = "Ratio",
+                        questionDisplay = "If A:B:C = $a:$b:$c & A+B+C = $total, A = ?",
+                        answer = aVal.toString(),
+                        numericAnswer = aVal.toDouble(),
+                        topicTag = "ratio",
+                        answerSpec = AnswerSpec.exact(aVal.toLong()),
+                        solutionSteps = listOf(
+                            "Total ratio parts = $a + $b + $c = $sumParts",
+                            "1 part = $total ÷ $sumParts = $mult",
+                            "A = $a × $mult = $aVal"
+                        )
+                    )
+                }
+            }
+
+            Difficulty.HARD -> {
+                // Hard: Larger 3-term ratio shares or chained ratios
+                val a = randomInRange(3, 9)
+                val b = randomInRange(4, 11)
+                val c = randomInRange(5, 13)
+                val mult = randomInRange(6, 15)
+                val sumParts = a + b + c
+                val total = sumParts * mult
+                val cVal = c * mult
+                MathProblem(
+                    num1 = 0.0,
+                    num2 = 0.0,
+                    operation = "Ratio",
+                    questionDisplay = "If A:B:C = $a:$b:$c & A+B+C = $total, C = ?",
+                    answer = cVal.toString(),
+                    numericAnswer = cVal.toDouble(),
+                    topicTag = "ratio",
+                    answerSpec = AnswerSpec.exact(cVal.toLong()),
+                    solutionSteps = listOf(
+                        "Sum of ratio parts = $a + $b + $c = $sumParts",
+                        "Value per part = $total ÷ $sumParts = $mult",
+                        "C = $c × $mult = $cVal"
+                    )
                 )
-            )
-        } else {
-            val ratio = randomInRange(2, if (diff == Difficulty.HARD) 10 else 5)
-            val a = randomInRange(2, 10) * ratio
-            val ans = a / ratio
-            MathProblem(
-                num1 = 0.0,
-                num2 = 0.0,
-                operation = "Ratio",
-                questionDisplay = "In ratio $ratio:1, if 1st = $a, 2nd = ?",
-                answer = ans.toString(),
-                numericAnswer = ans.toDouble(),
-                topicTag = "ratio",
-                answerSpec = AnswerSpec.exact(ans.toLong()),
-                solutionSteps = listOf(
-                    "Divide 1st term by $ratio: $a ÷ $ratio = $ans"
-                )
-            )
+            }
         }
     }
 
     fun generateChainCalculationQuestion(diff: Difficulty): MathProblem {
+        if (diff == Difficulty.HARD) {
+            // Hard: 4 operations and brackets
+            val a = randomInRange(4, 18)
+            val b = randomInRange(3, 14)
+            val c = randomInRange(2, 9)
+            val d = randomInRange(3, 15)
+            val e = randomInRange(2, 9)
+            val op1Plus = Random.nextBoolean()
+            val op2Plus = Random.nextBoolean()
+            val op3Plus = Random.nextBoolean()
+
+            val bracket1 = if (op1Plus) a + b else a - b
+            val prod1 = bracket1.toLong() * c.toLong()
+            val bracket2 = if (op3Plus) d + e else d - e
+            val finalAns = if (op2Plus) prod1 + bracket2.toLong() else prod1 - bracket2.toLong()
+
+            val s1 = if (op1Plus) "+" else "−"
+            val s2 = if (op2Plus) "+" else "−"
+            val s3 = if (op3Plus) "+" else "−"
+            val display = "($a $s1 $b) × $c $s2 ($d $s3 $e)"
+
+            val steps = listOf(
+                "Evaluate first bracket: ($a $s1 $b) = $bracket1",
+                "Multiply by $c: $bracket1 × $c = $prod1",
+                "Evaluate second bracket: ($d $s3 $e) = $bracket2",
+                "Combine: $prod1 $s2 $bracket2 = $finalAns"
+            )
+
+            return MathProblem(
+                num1 = 0.0,
+                num2 = 0.0,
+                operation = "Chain",
+                questionDisplay = display,
+                answer = finalAns.toString(),
+                numericAnswer = finalAns.toDouble(),
+                topicTag = "chain-calculation",
+                answerSpec = AnswerSpec.exact(finalAns),
+                solutionSteps = steps
+            )
+        }
+
         val operations = arrayOf("+", "-", "*")
         val numOps = if (diff == Difficulty.EASY) 2 else 3
         val numbers = mutableListOf(randomInRange(2, if (diff == Difficulty.EASY) 9 else 20))

@@ -93,4 +93,12 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
   - Extended `Keypad` with `×10ⁿ` exponent-entry key, raised input length cap to 20, and created `RichTextHelper` using Compose `AnnotatedString` (`SpanStyle` with `BaselineShift.Superscript` / `Subscript`) for scientific notation, units, and symbols.
   - Enabled Room schema export (`app/schemas`), bumped `ZenMathDatabase` to v2 with non-destructive `MIGRATION_1_2`, created `DateBucketUtils` for local-date bucketing across timezones, updated backup JSON export/import (v1-compatible), and switched timing to monotonic milliseconds (`MonotonicClock`).
   - Added dedicated data files `CourseValuesData.kt`, `PhSpeciesData.kt`, `ConstantsSchema.kt`, and `ConstantsData.kt`.
-  - Next step: Phase 2 (Fixes to Existing Behavior).
+- **Phase 2 (Fixes to Existing Behavior — Section 2)**:
+  - Hid the Difficulty slider on `GameSetupScreen` for modes that do not use it (`SQUARE`, `FRACTION`, `SQUARE_ROOT` when custom range is selected, etc.).
+  - Added validated Min / Max number fields (`CustomRangeEditor`) for custom Square and Square Root ranges.
+  - Differentiated Medium vs Hard in `PERCENTAGE` (Hard: fractional percentages `12.5%`, `37.5%`, `62.5%`, `87.5%` and larger bases), `NUMBER_SERIES` (Hard: 7 terms, second-order differences, alternating patterns; Fibonacci from random start pair and varied hidden index), and `CHAIN_CALCULATION` (Hard: 4 operations and bracketed expressions `(a ± b) × c ± (d ± e)`).
+  - Differentiated Easy vs Medium in `RATIO` (Medium & Hard: three-term `A:B:C` ratios).
+  - Reset `allowRemainder` and `allowNegativeResults` on mode selection and exposed both toggles on `MIXED` setup.
+  - Updated adaptive difficulty to step down (`HARD -> MEDIUM -> EASY -> digits - 1`) when session accuracy < 50%.
+  - Extended Fraction denominators up to 15 (`2, 4, 6, 8, 10, 12, 15`) and added the "Course Values" toggle.
+  - Next step: Phase 3 (New Content: Revision Tables and Drills).

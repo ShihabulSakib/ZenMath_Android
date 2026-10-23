@@ -59,6 +59,7 @@ fun ZenMathApp(
     val customSqrtRange by viewModel.customSqrtRange.collectAsState()
     val fractionDenRange by viewModel.fractionDenRange.collectAsState()
     val fractionNumRange by viewModel.fractionNumRange.collectAsState()
+    val fractionUseCourseValues by viewModel.fractionUseCourseValues.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -129,6 +130,7 @@ fun ZenMathApp(
                         customSqrtRange = customSqrtRange,
                         fractionDenRange = fractionDenRange,
                         fractionNumRange = fractionNumRange,
+                        fractionUseCourseValues = fractionUseCourseValues,
                         onDigitsChange = { viewModel.setDigits(it) },
                         onDifficultyChange = { viewModel.setDifficulty(it) },
                         onAllowRemainderChange = { viewModel.setAllowRemainder(it) },
@@ -140,6 +142,7 @@ fun ZenMathApp(
                         onCustomSqrtRangeChange = { viewModel.setCustomSqrtRange(it) },
                         onFractionDenRangeChange = { viewModel.setFractionDenRange(it) },
                         onFractionNumRangeChange = { viewModel.setFractionNumRange(it) },
+                        onFractionUseCourseValuesChange = { viewModel.setFractionUseCourseValues(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )

@@ -71,6 +71,7 @@ fun GameSetupScreen(
     customSqrtRange: Pair<Int, Int>,
     fractionDenRange: Pair<Int, Int>,
     fractionNumRange: Pair<Int, Int>,
+    fractionUseCourseValues: Boolean = false,
     onDigitsChange: (Int) -> Unit,
     onDifficultyChange: (Difficulty) -> Unit,
     onAllowRemainderChange: (Boolean) -> Unit,
@@ -82,6 +83,7 @@ fun GameSetupScreen(
     onCustomSqrtRangeChange: (Pair<Int, Int>) -> Unit,
     onFractionDenRangeChange: (Pair<Int, Int>) -> Unit,
     onFractionNumRangeChange: (Pair<Int, Int>) -> Unit,
+    onFractionUseCourseValuesChange: (Boolean) -> Unit = {},
     onStart: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -238,56 +240,59 @@ fun GameSetupScreen(
                     }
                 }
 
-                // Difficulty selector
-                item {
-                    SectionHeader(title = "DIFFICULTY")
-                    val cardShape = RoundedCornerShape(24.dp)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(cardShape)
-                            .background(colors.card)
-                            .border(1.dp, colors.cardBorder, cardShape)
-                            .padding(20.dp)
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Difficulty.entries.forEach { diff ->
-                                    val isSelected = difficulty == diff
-                                    Text(
-                                        text = diff.label.uppercase(),
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
-                                        letterSpacing = 1.sp,
-                                        color = if (isSelected) colors.primary else colors.textSecondary.copy(alpha = 0.5f),
-                                        modifier = Modifier.clickable { onDifficultyChange(diff) }
-                                    )
+                // Difficulty selector (only shown for modes that use difficulty and when custom range isn't overriding it)
+                val showDifficulty = mode.usesDifficulty && !(mode == GameMode.SQUARE_ROOT && sqrtRangeType == "custom")
+                if (showDifficulty) {
+                    item {
+                        SectionHeader(title = "DIFFICULTY")
+                        val cardShape = RoundedCornerShape(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(cardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, cardShape)
+                                .padding(20.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Difficulty.entries.forEach { diff ->
+                                        val isSelected = difficulty == diff
+                                        Text(
+                                            text = diff.label.uppercase(),
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                                            letterSpacing = 1.sp,
+                                            color = if (isSelected) colors.primary else colors.textSecondary.copy(alpha = 0.5f),
+                                            modifier = Modifier.clickable { onDifficultyChange(diff) }
+                                        )
+                                    }
                                 }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                val diffIndex = Difficulty.entries.indexOf(difficulty).toFloat()
+                                ZenSlider(
+                                    value = diffIndex,
+                                    onValueChange = { floatVal ->
+                                        val idx = floatVal.toInt().coerceIn(0, 2)
+                                        onDifficultyChange(Difficulty.entries[idx])
+                                    },
+                                    valueRange = 0f..2f,
+                                    steps = 1
+                                )
                             }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            val diffIndex = Difficulty.entries.indexOf(difficulty).toFloat()
-                            ZenSlider(
-                                value = diffIndex,
-                                onValueChange = { floatVal ->
-                                    val idx = floatVal.toInt().coerceIn(0, 2)
-                                    onDifficultyChange(Difficulty.entries[idx])
-                                },
-                                valueRange = 0f..2f,
-                                steps = 1
-                            )
                         }
                     }
                 }
 
-                // Subtraction: Negative Results toggle
-                if (mode == GameMode.SUBTRACTION) {
+                // Subtraction or Mixed: Negative Results toggle
+                if (mode == GameMode.SUBTRACTION || mode == GameMode.MIXED) {
                     item {
-                        SectionHeader(title = "SUBTRACTION MODE")
+                        SectionHeader(title = "SUBTRACTION OPTIONS")
                         ToggleCardRow(
                             title = "Negative Results",
                             subtitle = if (allowNegativeResults) "Negative answers allowed" else "Positive results only",
@@ -298,10 +303,10 @@ fun GameSetupScreen(
                     }
                 }
 
-                // Division: Allow Remainders toggle
-                if (mode == GameMode.DIVISION) {
+                // Division or Mixed: Allow Remainders toggle
+                if (mode == GameMode.DIVISION || mode == GameMode.MIXED) {
                     item {
-                        SectionHeader(title = "DIVISION MODE")
+                        SectionHeader(title = "DIVISION OPTIONS")
                         ToggleCardRow(
                             title = "Allow Remainders",
                             subtitle = if (allowRemainder) "Include decimal solutions" else "Exact division only",
@@ -312,21 +317,21 @@ fun GameSetupScreen(
                     }
                 }
 
-                // Fraction: Denominator & Numerator Ranges
+                // Fraction: Denominator & Numerator Ranges + Course Values
                 if (mode == GameMode.FRACTION) {
                     item {
                         SectionHeader(title = "MAXIMUM DENOMINATOR")
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            listOf(2, 4, 6, 8, 10).forEach { den ->
+                            listOf(2, 4, 6, 8, 10, 12, 15).forEach { den ->
                                 val isSelected = fractionDenRange.second == den
                                 val shape = RoundedCornerShape(14.dp)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(52.dp)
+                                        .height(48.dp)
                                         .clip(shape)
                                         .background(if (isSelected) colors.primary else colors.card)
                                         .border(1.dp, if (isSelected) colors.primary else colors.cardBorder, shape)
@@ -335,7 +340,7 @@ fun GameSetupScreen(
                                 ) {
                                     Text(
                                         text = den.toString(),
-                                        fontSize = 18.sp,
+                                        fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         fontFamily = FontFamily.Monospace,
                                         color = if (isSelected) colors.onPrimary else colors.textSecondary
@@ -373,6 +378,16 @@ fun GameSetupScreen(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SectionHeader(title = "DECIMAL CONVENTION")
+                        ToggleCardRow(
+                            title = "Course Values",
+                            subtitle = if (fractionUseCourseValues) "Accepts 2-decimal course values (e.g. 1/13 = 0.07)" else "Standard rounded decimal values",
+                            icon = Icons.Default.Calculate,
+                            checked = fractionUseCourseValues,
+                            onCheckedChange = onFractionUseCourseValuesChange
+                        )
                     }
                 }
 
@@ -389,41 +404,51 @@ fun GameSetupScreen(
                                 .border(1.dp, colors.cardBorder, cardShape)
                                 .padding(16.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                val fixedActive = squareRangeType == "fixed"
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (fixedActive) colors.primary else colors.surface)
-                                        .clickable { onSquareRangeTypeChange("fixed") },
-                                    contentAlignment = Alignment.Center
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text(
-                                        text = "1 to 25",
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (fixedActive) colors.onPrimary else colors.textSecondary
-                                    )
+                                    val fixedActive = squareRangeType == "fixed"
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (fixedActive) colors.primary else colors.surface)
+                                            .clickable { onSquareRangeTypeChange("fixed") },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "1 to 25",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (fixedActive) colors.onPrimary else colors.textSecondary
+                                        )
+                                    }
+
+                                    val customActive = squareRangeType == "custom"
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (customActive) colors.primary else colors.surface)
+                                            .clickable { onSquareRangeTypeChange("custom") },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Custom",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (customActive) colors.onPrimary else colors.textSecondary
+                                        )
+                                    }
                                 }
 
-                                val customActive = squareRangeType == "custom"
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (customActive) colors.primary else colors.surface)
-                                        .clickable { onSquareRangeTypeChange("custom") },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "Custom",
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (customActive) colors.onPrimary else colors.textSecondary
+                                if (squareRangeType == "custom") {
+                                    CustomRangeEditor(
+                                        range = customSquareRange,
+                                        onRangeChange = onCustomSquareRangeChange,
+                                        testTagPrefix = "square_custom"
                                     )
                                 }
                             }
@@ -444,41 +469,51 @@ fun GameSetupScreen(
                                 .border(1.dp, colors.cardBorder, cardShape)
                                 .padding(16.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                val fixedActive = sqrtRangeType == "fixed"
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (fixedActive) colors.primary else colors.surface)
-                                        .clickable { onSqrtRangeTypeChange("fixed") },
-                                    contentAlignment = Alignment.Center
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text(
-                                        text = "By Difficulty",
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (fixedActive) colors.onPrimary else colors.textSecondary
-                                    )
+                                    val fixedActive = sqrtRangeType == "fixed"
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (fixedActive) colors.primary else colors.surface)
+                                            .clickable { onSqrtRangeTypeChange("fixed") },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "By Difficulty",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (fixedActive) colors.onPrimary else colors.textSecondary
+                                        )
+                                    }
+
+                                    val customActive = sqrtRangeType == "custom"
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (customActive) colors.primary else colors.surface)
+                                            .clickable { onSqrtRangeTypeChange("custom") },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "Custom",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (customActive) colors.onPrimary else colors.textSecondary
+                                        )
+                                    }
                                 }
 
-                                val customActive = sqrtRangeType == "custom"
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(if (customActive) colors.primary else colors.surface)
-                                        .clickable { onSqrtRangeTypeChange("custom") },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "Custom",
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (customActive) colors.onPrimary else colors.textSecondary
+                                if (sqrtRangeType == "custom") {
+                                    CustomRangeEditor(
+                                        range = customSqrtRange,
+                                        onRangeChange = onCustomSqrtRangeChange,
+                                        testTagPrefix = "sqrt_custom"
                                     )
                                 }
                             }
@@ -596,5 +631,72 @@ private fun ToggleCardRow(
 
             ZenToggle(checked = checked, onCheckedChange = onCheckedChange)
         }
+    }
+}
+
+@Composable
+private fun CustomRangeEditor(
+    range: Pair<Int, Int>,
+    onRangeChange: (Pair<Int, Int>) -> Unit,
+    testTagPrefix: String
+) {
+    val colors = ZenTheme.colors
+    var minText by remember(range.first) { mutableStateOf(range.first.toString()) }
+    var maxText by remember(range.second) { mutableStateOf(range.second.toString()) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = minText,
+            onValueChange = { raw ->
+                minText = raw.filter { it.isDigit() }.take(3)
+                val parsedMin = minText.toIntOrNull()
+                if (parsedMin != null) {
+                    val safeMin = parsedMin.coerceIn(1, 199)
+                    val safeMax = range.second.coerceIn(safeMin + 1, 200)
+                    onRangeChange(Pair(safeMin, safeMax))
+                }
+            },
+            label = { Text("Min (≥1)", fontSize = 11.sp) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colors.primary,
+                unfocusedBorderColor = colors.cardBorder,
+                focusedTextColor = colors.textMain,
+                unfocusedTextColor = colors.textMain
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("${testTagPrefix}_min")
+        )
+
+        OutlinedTextField(
+            value = maxText,
+            onValueChange = { raw ->
+                maxText = raw.filter { it.isDigit() }.take(3)
+                val parsedMax = maxText.toIntOrNull()
+                if (parsedMax != null) {
+                    val safeMin = range.first.coerceIn(1, 199)
+                    val safeMax = parsedMax.coerceIn(safeMin + 1, 200)
+                    onRangeChange(Pair(safeMin, safeMax))
+                }
+            },
+            label = { Text("Max (>Min)", fontSize = 11.sp) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colors.primary,
+                unfocusedBorderColor = colors.cardBorder,
+                focusedTextColor = colors.textMain,
+                unfocusedTextColor = colors.textMain
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("${testTagPrefix}_max")
+        )
     }
 }
