@@ -1,13 +1,22 @@
 package com.example.domain
 
+import com.example.data.ConstantEntry
+import com.example.data.ConstantsData
+import com.example.data.ConstantsLoader
+import com.example.data.CourseValuesData
+import com.example.data.MemoryTableCategory
+import com.example.data.PhSpeciesData
 import com.example.data.StructuredSymbol
 import com.example.data.StructuredUnit
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
@@ -803,5 +812,950 @@ object QuestionGenerator {
             answerSpec = AnswerSpec.exact(finalAns),
             solutionSteps = steps
         )
+    }
+
+    // =========================================================================
+    // 3.1 Memory Tables Drill (Forward, Reverse, Mixed)
+    // =========================================================================
+    fun generateMemoryTableQuestion(
+        direction: MemoryDirection = MemoryDirection.MIXED,
+        categories: Set<MemoryTableCategory> = MemoryTableCategory.entries.toSet()
+    ): MathProblem {
+        val activeCategories = categories.ifEmpty { MemoryTableCategory.entries.toSet() }
+        val pool = CourseValuesData.allEntries.filter { it.category in activeCategories }
+            .ifEmpty { CourseValuesData.allEntries }
+        val entry = pool.random()
+
+        val isReverse = when (direction) {
+            MemoryDirection.FORWARD -> false
+            MemoryDirection.REVERSE -> true
+            MemoryDirection.MIXED -> Random.nextBoolean()
+        }
+
+        if (!isReverse) {
+            val valStr = formatCleanDouble(entry.courseValue)
+            return MathProblem(
+                num1 = entry.argument.toDouble(),
+                num2 = 0.0,
+                operation = "Memory Tables",
+                questionDisplay = "${entry.forwardPrompt} = ?",
+                answer = valStr,
+                numericAnswer = entry.courseValue,
+                topicTag = "memory-${entry.category.id}",
+                answerSpec = AnswerSpec.AbsoluteTolerance(
+                    expected = entry.courseValue,
+                    tolerance = 0.05,
+                    alsoAcceptExact = listOf(entry.courseValue, entry.trueValue)
+                ),
+                solutionSteps = listOf(
+                    "Memorized ${entry.category.displayName} table value: ${entry.forwardPrompt} ≈ $valStr",
+                    "Exact value: ${String.format(Locale.US, "%.4f", entry.trueValue)} (±0.05 accepted)"
+                )
+            )
+        } else {
+            // Find any sibling entries in the same category that share the exact same rounded courseValue
+            // (e.g. 1/13 and 1/14 -> 0.07, or ∛8 and ∛9 -> 2.0)
+            val matchingArgs = CourseValuesData.byCategory(entry.category)
+                .filter { abs(it.courseValue - entry.courseValue) < 1e-9 }
+                .map { it.argument.toLong() }
+                .toSet()
+
+            val valStr = formatCleanDouble(entry.courseValue)
+            val prompt = when (entry.category) {
+                MemoryTableCategory.SQUARE_ROOT -> "√? ≈ $valStr"
+                MemoryTableCategory.CUBE_ROOT -> "∛? ≈ $valStr"
+                MemoryTableCategory.LOG_10 -> "log₁₀(?) ≈ $valStr"
+                MemoryTableCategory.RECIPROCAL -> "1/? ≈ $valStr"
+            }
+
+            return MathProblem(
+                num1 = entry.courseValue,
+                num2 = 0.0,
+                operation = "Memory Tables",
+                questionDisplay = prompt,
+                answer = entry.argument.toString(),
+                numericAnswer = entry.argument.toDouble(),
+                topicTag = "memory-${entry.category.id}-reverse",
+                answerSpec = AnswerSpec.Exact(
+                    expected = entry.argument.toLong(),
+                    alternateAccepted = matchingArgs - entry.argument.toLong()
+                ),
+                solutionSteps = listOf(
+                    "From ${entry.category.displayName} table: ${entry.forwardPrompt} ≈ $valStr",
+                    if (matchingArgs.size > 1) {
+                        "Accepted arguments for $valStr: ${matchingArgs.sorted().joinToString(" or ")}"
+                    } else {
+                        "Argument = ${entry.argument}"
+                    }
+                )
+            )
+        }
+    }
+
+    // =========================================================================
+    // 3.2 Scientific Notation Drills
+    // =========================================================================
+    fun generateScientificNotationQuestion(
+        subtype: SciNotationSubtype = SciNotationSubtype.ALL
+    ): MathProblem {
+        val chosen = if (subtype == SciNotationSubtype.ALL) {
+            listOf(
+                SciNotationSubtype.NORMALIZE,
+                SciNotationSubtype.DECIMAL_SHIFT,
+                SciNotationSubtype.MULTIPLY_DIVIDE,
+                SciNotationSubtype.ROOT_POWER_TEN
+            ).random()
+        } else {
+            subtype
+        }
+
+        return when (chosen) {
+            SciNotationSubtype.NORMALIZE -> {
+                // Generate mantissa in 1.1..9.5 (with 1 decimal place) and non-zero exponent in -4..5
+                val mTenths = randomInRange(11, 95).let { if (it % 10 == 0) it + 2 else it }
+                val mantissa = mTenths / 10.0
+                val exp = listOf(-4, -3, -2, -1, 2, 3, 4, 5).random()
+                val rawVal = mantissa * 10.0.pow(exp.toDouble())
+                val rawStr = if (exp > 0) {
+                    rawVal.roundToLong().toString()
+                } else {
+                    String.format(Locale.US, "%.${abs(exp) + 1}f", rawVal).trimEnd('0').trimEnd('.')
+                }
+                val shiftDir = if (exp > 0) "left by $exp places" else "right by ${abs(exp)} places"
+                val ansStr = "${formatCleanDouble(mantissa)}×10^$exp"
+
+                MathProblem(
+                    num1 = mantissa,
+                    num2 = exp.toDouble(),
+                    operation = "Sci Notation",
+                    questionDisplay = "Normalize: $rawStr",
+                    answer = ansStr,
+                    numericAnswer = rawVal,
+                    topicTag = "sci-normalize",
+                    answerSpec = AnswerSpec.ScientificValue(
+                        mantissa = mantissa,
+                        exponent = exp,
+                        mantissaRelativeTol = 0.01,
+                        requireNormalized = true
+                    ),
+                    solutionSteps = listOf(
+                        "Move decimal point $shiftDir so mantissa is in [1, 10): ${formatCleanDouble(mantissa)}",
+                        "Result: $ansStr"
+                    )
+                )
+            }
+
+            SciNotationSubtype.DECIMAL_SHIFT -> {
+                // Shift decimal point in a * 10^n left or right by k places and give the new exponent
+                val mantissa = randomInRange(12, 95) / 10.0
+                val exp = randomInRange(-8, 8)
+                val shiftLeft = Random.nextBoolean()
+                val k = randomInRange(1, 3)
+                val unshiftedMantissa = if (shiftLeft) {
+                    // Original had larger number, shifting left by k increases exponent by k
+                    mantissa * 10.0.pow(k.toDouble())
+                } else {
+                    // Original had smaller number, shifting right by k decreases exponent by k
+                    mantissa / 10.0.pow(k.toDouble())
+                }
+                val newExp = if (shiftLeft) exp + k else exp - k
+                val origStr = formatCleanDouble(unshiftedMantissa)
+                val targetMantissaStr = formatCleanDouble(mantissa)
+                val dirWord = if (shiftLeft) "left by $k (exponent +$k)" else "right by $k (exponent −$k)"
+
+                MathProblem(
+                    num1 = exp.toDouble(),
+                    num2 = k.toDouble(),
+                    operation = "Sci Notation",
+                    questionDisplay = "$origStr×10^$exp = $targetMantissaStr×10^?",
+                    answer = newExp.toString(),
+                    numericAnswer = newExp.toDouble(),
+                    topicTag = "sci-shift",
+                    answerSpec = AnswerSpec.Exact(newExp.toLong()),
+                    solutionSteps = listOf(
+                        "Decimal shifts $dirWord to go from $origStr to $targetMantissaStr",
+                        "New exponent = $exp ${if (shiftLeft) "+ $k" else "− $k"} = $newExp"
+                    )
+                )
+            }
+
+            SciNotationSubtype.MULTIPLY_DIVIDE -> {
+                val isMultiply = Random.nextBoolean()
+                if (isMultiply) {
+                    val a = randomInRange(2, 8)
+                    val b = randomInRange(2, 8)
+                    val e1 = randomInRange(-5, 5)
+                    val e2 = randomInRange(-5, 5)
+                    val prod = a * b
+                    val (normM, extraExp) = if (prod >= 10) {
+                        Pair(prod / 10.0, 1)
+                    } else {
+                        Pair(prod.toDouble(), 0)
+                    }
+                    val finalExp = e1 + e2 + extraExp
+                    val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                    val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+
+                    MathProblem(
+                        num1 = a.toDouble(),
+                        num2 = b.toDouble(),
+                        operation = "Sci Notation",
+                        questionDisplay = "($a×10^$e1) × ($b×10^$e2)",
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-mul-div",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = normM,
+                            exponent = finalExp,
+                            mantissaRelativeTol = 0.015
+                        ),
+                        solutionSteps = listOf(
+                            "Multiply mantissas: $a × $b = $prod",
+                            "Add exponents: $e1 + ($e2) = ${e1 + e2}",
+                            if (extraExp > 0) "Normalize $prod×10^${e1 + e2} → $ansStr" else "Result: $ansStr"
+                        )
+                    )
+                } else {
+                    val b = listOf(2, 4, 5, 8).random()
+                    val q = randomInRange(2, 9)
+                    val a = b * q
+                    // Place a in 1..9.9 by dividing by 10 if needed
+                    val aMant = if (a >= 10) a / 10.0 else a.toDouble()
+                    val rawQuot = aMant / b.toDouble()
+                    val (normM, expAdjust) = if (rawQuot < 1.0) {
+                        Pair(rawQuot * 10.0, -1)
+                    } else {
+                        Pair(rawQuot, 0)
+                    }
+                    val e1 = randomInRange(-4, 6)
+                    val e2 = randomInRange(-4, 5)
+                    val finalExp = e1 - e2 + expAdjust
+                    val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                    val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+
+                    MathProblem(
+                        num1 = aMant,
+                        num2 = b.toDouble(),
+                        operation = "Sci Notation",
+                        questionDisplay = "(${formatCleanDouble(aMant)}×10^$e1) ÷ ($b×10^$e2)",
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-mul-div",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = normM,
+                            exponent = finalExp,
+                            mantissaRelativeTol = 0.015
+                        ),
+                        solutionSteps = listOf(
+                            "Divide mantissas: ${formatCleanDouble(aMant)} ÷ $b = ${formatCleanDouble(rawQuot)}",
+                            "Subtract exponents: $e1 − ($e2) = ${e1 - e2}",
+                            if (expAdjust != 0) "Normalize ${formatCleanDouble(rawQuot)}×10^${e1 - e2} → $ansStr" else "Result: $ansStr"
+                        )
+                    )
+                }
+            }
+
+            SciNotationSubtype.ROOT_POWER_TEN -> {
+                val isEvenExp = Random.nextBoolean()
+                if (isEvenExp) {
+                    // Even exponent: √(a × 10^(2k)) where a in {1, 2, 3, 4, 5, 6, 7, 8, 9}
+                    val a = randomInRange(1, 9)
+                    val halfExp = listOf(-5, -4, -3, -2, -1, 1, 2, 3, 4).random()
+                    val evenExp = halfExp * 2
+                    val rootEntry = CourseValuesData.lookup(MemoryTableCategory.SQUARE_ROOT, a)
+                    val rootMant = rootEntry?.courseValue ?: sqrt(a.toDouble())
+                    val trueRootMant = sqrt(a.toDouble())
+                    val finalVal = rootMant * 10.0.pow(halfExp.toDouble())
+                    val trueVal = trueRootMant * 10.0.pow(halfExp.toDouble())
+                    val ansStr = "${formatCleanDouble(rootMant)}×10^$halfExp"
+                    val prompt = if (a == 1) "√(10^$evenExp)" else "√($a×10^$evenExp)"
+
+                    MathProblem(
+                        num1 = a.toDouble(),
+                        num2 = evenExp.toDouble(),
+                        operation = "Sci Notation",
+                        questionDisplay = prompt,
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-root-pow10",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = rootMant,
+                            exponent = halfExp,
+                            mantissaRelativeTol = 0.05,
+                            alsoAcceptDoubles = listOf(finalVal, trueVal)
+                        ),
+                        solutionSteps = listOf(
+                            "Halve the even exponent: $evenExp ÷ 2 = $halfExp",
+                            "√$a ≈ ${formatCleanDouble(rootMant)}",
+                            "Result: $ansStr"
+                        )
+                    )
+                } else {
+                    // Odd exponent: rewrite √(a × 10^(2k+1)) = √(10a × 10^(2k))
+                    // Pick a in {1, 2, 3, 4, 5, 6, 7, 8, 9} and use √(10a) = √10 × √a or perfect/memorized root
+                    val a = listOf(1, 2, 3, 4, 5, 6, 9).random()
+                    val halfExp = listOf(-4, -3, -2, -1, 1, 2, 3).random()
+                    val evenExp = halfExp * 2
+                    val oddExp = evenExp + 1
+                    val tenA = 10 * a
+                    // Course approximation: √(10 * a) = √10 (3.1) * √a or direct rounded value
+                    val root10Course = CourseValuesData.lookup(MemoryTableCategory.SQUARE_ROOT, 10)!!.courseValue // 3.1
+                    val rootACourse = if (a == 1) 1.0 else CourseValuesData.lookup(MemoryTableCategory.SQUARE_ROOT, a)!!.courseValue
+                    val courseMant = ((root10Course * rootACourse) * 10.0).roundToInt() / 10.0
+                    val trueMant = sqrt(tenA.toDouble())
+                    val finalVal = courseMant * 10.0.pow(halfExp.toDouble())
+                    val trueVal = trueMant * 10.0.pow(halfExp.toDouble())
+                    val ansStr = "${formatCleanDouble(courseMant)}×10^$halfExp"
+
+                    MathProblem(
+                        num1 = a.toDouble(),
+                        num2 = oddExp.toDouble(),
+                        operation = "Sci Notation",
+                        questionDisplay = "√($a×10^$oddExp)",
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-root-pow10",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = courseMant,
+                            exponent = halfExp,
+                            mantissaRelativeTol = 0.06,
+                            alsoAcceptDoubles = listOf(finalVal, trueVal)
+                        ),
+                        solutionSteps = listOf(
+                            "Rewrite odd exponent $oddExp as even $evenExp: √($a×10^$oddExp) = √($tenA×10^$evenExp)",
+                            "√$tenA ≈ ${formatCleanDouble(courseMant)} and √(10^$evenExp) = 10^$halfExp",
+                            "Result: $ansStr"
+                        )
+                    )
+                }
+            }
+
+            SciNotationSubtype.ALL -> generateScientificNotationQuestion(SciNotationSubtype.NORMALIZE)
+        }
+    }
+
+    // =========================================================================
+    // 3.3 pH and pOH Drills
+    // =========================================================================
+    fun generatePhQuestion(subtype: PhSubType = PhSubType.ALL): MathProblem {
+        val chosen = if (subtype == PhSubType.ALL) {
+            listOf(
+                PhSubType.CONC_TO_PH,
+                PhSubType.SCI_CONC_TO_PH,
+                PhSubType.PH_TO_CONC,
+                PhSubType.PH_POH_CONV,
+                PhSubType.PERCENT_WV_TO_PH
+            ).random()
+        } else {
+            subtype
+        }
+
+        return when (chosen) {
+            PhSubType.CONC_TO_PH -> {
+                val species = PhSpeciesData.allSpecies.random()
+                val useMilliMolar = Random.nextBoolean()
+                // Pick a concentration such that [H+] or [OH-] = m * 10^-exp with m in 1..5
+                val m = if (species.valence == 2) {
+                    // For diprotic, pick species conc cMant in {1, 2, 3, 4, 5} so 2*cMant in {2, 4, 6, 8, 10}
+                    listOf(1, 2, 3, 4, 5).random()
+                } else {
+                    listOf(1, 2, 3, 4, 5).random()
+                }
+                val baseExp = if (useMilliMolar) randomInRange(0, 2) else randomInRange(1, 4)
+                val molarExp = if (useMilliMolar) baseExp + 3 else baseExp
+                // Species concentration = m * 10^-molarExp M
+                val ionMantRaw = m * species.valence
+                val (ionMant, ionExp) = if (ionMantRaw == 10) {
+                    Pair(1, molarExp - 1)
+                } else {
+                    Pair(ionMantRaw, molarExp)
+                }
+                val logIonMant = if (ionMant == 1) 0.0 else CourseValuesData.lookup(MemoryTableCategory.LOG_10, ionMant)!!.courseValue
+                val pIonCourse = ionExp - logIonMant
+                val pIonTrue = ionExp - log10(ionMant.toDouble())
+                val phCourse = if (species.isAcid) pIonCourse else 14.0 - pIonCourse
+                val phTrue = if (species.isAcid) pIonTrue else 14.0 - pIonTrue
+
+                val concDisplay = if (useMilliMolar) {
+                    val mmVal = m * 10.0.pow((-baseExp).toDouble())
+                    "${formatCleanDouble(mmVal)} mM"
+                } else {
+                    val mVal = m * 10.0.pow((-baseExp).toDouble())
+                    "${formatCleanDouble(mVal)} M"
+                }
+
+                val ionSym = if (species.isAcid) "[H^+]" else "[OH^-]"
+                val pIonLabel = if (species.isAcid) "pH" else "pOH"
+                val steps = buildList {
+                    if (useMilliMolar) {
+                        add("Convert mM to M: $concDisplay = $m×10^−$molarExp M")
+                    }
+                    if (species.valence == 2) {
+                        add("${species.formula} is diprotic (×2): $ionSym = 2 × $m×10^−$molarExp = $ionMant×10^−$ionExp M")
+                    } else {
+                        add("${species.formula} is monoprotic: $ionSym = $ionMant×10^−$ionExp M")
+                    }
+                    add("$pIonLabel = $ionExp − log₁₀($ionMant) = $ionExp − ${formatCleanDouble(logIonMant)} = ${formatCleanDouble(pIonCourse)}")
+                    if (!species.isAcid) {
+                        add("pH = 14 − pOH = 14 − ${formatCleanDouble(pIonCourse)} = ${formatCleanDouble(phCourse)}")
+                    }
+                }
+
+                MathProblem(
+                    num1 = phCourse,
+                    num2 = 0.0,
+                    operation = "pH & pOH",
+                    questionDisplay = "pH of $concDisplay ${species.formula}",
+                    answer = formatCleanDouble(phCourse),
+                    numericAnswer = phCourse,
+                    topicTag = "ph-conc-to-ph",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = phCourse,
+                        tolerance = 0.1,
+                        alsoAcceptExact = listOf(phCourse, phTrue)
+                    ),
+                    solutionSteps = steps
+                )
+            }
+
+            PhSubType.SCI_CONC_TO_PH -> {
+                // Scientific-notation [H+] -> pH by course rounding method:
+                // Round mantissa to nearest integer m in 1..9, then pH = exp - log(m)
+                val mRounded = randomInRange(2, 9)
+                val offsetTenths = listOf(-2, -1, 0, 1, 2).random()
+                val rawMantissa = (mRounded * 10 + offsetTenths).coerceIn(11, 94) / 10.0
+                val roundedInt = rawMantissa.roundToInt().coerceIn(1, 9)
+                val exp = randomInRange(2, 6)
+                val logVal = if (roundedInt == 1) 0.0 else CourseValuesData.lookup(MemoryTableCategory.LOG_10, roundedInt)!!.courseValue
+                val phCourse = exp - logVal
+                val phTrue = exp - log10(rawMantissa)
+
+                MathProblem(
+                    num1 = rawMantissa,
+                    num2 = exp.toDouble(),
+                    operation = "pH & pOH",
+                    questionDisplay = "pH when [H^+] = ${formatCleanDouble(rawMantissa)}×10^-$exp M",
+                    answer = formatCleanDouble(phCourse),
+                    numericAnswer = phCourse,
+                    topicTag = "ph-sci-to-ph",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = phCourse,
+                        tolerance = 0.1,
+                        alsoAcceptExact = listOf(phCourse, phTrue)
+                    ),
+                    solutionSteps = listOf(
+                        "Round mantissa ${formatCleanDouble(rawMantissa)} to nearest integer: $roundedInt",
+                        "pH = $exp − log₁₀($roundedInt) = $exp − ${formatCleanDouble(logVal)} = ${formatCleanDouble(phCourse)}"
+                    )
+                )
+            }
+
+            PhSubType.PH_TO_CONC -> {
+                // Reverse: integer or constructible decimal pH -> [H+]
+                // Pick m in {1, 2, 3, 5} (log values: 0, 0.3, 0.5, 0.7) and exp in 2..6
+                val m = listOf(1, 2, 3, 5).random()
+                val exp = randomInRange(2, 6)
+                val logVal = if (m == 1) 0.0 else CourseValuesData.lookup(MemoryTableCategory.LOG_10, m)!!.courseValue
+                val ph = exp - logVal
+                val hConc = m * 10.0.pow((-exp).toDouble())
+                val ansStr = "$m×10^-$exp"
+
+                MathProblem(
+                    num1 = ph,
+                    num2 = 0.0,
+                    operation = "pH & pOH",
+                    questionDisplay = "[H^+] (in M) at pH = ${formatCleanDouble(ph)}",
+                    answer = ansStr,
+                    numericAnswer = hConc,
+                    topicTag = "ph-to-conc",
+                    unitText = "M",
+                    answerSpec = AnswerSpec.ScientificValue(
+                        mantissa = m.toDouble(),
+                        exponent = -exp,
+                        mantissaRelativeTol = 0.05
+                    ),
+                    solutionSteps = listOf(
+                        if (m == 1) {
+                            "Integer pH = $exp → [H^+] = 10^−$exp M"
+                        } else {
+                            "Rewrite pH = ${formatCleanDouble(ph)} = $exp − ${formatCleanDouble(logVal)} = $exp − log₁₀($m)"
+                        },
+                        "[H^+] = $m×10^−$exp M"
+                    )
+                )
+            }
+
+            PhSubType.PH_POH_CONV -> {
+                val givenPh = Random.nextBoolean()
+                val valTenths = randomInRange(15, 125)
+                val givenVal = valTenths / 10.0
+                val targetVal = (140 - valTenths) / 10.0
+                val prompt = if (givenPh) {
+                    "If pH = ${formatCleanDouble(givenVal)}, pOH = ?"
+                } else {
+                    "If pOH = ${formatCleanDouble(givenVal)}, pH = ?"
+                }
+
+                MathProblem(
+                    num1 = givenVal,
+                    num2 = 14.0,
+                    operation = "pH & pOH",
+                    questionDisplay = prompt,
+                    answer = formatCleanDouble(targetVal),
+                    numericAnswer = targetVal,
+                    topicTag = "ph-poh-conv",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = targetVal,
+                        tolerance = 0.1
+                    ),
+                    solutionSteps = listOf(
+                        "Use pH + pOH = 14 (at 25 °C)",
+                        "${if (givenPh) "pOH" else "pH"} = 14 − ${formatCleanDouble(givenVal)} = ${formatCleanDouble(targetVal)}"
+                    )
+                )
+            }
+
+            PhSubType.PERCENT_WV_TO_PH -> {
+                // % w/v of a strong base -> molarity via c = (10 * %) / M -> pOH -> pH
+                val base = PhSpeciesData.bases.random()
+                // Choose target molarity c = m * 10^-exp so % w/v = c * M / 10 is clean
+                val exp = listOf(1, 2).random() // 0.1 M or 0.01 M (or 0.2 M)
+                val m = if (base.valence == 2) 1 else listOf(1, 2).random()
+                val cMolar = m * 10.0.pow((-exp).toDouble())
+                val percentWv = (cMolar * base.molarMass) / 10.0
+                val ohMant = m * base.valence
+                val logOh = if (ohMant == 1) 0.0 else CourseValuesData.lookup(MemoryTableCategory.LOG_10, ohMant)!!.courseValue
+                val pohCourse = exp - logOh
+                val phCourse = 14.0 - pohCourse
+                val phTrue = 14.0 - (exp - log10(ohMant.toDouble()))
+
+                val pctStr = formatCleanDouble(percentWv)
+                MathProblem(
+                    num1 = percentWv,
+                    num2 = base.molarMass,
+                    operation = "pH & pOH",
+                    questionDisplay = "pH of $pctStr% w/v ${base.formula} (M=${formatCleanDouble(base.molarMass)})",
+                    answer = formatCleanDouble(phCourse),
+                    numericAnswer = phCourse,
+                    topicTag = "ph-percent-wv",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = phCourse,
+                        tolerance = 0.1,
+                        alsoAcceptExact = listOf(phCourse, phTrue)
+                    ),
+                    solutionSteps = listOf(
+                        "Molarity c = (10 × %w/v) ÷ M = (10 × $pctStr) ÷ ${formatCleanDouble(base.molarMass)} = ${formatCleanDouble(cMolar)} M",
+                        "[OH^-] = ${if (base.valence == 2) "2 × c = " else ""}$ohMant×10^−$exp M",
+                        "pOH = $exp − log₁₀($ohMant) = ${formatCleanDouble(pohCourse)}",
+                        "pH = 14 − pOH = 14 − ${formatCleanDouble(pohCourse)} = ${formatCleanDouble(phCourse)}"
+                    )
+                )
+            }
+
+            PhSubType.ALL -> generatePhQuestion(PhSubType.CONC_TO_PH)
+        }
+    }
+
+    // =========================================================================
+    // 3.4 Composite Logs and Roots
+    // =========================================================================
+    fun generateCompositeLogRootQuestion(
+        subtype: CompositeLogRootSubtype = CompositeLogRootSubtype.ALL
+    ): MathProblem {
+        val chosen = if (subtype == CompositeLogRootSubtype.ALL) {
+            listOf(
+                CompositeLogRootSubtype.LOG_SCI,
+                CompositeLogRootSubtype.LOG_PRODUCT,
+                CompositeLogRootSubtype.ROOT_SCI
+            ).random()
+        } else {
+            subtype
+        }
+
+        return when (chosen) {
+            CompositeLogRootSubtype.LOG_SCI -> {
+                // log10(k × 10^n) = log10(k) + n
+                val k = randomInRange(2, 9)
+                val n = listOf(-6, -5, -4, -3, -2, 2, 3, 4, 5).random()
+                val logKCourse = CourseValuesData.lookup(MemoryTableCategory.LOG_10, k)!!.courseValue
+                val ansCourse = ((logKCourse + n) * 100.0).roundToInt() / 100.0
+                val ansTrue = log10(k.toDouble()) + n
+
+                MathProblem(
+                    num1 = k.toDouble(),
+                    num2 = n.toDouble(),
+                    operation = "Logs & Roots",
+                    questionDisplay = "log₁₀($k×10^$n)",
+                    answer = formatCleanDouble(ansCourse),
+                    numericAnswer = ansCourse,
+                    topicTag = "composite-log-sci",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = ansCourse,
+                        tolerance = 0.06,
+                        alsoAcceptExact = listOf(ansCourse, ansTrue)
+                    ),
+                    solutionSteps = listOf(
+                        "log₁₀($k×10^$n) = log₁₀($k) + $n",
+                        "From table, log₁₀($k) ≈ ${formatCleanDouble(logKCourse)}",
+                        "${formatCleanDouble(logKCourse)} + ($n) = ${formatCleanDouble(ansCourse)}"
+                    )
+                )
+            }
+
+            CompositeLogRootSubtype.LOG_PRODUCT -> {
+                // log10(a * b) = log10(a) + log10(b) for composite numbers factorable into 2..9
+                val pairs = listOf(
+                    Pair(2, 7), // 14
+                    Pair(3, 5), // 15
+                    Pair(3, 7), // 21
+                    Pair(4, 7), // 28
+                    Pair(5, 7), // 35
+                    Pair(6, 7), // 42
+                    Pair(3, 8), // 24
+                    Pair(4, 9), // 36
+                    Pair(5, 9), // 45
+                    Pair(6, 9)  // 54
+                )
+                val (a, b) = pairs.random()
+                val prod = a * b
+                val logA = CourseValuesData.lookup(MemoryTableCategory.LOG_10, a)!!.courseValue
+                val logB = CourseValuesData.lookup(MemoryTableCategory.LOG_10, b)!!.courseValue
+                val ansCourse = ((logA + logB) * 100.0).roundToInt() / 100.0
+                val ansTrue = log10(prod.toDouble())
+
+                MathProblem(
+                    num1 = a.toDouble(),
+                    num2 = b.toDouble(),
+                    operation = "Logs & Roots",
+                    questionDisplay = "log₁₀($prod)",
+                    answer = formatCleanDouble(ansCourse),
+                    numericAnswer = ansCourse,
+                    topicTag = "composite-log-prod",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = ansCourse,
+                        tolerance = 0.06,
+                        alsoAcceptExact = listOf(ansCourse, ansTrue)
+                    ),
+                    solutionSteps = listOf(
+                        "Factor $prod = $a × $b",
+                        "log₁₀($prod) = log₁₀($a) + log₁₀($b) ≈ ${formatCleanDouble(logA)} + ${formatCleanDouble(logB)} = ${formatCleanDouble(ansCourse)}"
+                    )
+                )
+            }
+
+            CompositeLogRootSubtype.ROOT_SCI -> {
+                // √(a × 10^n) with even n
+                val a = randomInRange(2, 9)
+                val halfN = listOf(-4, -3, -2, -1, 1, 2, 3).random()
+                val n = halfN * 2
+                val rootACourse = CourseValuesData.lookup(MemoryTableCategory.SQUARE_ROOT, a)!!.courseValue
+                val rootATrue = sqrt(a.toDouble())
+                val ansVal = rootACourse * 10.0.pow(halfN.toDouble())
+                val trueVal = rootATrue * 10.0.pow(halfN.toDouble())
+                val ansStr = "${formatCleanDouble(rootACourse)}×10^$halfN"
+
+                MathProblem(
+                    num1 = a.toDouble(),
+                    num2 = n.toDouble(),
+                    operation = "Logs & Roots",
+                    questionDisplay = "√($a×10^$n)",
+                    answer = ansStr,
+                    numericAnswer = ansVal,
+                    topicTag = "composite-root-sci",
+                    answerSpec = AnswerSpec.ScientificValue(
+                        mantissa = rootACourse,
+                        exponent = halfN,
+                        mantissaRelativeTol = 0.05,
+                        alsoAcceptDoubles = listOf(ansVal, trueVal)
+                    ),
+                    solutionSteps = listOf(
+                        "√($a×10^$n) = √$a × 10^($n÷2)",
+                        "√$a ≈ ${formatCleanDouble(rootACourse)}, exponent = $halfN",
+                        "Result: $ansStr"
+                    )
+                )
+            }
+
+            CompositeLogRootSubtype.ALL -> generateCompositeLogRootQuestion(CompositeLogRootSubtype.LOG_SCI)
+        }
+    }
+
+    // =========================================================================
+    // 3.5 Cubes and Powers
+    // =========================================================================
+    fun generateCubesPowersQuestion(
+        subtype: CubesPowersSubtype = CubesPowersSubtype.ALL,
+        cubeRange: Pair<Int, Int> = Pair(1, 15)
+    ): MathProblem {
+        val chosen = if (subtype == CubesPowersSubtype.ALL) {
+            listOf(
+                CubesPowersSubtype.CUBES,
+                CubesPowersSubtype.POWERS,
+                CubesPowersSubtype.PERFECT_CUBE_ROOTS
+            ).random()
+        } else {
+            subtype
+        }
+
+        val minCube = cubeRange.first.coerceAtLeast(1)
+        val maxCube = cubeRange.second.coerceAtLeast(minCube)
+
+        return when (chosen) {
+            CubesPowersSubtype.CUBES -> {
+                val n = randomInRange(minCube, maxCube)
+                val ans = n.toLong() * n.toLong() * n.toLong()
+                MathProblem(
+                    num1 = n.toDouble(),
+                    num2 = 3.0,
+                    operation = "Cubes & Powers",
+                    questionDisplay = "$n^3",
+                    answer = ans.toString(),
+                    numericAnswer = ans.toDouble(),
+                    topicTag = "cubes",
+                    answerSpec = AnswerSpec.exact(ans),
+                    solutionSteps = listOf(
+                        "$n^2 = ${n * n}",
+                        "$n^3 = ${n * n} × $n = $ans"
+                    )
+                )
+            }
+
+            CubesPowersSubtype.POWERS -> {
+                // Small powers: 2^1..2^10, 3^1..3^6, 5^1..5^4
+                val base = listOf(2, 3, 5).random()
+                val exp = when (base) {
+                    2 -> randomInRange(1, 10)
+                    3 -> randomInRange(1, 6)
+                    else -> randomInRange(1, 4)
+                }
+                val ans = base.toDouble().pow(exp.toDouble()).roundToLong()
+                MathProblem(
+                    num1 = base.toDouble(),
+                    num2 = exp.toDouble(),
+                    operation = "Cubes & Powers",
+                    questionDisplay = "$base^$exp",
+                    answer = ans.toString(),
+                    numericAnswer = ans.toDouble(),
+                    topicTag = "powers",
+                    answerSpec = AnswerSpec.exact(ans),
+                    solutionSteps = listOf(
+                        "Multiply $base by itself $exp times: $base^$exp = $ans"
+                    )
+                )
+            }
+
+            CubesPowersSubtype.PERFECT_CUBE_ROOTS -> {
+                val n = randomInRange(minCube, maxCube)
+                val cube = n.toLong() * n.toLong() * n.toLong()
+                MathProblem(
+                    num1 = cube.toDouble(),
+                    num2 = 3.0,
+                    operation = "Cubes & Powers",
+                    questionDisplay = "∛$cube",
+                    answer = n.toString(),
+                    numericAnswer = n.toDouble(),
+                    topicTag = "cube-roots-exact",
+                    answerSpec = AnswerSpec.exact(n.toLong()),
+                    solutionSteps = listOf(
+                        "Since $n^3 = $cube, ∛$cube = $n"
+                    )
+                )
+            }
+
+            CubesPowersSubtype.ALL -> generateCubesPowersQuestion(CubesPowersSubtype.CUBES, cubeRange)
+        }
+    }
+
+    // =========================================================================
+    // 3.6 Approximation MCQ Helper
+    // =========================================================================
+    /**
+     * Converts any [MathProblem] into a 4-option multiple-choice question (2×2 grid).
+     * Options are guaranteed to be spaced at least `3 × tolerance` apart, with realistic distractors
+     * (power-of-10 off, wrong sign, neighboring value).
+     */
+    fun attachMcqOptions(
+        problem: MathProblem,
+        preset: TolerancePreset = TolerancePreset.NORMAL
+    ): MathProblem {
+        val correctStr = problem.answer
+        val correctVal = problem.numericAnswer
+        val minSpacing = AnswerChecker.minimumMcqSpacing(problem.answerSpec, preset)
+
+        val isSciDisplay = correctStr.contains("×10^")
+        val candidates = mutableListOf<Pair<Double, String>>()
+
+        if (isSciDisplay && problem.answerSpec is AnswerSpec.ScientificValue) {
+            val spec = problem.answerSpec
+            val m = spec.mantissa
+            val e = spec.exponent
+            // Realistic distractors: power-of-10 off, neighboring mantissas, wrong exponent sign
+            val rawPairs = listOf(
+                Pair(m, e + 1),
+                Pair(m, e - 1),
+                Pair((m + 1.2).coerceAtMost(9.8), e),
+                Pair((m - 1.1).coerceAtLeast(1.1), e),
+                Pair(m, if (e != 0) -e else e + 2),
+                Pair((m + 2.5).coerceAtMost(9.9), e),
+                Pair(m, e + 2)
+            )
+            for ((dm, de) in rawPairs) {
+                val dVal = dm * 10.0.pow(de.toDouble())
+                val dStr = "${formatCleanDouble(dm)}×10^$de"
+                candidates.add(Pair(dVal, dStr))
+            }
+        } else {
+            val step = maxOf(minSpacing * 1.35, if (abs(correctVal) >= 10) 2.0 else 0.25)
+            val rawOffsets = listOf(
+                correctVal + step,
+                correctVal - step,
+                correctVal + 2.1 * step,
+                correctVal - 2.1 * step,
+                if (abs(correctVal) > 0.1) correctVal * 10.0 else correctVal + 3.2 * step,
+                if (abs(correctVal) > minSpacing * 2) -correctVal else correctVal + 4.3 * step,
+                correctVal + 3.5 * step
+            )
+            for (dVal in rawOffsets) {
+                val rounded = if (correctStr.contains(".")) {
+                    val decimals = correctStr.substringAfter(".").length.coerceIn(1, 3)
+                    val factor = 10.0.pow(decimals.toDouble())
+                    (dVal * factor).roundToInt() / factor
+                } else {
+                    dVal.roundToLong().toDouble()
+                }
+                candidates.add(Pair(rounded, formatCleanDouble(rounded)))
+            }
+        }
+
+        val chosen = mutableListOf(Pair(correctVal, correctStr))
+        for (cand in candidates) {
+            if (chosen.size >= 4) break
+            if (cand.second != correctStr &&
+                chosen.none { it.second == cand.second } &&
+                chosen.all { abs(it.first - cand.first) >= minSpacing - 1e-9 }
+            ) {
+                chosen.add(cand)
+            }
+        }
+
+        // Fallback if still < 4 options: step outward by 1.5 * minSpacing
+        var k = 1
+        while (chosen.size < 4) {
+            val dVal = correctVal + k * maxOf(minSpacing * 1.5, 1.0)
+            val dStr = if (isSciDisplay && problem.answerSpec is AnswerSpec.ScientificValue) {
+                val e = problem.answerSpec.exponent + k
+                val m = problem.answerSpec.mantissa
+                "${formatCleanDouble(m)}×10^$e"
+            } else {
+                formatCleanDouble((dVal * 100.0).roundToInt() / 100.0)
+            }
+            val actualVal = ScientificInputParser.parse(dStr) ?: dVal
+            if (chosen.none { it.second == dStr } && chosen.all { abs(it.first - actualVal) >= minSpacing - 1e-9 }) {
+                chosen.add(Pair(actualVal, dStr))
+            }
+            k++
+        }
+
+        val shuffledOptions = chosen.map { it.second }.shuffled()
+        val correctIndex = shuffledOptions.indexOf(correctStr).coerceAtLeast(0)
+
+        return problem.copy(
+            mcqOptions = shuffledOptions,
+            answerSpec = AnswerSpec.Choice(
+                options = shuffledOptions,
+                correctIndex = correctIndex,
+                correctValue = correctStr
+            )
+        )
+    }
+
+    // =========================================================================
+    // 5.4 Constants Drill Generator
+    // =========================================================================
+    fun generateConstantQuestion(
+        subjects: Set<String> = emptySet(),
+        missedCounts: Map<String, Int> = emptyMap()
+    ): MathProblem {
+        val allLoaded = ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
+        val filtered = if (subjects.isEmpty()) {
+            allLoaded
+        } else {
+            allLoaded.filter { it.subject in subjects }.ifEmpty { allLoaded }
+        }
+        val entry: ConstantEntry = selectWeightedConstant(filtered, missedCounts)
+        val expectedVal = entry.numericValue
+        val ansStr = if (entry.exponent == 0) {
+            formatCleanDouble(entry.mantissa)
+        } else {
+            "${formatCleanDouble(entry.mantissa)}×10^${entry.exponent}"
+        }
+        val unitPlain = entry.unit.toPlainString()
+        val relTol = entry.relativeToleranceOverride ?: 0.01
+
+        val alternateDoubles = buildList {
+            add(expectedVal)
+            entry.alternateValues.forEach { alt ->
+                add(alt.mantissa * 10.0.pow(alt.exponent.toDouble()))
+            }
+        }
+
+        val steps = buildList {
+            add("${entry.name} (${entry.symbol.toPlainString()}): $ansStr $unitPlain")
+            entry.notes?.let { add(it) }
+            if (entry.alternateValues.isNotEmpty()) {
+                val altSummary = entry.alternateValues.joinToString("; ") { alt ->
+                    val s = if (alt.exponent == 0) formatCleanDouble(alt.mantissa) else "${formatCleanDouble(alt.mantissa)}×10^${alt.exponent}"
+                    "$s ${alt.unit.toPlainString()}"
+                }
+                add("Alternate units: $altSummary")
+            }
+        }
+
+        return MathProblem(
+            num1 = entry.mantissa,
+            num2 = entry.exponent.toDouble(),
+            operation = "Constants",
+            questionDisplay = "${entry.name} (${entry.symbol.toPlainString()})",
+            answer = ansStr,
+            numericAnswer = expectedVal,
+            topicTag = "constant-${entry.id}",
+            answerSpec = AnswerSpec.ScientificValue(
+                mantissa = entry.mantissa,
+                exponent = entry.exponent,
+                mantissaRelativeTol = relTol,
+                requireNormalized = false,
+                alsoAcceptDoubles = alternateDoubles
+            ),
+            unitText = unitPlain,
+            subjectLabel = entry.subject,
+            solutionSteps = steps,
+            confusableIds = entry.confusableWith,
+            constantSymbol = entry.symbol,
+            structuredUnit = entry.unit
+        )
+    }
+
+    private fun selectWeightedConstant(
+        entries: List<ConstantEntry>,
+        missedCounts: Map<String, Int>
+    ): ConstantEntry {
+        if (entries.size <= 1) return entries.first()
+        val weights = entries.map { e -> 1 + (missedCounts[e.id] ?: 0) * 2 }
+        val totalWeight = weights.sum()
+        var roll = Random.nextInt(totalWeight)
+        for (i in entries.indices) {
+            roll -= weights[i]
+            if (roll < 0) return entries[i]
+        }
+        return entries.last()
+    }
+
+    internal fun formatCleanDouble(v: Double): String {
+        val roundedLong = v.roundToLong()
+        return if (abs(v - roundedLong.toDouble()) < 1e-9) {
+            roundedLong.toString()
+        } else {
+            String.format(Locale.US, "%.4f", v).trimEnd('0').trimEnd('.')
+        }
     }
 }

@@ -248,13 +248,20 @@ fun MainMenuScreen(
                     Triple(GameMode.MULTIPLICATION_TABLE, SpecializedIcon.Resource(R.drawable.ic_tables), "Tables"),
                     Triple(GameMode.FACTOR_FINDING, SpecializedIcon.Resource(R.drawable.ic_factors), "Factors"),
                     Triple(GameMode.SQUARE, SpecializedIcon.Glyph("x²"), "Squares"),
+                    Triple(GameMode.CUBES_AND_POWERS, SpecializedIcon.Glyph("x³"), "Cubes"),
                     Triple(GameMode.FRACTION, SpecializedIcon.Glyph("½"), "Fractions"),
                     Triple(GameMode.PERCENTAGE, SpecializedIcon.Glyph("%"), "Percent"),
                     Triple(GameMode.SQUARE_ROOT, SpecializedIcon.Glyph("√"), "Roots"),
                     Triple(GameMode.APPROXIMATION, SpecializedIcon.Glyph("≈"), "Estimation"),
                     Triple(GameMode.NUMBER_SERIES, SpecializedIcon.Vector(Icons.Default.LinearScale), "Series"),
                     Triple(GameMode.RATIO, SpecializedIcon.Glyph("::"), "Ratio"),
-                    Triple(GameMode.CHAIN_CALCULATION, SpecializedIcon.Vector(Icons.Default.MultipleStop), "Chain")
+                    Triple(GameMode.CHAIN_CALCULATION, SpecializedIcon.Vector(Icons.Default.MultipleStop), "Chain"),
+                    Triple(GameMode.MEMORY_TABLES, SpecializedIcon.Glyph("lg"), "Memory"),
+                    Triple(GameMode.SCIENTIFIC_NOTATION, SpecializedIcon.Glyph("10ⁿ"), "Sci Not."),
+                    Triple(GameMode.PH_POH, SpecializedIcon.Glyph("pH"), "pH & pOH"),
+                    Triple(GameMode.COMPOSITE_LOGS_ROOTS, SpecializedIcon.Glyph("√lg"), "Logs/Roots"),
+                    Triple(GameMode.CONSTANTS, SpecializedIcon.Glyph("kₑ"), "Constants"),
+                    Triple(GameMode.SPEED_ROUND, SpecializedIcon.Glyph("⚡"), "Speed Rnd")
                 )
 
                 // Grid of 3 columns

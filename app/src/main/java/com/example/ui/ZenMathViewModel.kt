@@ -3,6 +3,7 @@ package com.example.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.MemoryTableCategory
 import com.example.data.PreferencesManager
 import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
@@ -10,16 +11,21 @@ import com.example.data.ZenMathDatabase
 import com.example.data.ZenMathRepository
 import com.example.domain.AnswerChecker
 import com.example.domain.AnswerSpec
+import com.example.domain.CompositeLogRootSubtype
+import com.example.domain.CubesPowersSubtype
 import com.example.domain.DateBucketUtils
 import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
 import com.example.domain.GameMode
 import com.example.domain.GameSettings
 import com.example.domain.MathProblem
+import com.example.domain.MemoryDirection
 import com.example.domain.MonotonicClock
+import com.example.domain.PhSubType
 import com.example.domain.QuestionGenerator
 import com.example.domain.QuestionResult
 import com.example.domain.RecentPerformanceDay
+import com.example.domain.SciNotationSubtype
 import com.example.domain.ScientificInputParser
 import com.example.domain.StatsData
 import com.example.notifications.NotificationScheduler
@@ -124,6 +130,31 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _fractionUseCourseValues = MutableStateFlow(false)
     val fractionUseCourseValues: StateFlow<Boolean> = _fractionUseCourseValues.asStateFlow()
 
+    // Phase 3 & Phase 5 Setup Configuration
+    private val _memoryDirection = MutableStateFlow(MemoryDirection.MIXED)
+    val memoryDirection: StateFlow<MemoryDirection> = _memoryDirection.asStateFlow()
+
+    private val _memoryCategories = MutableStateFlow(MemoryTableCategory.entries.toSet())
+    val memoryCategories: StateFlow<Set<MemoryTableCategory>> = _memoryCategories.asStateFlow()
+
+    private val _sciNotationSubtype = MutableStateFlow(SciNotationSubtype.ALL)
+    val sciNotationSubtype: StateFlow<SciNotationSubtype> = _sciNotationSubtype.asStateFlow()
+
+    private val _phSubType = MutableStateFlow(PhSubType.ALL)
+    val phSubType: StateFlow<PhSubType> = _phSubType.asStateFlow()
+
+    private val _compositeLogRootSubtype = MutableStateFlow(CompositeLogRootSubtype.ALL)
+    val compositeLogRootSubtype: StateFlow<CompositeLogRootSubtype> = _compositeLogRootSubtype.asStateFlow()
+
+    private val _cubesPowersSubtype = MutableStateFlow(CubesPowersSubtype.ALL)
+    val cubesPowersSubtype: StateFlow<CubesPowersSubtype> = _cubesPowersSubtype.asStateFlow()
+
+    private val _cubeRange = MutableStateFlow(Pair(1, 15))
+    val cubeRange: StateFlow<Pair<Int, Int>> = _cubeRange.asStateFlow()
+
+    private val _mcqEnabled = MutableStateFlow(false)
+    val mcqEnabled: StateFlow<Boolean> = _mcqEnabled.asStateFlow()
+
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
@@ -208,6 +239,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         _selectedMode.value = mode
         _allowRemainder.value = false
         _allowNegativeResults.value = false
+        _mcqEnabled.value = false
         if (mode == GameMode.MULTIPLICATION_TABLE || mode == GameMode.FACTOR_FINDING) {
             _currentScreen.value = ZenScreen.SPECIAL_MENU
         } else {
@@ -228,7 +260,23 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setFractionDenRange(range: Pair<Int, Int>) { _fractionDenRange.value = range }
     fun setFractionNumRange(range: Pair<Int, Int>) { _fractionNumRange.value = range }
     fun setFractionUseCourseValues(v: Boolean) { _fractionUseCourseValues.value = v }
+    fun setMemoryDirection(dir: MemoryDirection) { _memoryDirection.value = dir }
+    fun setMemoryCategories(cats: Set<MemoryTableCategory>) {
+        if (cats.isNotEmpty()) _memoryCategories.value = cats
+    }
+    fun setSciNotationSubtype(sub: SciNotationSubtype) { _sciNotationSubtype.value = sub }
+    fun setPhSubType(sub: PhSubType) { _phSubType.value = sub }
+    fun setCompositeLogRootSubtype(sub: CompositeLogRootSubtype) { _compositeLogRootSubtype.value = sub }
+    fun setCubesPowersSubtype(sub: CubesPowersSubtype) { _cubesPowersSubtype.value = sub }
+    fun setCubeRange(range: Pair<Int, Int>) { _cubeRange.value = range }
+    fun setMcqEnabled(enabled: Boolean) { _mcqEnabled.value = enabled }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
+
+    fun selectMcqOption(option: String) {
+        if (isProcessingAnswer || _feedback.value != FeedbackType.NONE) return
+        _userInput.value = option
+        submitAnswer()
+    }
 
     // Gameplay
     fun startGame() {
@@ -540,7 +588,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         val diff = _difficulty.value
         val digitsVal = _digits.value
 
-        val problem: MathProblem = when (mode) {
+        val baseProblem: MathProblem = when (mode) {
             GameMode.ADDITION -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.SUBTRACTION -> QuestionGenerator.generateStandardQuestion("-", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.MULTIPLICATION -> QuestionGenerator.generateStandardQuestion("*", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
@@ -590,7 +638,31 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     solutionSteps = gen.solutionSteps
                 )
             }
+            GameMode.MEMORY_TABLES -> QuestionGenerator.generateMemoryTableQuestion(
+                direction = _memoryDirection.value,
+                categories = _memoryCategories.value
+            )
+            GameMode.SCIENTIFIC_NOTATION -> QuestionGenerator.generateScientificNotationQuestion(
+                subtype = _sciNotationSubtype.value
+            )
+            GameMode.PH_POH -> QuestionGenerator.generatePhQuestion(
+                subtype = _phSubType.value
+            )
+            GameMode.COMPOSITE_LOGS_ROOTS -> QuestionGenerator.generateCompositeLogRootQuestion(
+                subtype = _compositeLogRootSubtype.value
+            )
+            GameMode.CUBES_AND_POWERS -> QuestionGenerator.generateCubesPowersQuestion(
+                subtype = _cubesPowersSubtype.value,
+                cubeRange = _cubeRange.value
+            )
+            GameMode.CONSTANTS -> QuestionGenerator.generateConstantQuestion()
             else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
+        }
+
+        val problem = if (_mcqEnabled.value && mode.supportsMcq) {
+            QuestionGenerator.attachMcqOptions(baseProblem, settingsFlow.value.tolerancePreset)
+        } else {
+            baseProblem
         }
 
         _currentProblem.value = problem

@@ -67,7 +67,8 @@ fun GameScreen(
     onKey: (String) -> Unit,
     onQuit: () -> Unit,
     modifier: Modifier = Modifier,
-    hapticFeedbackEnabled: Boolean = true
+    hapticFeedbackEnabled: Boolean = true,
+    onSelectMcqOption: (String) -> Unit = {}
 ) {
     val colors = ZenTheme.colors
 
@@ -399,17 +400,80 @@ fun GameScreen(
             }
         }
 
-        // Bottom Keypad
-        Keypad(
-            onKey = onKey,
-            disabled = feedback != FeedbackType.NONE,
-            negativeEnabled = negativeEnabled,
-            showFraction = showFraction,
-            showDecimal = showDecimal,
-            showScientific = showScientific,
-            isExponentActive = isExponentActive,
-            hapticFeedbackEnabled = hapticFeedbackEnabled,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Bottom Area: 2×2 Multiple Choice Grid OR Numeric/Scientific Keypad
+        val mcqOptions = problem?.mcqOptions
+        if (mcqOptions != null && mcqOptions.size >= 4) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .testTag("mcq_grid"),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                for (rowIdx in 0..1) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        for (colIdx in 0..1) {
+                            val optIdx = rowIdx * 2 + colIdx
+                            val option = mcqOptions[optIdx]
+                            val isSelected = userInput == option
+                            val isCorrectOpt = option == problem.answer
+                            val shape = RoundedCornerShape(18.dp)
+
+                            val cardBg = when {
+                                feedback != FeedbackType.NONE && isCorrectOpt -> colors.correct.copy(alpha = 0.2f)
+                                feedback == FeedbackType.INCORRECT && isSelected -> colors.incorrect.copy(alpha = 0.2f)
+                                isSelected -> colors.primary.copy(alpha = 0.15f)
+                                else -> colors.card
+                            }
+                            val borderColor = when {
+                                feedback != FeedbackType.NONE && isCorrectOpt -> colors.correct
+                                feedback == FeedbackType.INCORRECT && isSelected -> colors.incorrect
+                                isSelected -> colors.primary
+                                else -> colors.cardBorder
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(74.dp)
+                                    .clip(shape)
+                                    .background(cardBg)
+                                    .border(1.5.dp, borderColor, shape)
+                                    .clickable(enabled = feedback == FeedbackType.NONE) {
+                                        onSelectMcqOption(option)
+                                    }
+                                    .padding(horizontal = 10.dp)
+                                    .testTag("mcq_option_$optIdx"),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = RichTextHelper.formatMathText(option),
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = RichTextHelper.MathFontFamily,
+                                    color = colors.textMain,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Keypad(
+                onKey = onKey,
+                disabled = feedback != FeedbackType.NONE,
+                negativeEnabled = negativeEnabled,
+                showFraction = showFraction,
+                showDecimal = showDecimal,
+                showScientific = showScientific,
+                isExponentActive = isExponentActive,
+                hapticFeedbackEnabled = hapticFeedbackEnabled,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

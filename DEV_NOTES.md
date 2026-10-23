@@ -101,4 +101,12 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
   - Reset `allowRemainder` and `allowNegativeResults` on mode selection and exposed both toggles on `MIXED` setup.
   - Updated adaptive difficulty to step down (`HARD -> MEDIUM -> EASY -> digits - 1`) when session accuracy < 50%.
   - Extended Fraction denominators up to 15 (`2, 4, 6, 8, 10, 12, 15`) and added the "Course Values" toggle.
-  - Next step: Phase 3 (New Content: Revision Tables and Drills).
+- **Phase 3 (New Content: Revision Tables and Drills — Section 3)**:
+  - Implemented `generateMemoryTableQuestion` (Forward, Reverse, Mixed across Square Roots, Cube Roots, Base-10 Logs, and Reciprocals `1/11..1/15`, accepting both 13 and 14 for `0.07` and both 8 and 9 for `∛? ≈ 2.0`).
+  - Implemented `generateScientificNotationQuestion` (`NORMALIZE`, `DECIMAL_SHIFT`, `MULTIPLY_DIVIDE`, and `ROOT_POWER_TEN` including odd exponents rewritten to even exponents, with full steps).
+  - Implemented `generatePhQuestion` (`CONC_TO_PH` in M/mM for monoprotic/diprotic strong acids & bases, `SCI_CONC_TO_PH` via course integer-rounding method, `PH_TO_CONC` from constructible log values, `PH_POH_CONV`, and `PERCENT_WV_TO_PH` via `c = 10 × % / M`, tolerance `0.1`).
+  - Implemented `generateCompositeLogRootQuestion` (`log10(k × 10^n)`, `log10(a × b)`, `√(a × 10^n)`).
+  - Implemented `generateCubesPowersQuestion` (`n^3` configurable 1..15, `2^1..10`, `3^1..6`, `5^1..4`, and `∛(n^3)`).
+  - Implemented `attachMcqOptions` and 2×2 Multiple Choice UI (`GameScreen`) with options spaced `>= 3 × tolerance` apart.
+  - Extended `RevisionScreen` with tabs for Powers (Squares + `(10+b)^2` trick, Cubes, Small Powers), Course Values (Memory Tables), pH & Logs (Formulas, Worked Examples, Species Table), and Constants.
+  - Next step: Phase 4 (Learning Aids).

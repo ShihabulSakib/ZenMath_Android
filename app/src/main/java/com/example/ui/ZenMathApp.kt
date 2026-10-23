@@ -60,6 +60,14 @@ fun ZenMathApp(
     val fractionDenRange by viewModel.fractionDenRange.collectAsState()
     val fractionNumRange by viewModel.fractionNumRange.collectAsState()
     val fractionUseCourseValues by viewModel.fractionUseCourseValues.collectAsState()
+    val memoryDirection by viewModel.memoryDirection.collectAsState()
+    val memoryCategories by viewModel.memoryCategories.collectAsState()
+    val sciNotationSubtype by viewModel.sciNotationSubtype.collectAsState()
+    val phSubType by viewModel.phSubType.collectAsState()
+    val compositeLogRootSubtype by viewModel.compositeLogRootSubtype.collectAsState()
+    val cubesPowersSubtype by viewModel.cubesPowersSubtype.collectAsState()
+    val cubeRange by viewModel.cubeRange.collectAsState()
+    val mcqEnabled by viewModel.mcqEnabled.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -131,6 +139,14 @@ fun ZenMathApp(
                         fractionDenRange = fractionDenRange,
                         fractionNumRange = fractionNumRange,
                         fractionUseCourseValues = fractionUseCourseValues,
+                        memoryDirection = memoryDirection,
+                        memoryCategories = memoryCategories,
+                        sciNotationSubtype = sciNotationSubtype,
+                        phSubType = phSubType,
+                        compositeLogRootSubtype = compositeLogRootSubtype,
+                        cubesPowersSubtype = cubesPowersSubtype,
+                        cubeRange = cubeRange,
+                        mcqEnabled = mcqEnabled,
                         onDigitsChange = { viewModel.setDigits(it) },
                         onDifficultyChange = { viewModel.setDifficulty(it) },
                         onAllowRemainderChange = { viewModel.setAllowRemainder(it) },
@@ -143,6 +159,14 @@ fun ZenMathApp(
                         onFractionDenRangeChange = { viewModel.setFractionDenRange(it) },
                         onFractionNumRangeChange = { viewModel.setFractionNumRange(it) },
                         onFractionUseCourseValuesChange = { viewModel.setFractionUseCourseValues(it) },
+                        onMemoryDirectionChange = { viewModel.setMemoryDirection(it) },
+                        onMemoryCategoriesChange = { viewModel.setMemoryCategories(it) },
+                        onSciNotationSubtypeChange = { viewModel.setSciNotationSubtype(it) },
+                        onPhSubTypeChange = { viewModel.setPhSubType(it) },
+                        onCompositeLogRootSubtypeChange = { viewModel.setCompositeLogRootSubtype(it) },
+                        onCubesPowersSubtypeChange = { viewModel.setCubesPowersSubtype(it) },
+                        onCubeRangeChange = { viewModel.setCubeRange(it) },
+                        onMcqEnabledChange = { viewModel.setMcqEnabled(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )
@@ -174,7 +198,8 @@ fun ZenMathApp(
                         allowNegativeResults = allowNegativeResults,
                         onKey = { key -> viewModel.handleKeyPress(key) },
                         onQuit = { viewModel.onQuitGame() },
-                        hapticFeedbackEnabled = settings.hapticFeedback
+                        hapticFeedbackEnabled = settings.hapticFeedback,
+                        onSelectMcqOption = { opt -> viewModel.selectMcqOption(opt) }
                     )
                 }
 

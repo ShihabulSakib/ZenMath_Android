@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `DateBucketUtils` for timezone-aware local calendar day bucketing and `MonotonicClock` for millisecond-accurate timing.
 - Added dedicated data files (`CourseValuesData.kt`, `PhSpeciesData.kt`, `ConstantsSchema.kt`, `ConstantsData.kt`).
 - Added validated custom range editors for Square and Square Root modes and extended Fraction denominators up to 15 with a "Course Values" toggle.
+- Added Memory Tables drill (Forward, Reverse, Mixed) and Revision tab for Square Roots, Cube Roots, Base-10 Logs, and Reciprocals (`1/11..1/15`).
+- Added Scientific Notation drill (Normalize, Decimal Shift, Multiply/Divide, and Square Roots of Powers of 10).
+- Added pH & pOH drill (Concentration M/mM to pH, Scientific `[H+]` course rounding to pH, Reverse pH to `[H+]`, pH ↔ pOH, and `% w/v` of strong base to pH) and Revision tab with worked examples.
+- Added Composite Logs & Roots (`log(k×10^n)`, `log(a×b)`, `√(a×10^n)`) and Cubes & Powers (`n^3` 1..15, `2^n/3^n/5^n`, `∛(n^3)`) drills and Revision sections.
+- Added 4-option 2×2 Multiple Choice mode toggle for Approximation and new scientific/table drills with options spaced at least `3 × tolerance` apart.
 
 ### Fixed
 - Hid Difficulty slider on setup screens for modes that do not use difficulty.

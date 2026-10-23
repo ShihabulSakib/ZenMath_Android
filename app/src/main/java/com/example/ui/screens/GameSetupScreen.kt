@@ -51,8 +51,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.MemoryTableCategory
+import com.example.domain.CompositeLogRootSubtype
+import com.example.domain.CubesPowersSubtype
 import com.example.domain.Difficulty
 import com.example.domain.GameMode
+import com.example.domain.MemoryDirection
+import com.example.domain.PhSubType
+import com.example.domain.SciNotationSubtype
 import com.example.ui.components.ZenSlider
 import com.example.ui.components.ZenToggle
 import com.example.ui.theme.ZenTheme
@@ -72,6 +78,14 @@ fun GameSetupScreen(
     fractionDenRange: Pair<Int, Int>,
     fractionNumRange: Pair<Int, Int>,
     fractionUseCourseValues: Boolean = false,
+    memoryDirection: MemoryDirection = MemoryDirection.MIXED,
+    memoryCategories: Set<MemoryTableCategory> = MemoryTableCategory.entries.toSet(),
+    sciNotationSubtype: SciNotationSubtype = SciNotationSubtype.ALL,
+    phSubType: PhSubType = PhSubType.ALL,
+    compositeLogRootSubtype: CompositeLogRootSubtype = CompositeLogRootSubtype.ALL,
+    cubesPowersSubtype: CubesPowersSubtype = CubesPowersSubtype.ALL,
+    cubeRange: Pair<Int, Int> = Pair(1, 15),
+    mcqEnabled: Boolean = false,
     onDigitsChange: (Int) -> Unit,
     onDifficultyChange: (Difficulty) -> Unit,
     onAllowRemainderChange: (Boolean) -> Unit,
@@ -84,6 +98,14 @@ fun GameSetupScreen(
     onFractionDenRangeChange: (Pair<Int, Int>) -> Unit,
     onFractionNumRangeChange: (Pair<Int, Int>) -> Unit,
     onFractionUseCourseValuesChange: (Boolean) -> Unit = {},
+    onMemoryDirectionChange: (MemoryDirection) -> Unit = {},
+    onMemoryCategoriesChange: (Set<MemoryTableCategory>) -> Unit = {},
+    onSciNotationSubtypeChange: (SciNotationSubtype) -> Unit = {},
+    onPhSubTypeChange: (PhSubType) -> Unit = {},
+    onCompositeLogRootSubtypeChange: (CompositeLogRootSubtype) -> Unit = {},
+    onCubesPowersSubtypeChange: (CubesPowersSubtype) -> Unit = {},
+    onCubeRangeChange: (Pair<Int, Int>) -> Unit = {},
+    onMcqEnabledChange: (Boolean) -> Unit = {},
     onStart: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -518,6 +540,233 @@ fun GameSetupScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Memory Tables Setup
+                if (mode == GameMode.MEMORY_TABLES) {
+                    item {
+                        SectionHeader(title = "DRILL DIRECTION")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            MemoryDirection.entries.forEach { dir ->
+                                val selected = memoryDirection == dir
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(46.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onMemoryDirectionChange(dir) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = dir.label,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SectionHeader(title = "INCLUDED TABLES")
+                        val cardShape = RoundedCornerShape(20.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(cardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, cardShape)
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Column {
+                                MemoryTableCategory.entries.forEach { cat ->
+                                    val checked = cat in memoryCategories
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = cat.displayName,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = colors.textMain
+                                        )
+                                        ZenToggle(
+                                            checked = checked,
+                                            onCheckedChange = { newVal ->
+                                                val updated = if (newVal) memoryCategories + cat else memoryCategories - cat
+                                                if (updated.isNotEmpty()) {
+                                                    onMemoryCategoriesChange(updated)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Scientific Notation Setup
+                if (mode == GameMode.SCIENTIFIC_NOTATION) {
+                    item {
+                        SectionHeader(title = "QUESTION TYPE")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SciNotationSubtype.entries.forEach { sub ->
+                                val selected = sciNotationSubtype == sub
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onSciNotationSubtypeChange(sub) }
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = sub.label,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textMain
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // pH & pOH Setup
+                if (mode == GameMode.PH_POH) {
+                    item {
+                        SectionHeader(title = "QUESTION TYPE")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            PhSubType.entries.forEach { sub ->
+                                val selected = phSubType == sub
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onPhSubTypeChange(sub) }
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = sub.label,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textMain
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Composite Logs & Roots Setup
+                if (mode == GameMode.COMPOSITE_LOGS_ROOTS) {
+                    item {
+                        SectionHeader(title = "QUESTION TYPE")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CompositeLogRootSubtype.entries.forEach { sub ->
+                                val selected = compositeLogRootSubtype == sub
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onCompositeLogRootSubtypeChange(sub) }
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = sub.label,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textMain
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Cubes & Powers Setup
+                if (mode == GameMode.CUBES_AND_POWERS) {
+                    item {
+                        SectionHeader(title = "QUESTION TYPE")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CubesPowersSubtype.entries.forEach { sub ->
+                                val selected = cubesPowersSubtype == sub
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onCubesPowersSubtypeChange(sub) }
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = sub.label,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textMain
+                                    )
+                                }
+                            }
+                        }
+
+                        if (cubesPowersSubtype != CubesPowersSubtype.POWERS) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            SectionHeader(title = "CUBE RANGE (DEFAULT 1–15)")
+                            val cardShape = RoundedCornerShape(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(cardShape)
+                                    .background(colors.card)
+                                    .border(1.dp, colors.cardBorder, cardShape)
+                                    .padding(16.dp)
+                            ) {
+                                CustomRangeEditor(
+                                    range = cubeRange,
+                                    onRangeChange = onCubeRangeChange,
+                                    testTagPrefix = "cube_custom"
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 3.6 Multiple Choice (2×2) per-session setup toggle
+                if (mode.supportsMcq) {
+                    item {
+                        SectionHeader(title = "ANSWER FORMAT")
+                        ToggleCardRow(
+                            title = "Multiple Choice (2×2)",
+                            subtitle = if (mcqEnabled) "4 options spaced ≥ 3× tolerance apart" else "Free numeric / scientific keypad entry",
+                            icon = Icons.Default.Calculate,
+                            checked = mcqEnabled,
+                            onCheckedChange = onMcqEnabledChange
+                        )
                     }
                 }
 
