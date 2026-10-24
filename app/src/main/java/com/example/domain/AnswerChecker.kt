@@ -318,10 +318,11 @@ object AnswerChecker {
                 if (allExact.any { abs(userVal - it) <= EXACT_FLOAT_EPSILON }) {
                     return true
                 }
-                // 2. Check within absolute tolerance of expected or any stored course value
+                // 2. Check within absolute tolerance of expected
                 val tol = spec.tolerance + EXACT_FLOAT_EPSILON
                 if (abs(userVal - spec.expected) <= tol) return true
-                allExact.any { abs(userVal - it) <= tol }
+                // Check within absolute tolerance of exact course values (if specified)
+                spec.exactCourseValues.any { abs(userVal - it) <= tol }
             }
 
             is AnswerSpec.RelativeTolerance -> {

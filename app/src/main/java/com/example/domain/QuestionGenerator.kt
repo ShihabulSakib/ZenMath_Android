@@ -224,6 +224,8 @@ object QuestionGenerator {
         val question: String
         val answer: Double
         val steps: List<String>
+        val n1: Double
+        val n2: Double
 
         when (diff) {
             Difficulty.EASY -> {
@@ -257,6 +259,8 @@ object QuestionGenerator {
                     }
                 }
                 question = "$pct% of $baseValue"
+                n1 = pct.toDouble()
+                n2 = baseValue.toDouble()
             }
 
             Difficulty.MEDIUM -> {
@@ -272,6 +276,8 @@ object QuestionGenerator {
                         "Write $pct% as ${pct / gcd(pct, 100)}/${100 / gcd(pct, 100)}",
                         "($pct × $value) ÷ 100 = ${answer.roundToLong()}"
                     )
+                    n1 = pct.toDouble()
+                    n2 = value.toDouble()
                 } else {
                     val result = (value.toDouble() * pct.toDouble()) / 100.0
                     val resultInt = result.roundToInt()
@@ -281,17 +287,19 @@ object QuestionGenerator {
                         "Compute ($resultInt ÷ $value) × 100",
                         "Percentage = ${answer.roundToLong()}%"
                     )
+                    n1 = resultInt.toDouble()
+                    n2 = value.toDouble()
                 }
             }
 
             Difficulty.HARD -> {
                 // Hard: fractional percentages (12.5%, 37.5%, 62.5%, 87.5%) and larger bases
-                data class FractionalPct(val label: String, val num: Int, val den: Int)
+                data class FractionalPct(val label: String, val num: Int, val den: Int, val pctVal: Double)
                 val hardFractions = listOf(
-                    FractionalPct("12.5%", 1, 8),
-                    FractionalPct("37.5%", 3, 8),
-                    FractionalPct("62.5%", 5, 8),
-                    FractionalPct("87.5%", 7, 8)
+                    FractionalPct("12.5%", 1, 8, 12.5),
+                    FractionalPct("37.5%", 3, 8, 37.5),
+                    FractionalPct("62.5%", 5, 8, 62.5),
+                    FractionalPct("87.5%", 7, 8, 87.5)
                 )
                 if (Random.nextBoolean()) {
                     val chosen = hardFractions[randomInRange(0, hardFractions.size - 1)]
@@ -305,6 +313,8 @@ object QuestionGenerator {
                         "Divide base by ${chosen.den}: $baseValue ÷ ${chosen.den} = $k",
                         "Multiply by ${chosen.num}: $k × ${chosen.num} = $ansLong"
                     )
+                    n1 = chosen.pctVal
+                    n2 = baseValue.toDouble()
                 } else {
                     val hardPcts = intArrayOf(15, 35, 45, 65, 85, 115, 125, 135, 175)
                     val pct = hardPcts[randomInRange(0, hardPcts.size - 1)]
@@ -319,14 +329,16 @@ object QuestionGenerator {
                         "Split $pct% into tens and fives on base $baseValue (10% = ${String.format(Locale.US, "%.1f", tenPct)})",
                         "($pct × $baseValue) ÷ 100 = $ansLong"
                     )
+                    n1 = pct.toDouble()
+                    n2 = baseValue.toDouble()
                 }
             }
         }
 
         val ansLong = answer.roundToLong()
         return MathProblem(
-            num1 = 0.0,
-            num2 = 0.0,
+            num1 = n1,
+            num2 = n2,
             operation = "%",
             questionDisplay = question,
             answer = ansLong.toString(),
@@ -346,7 +358,7 @@ object QuestionGenerator {
         val root = randomInRange(minRoot, maxRoot)
         val square = root * root
         return MathProblem(
-            num1 = 0.0,
+            num1 = square.toDouble(),
             num2 = 0.0,
             operation = "√",
             questionDisplay = "√$square",

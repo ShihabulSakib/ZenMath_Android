@@ -19,7 +19,6 @@ enum class GameMode(
     val usesDifficulty: Boolean = true,
     val supportsMcqOption: Boolean = false
 ) {
-    val supportsMcq: Boolean get() = supportsMcqOption
     ADDITION("addition", "Addition", "+", usesDifficulty = true),
     SUBTRACTION("subtraction", "Subtraction", "−", usesDifficulty = true),
     MULTIPLICATION("multiplication", "Multiplication", "×", usesDifficulty = true),
@@ -45,6 +44,8 @@ enum class GameMode(
     CONSTANTS("constants", "Constants", "kₑ", usesDifficulty = false, supportsMcqOption = true),
     SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = false),
     WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false);
+
+    val supportsMcq: Boolean get() = supportsMcqOption
 
     companion object {
         fun fromId(id: String): GameMode {
