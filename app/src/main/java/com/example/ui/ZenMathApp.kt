@@ -245,9 +245,7 @@ fun ZenMathApp(
                 }
 
                 ZenScreen.REVISION -> {
-                    RevisionScreen(
-                        onStartDrill = { mode -> viewModel.onSelectMode(mode) }
-                    )
+                    RevisionScreen()
                 }
 
                 ZenScreen.STATS -> {
