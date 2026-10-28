@@ -19,6 +19,7 @@ import com.example.domain.CubesPowersSubtype
 import com.example.domain.DateBucketUtils
 import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
+import com.example.domain.GameMode
 import com.example.domain.MemoryDirection
 import com.example.domain.PhSubType
 import com.example.domain.QuestionGenerator
@@ -896,5 +897,15 @@ class ExampleUnitTest {
         onManualNextClicked()
         assertFalse(waitingForManualNext)
         assertEquals(2, currentQuestionIndex)
+    }
+
+    @Test
+    fun testSpeedRoundMcqSupport() {
+        assertTrue("Speed Round should support MCQ mode", GameMode.SPEED_ROUND.supportsMcq)
+        val problem = QuestionGenerator.generateStandardQuestion("+", 2, Difficulty.MEDIUM, false, false)
+        val mcqProblem = QuestionGenerator.attachMcqOptions(problem, TolerancePreset.NORMAL)
+        assertNotNull(mcqProblem.mcqOptions)
+        assertEquals(4, mcqProblem.mcqOptions?.size)
+        assertTrue(mcqProblem.mcqOptions!!.contains(mcqProblem.answer))
     }
 }

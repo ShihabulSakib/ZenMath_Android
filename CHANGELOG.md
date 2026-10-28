@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Gameplay Next Question Flow**: Fixed wrong-answer flow where missing manual next button or coroutine delay caused input drops and required a double tap. The visible "Next Question" button is now positioned directly below the answer/feedback display, the central question container is scrollable (`Modifier.verticalScroll`), and tapping Next (or pressing Enter) advances to the next question with a single tap across all drill types without double-triggering streak or score updates.
 - **Option Toggles Layout**: Fixed squeezed toggle controls in `GameSetupScreen` (e.g. "Include alternate unit systems" and "Multiple Choice") by assigning text descriptions `Modifier.weight(1f)` with wrapping and giving the toggle a fixed non-shrinkable 48dp touch target container.
 - **Answer Checking Relative Tolerance**: Fixed `AnswerChecker.isWithinRelativeTolerance` treating constants `< 1e-9` (such as Planck's constant or electron mass) as 0.0.
+- **Speed Round MCQ Option**: Re-enabled 2×2 Multiple Choice mode (`supportsMcq = true`) on Speed Round so players can toggle MCQ format in setup and answer rapid-fire questions via options grid.
 
 ## [1.2.0] - 2026-10-28
 

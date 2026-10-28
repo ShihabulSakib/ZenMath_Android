@@ -46,7 +46,7 @@ enum class GameMode(
     UNIT_CONVERSIONS("unit-conversions", "Conversions", "⇄", usesDifficulty = false, supportsMcqOption = true),
     MATH_CONSTANTS("math-constants", "Math Constants", "π", usesDifficulty = false, supportsMcqOption = true),
     REFERENCE_VALUES("reference-values", "Ref Values", "ref", usesDifficulty = false, supportsMcqOption = true),
-    SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = false),
+    SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = true),
     WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false);
 
     val supportsMcq: Boolean get() = supportsMcqOption
