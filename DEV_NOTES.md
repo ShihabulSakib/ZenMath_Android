@@ -129,3 +129,58 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 
 ## Deferred Items
 - **Real Constants Dataset**: As specified in the prompt and Section 5.5 of `ZENMATH_FEATURE_PLAN.md`, the full constants list will be provided in a follow-up prompt. The app ships with the complete modular framework and the 3 clearly flagged sample entries (`isSample = true`) in `ConstantsData.kt`.
+
+---
+
+# Constants Import (HSC Physics & Chemistry Dataset)
+
+## Step 0 — Recon Findings
+- **Existing Framework (`feature/next-release`)**:
+  - `ConstantsSchema.kt` and `ConstantsData.kt` currently hold the v1.1.0 modular schema (`ConstantEntry`, `ConstantSubject`, `StructuredUnit`, `ConstantVariant`, `ConstantsValidator`) and 3 `isSample = true` sample entries.
+  - `RichTextHelper.kt` provides `formatSymbol`, `formatStructuredUnit`, `formatScientific`, and `formatFormula` using Compose `AnnotatedString` with `BaselineShift.Superscript` / `Subscript`, but currently only handles single-character subscripts after `_` and pre-structured `StructuredUnit` tokens rather than arbitrary raw unit strings from JSON.
+  - `RevisionScreen.kt` has a `Constants` tab with basic subject filter chips (`ALL`, `PHYSICS`, `CHEMISTRY`, `GENERAL`), search bar, and expandable cards.
+  - `QuestionGenerator.kt` (`generateConstantsQuestion`) and `GameScreen.kt` / `GameSetupScreen.kt` support basic `GameMode.CONSTANTS` drills with subject filter chips, `AnswerSpec.Scientific` / `ApproximateDouble`, and post-answer unit/confusable feedback.
+- **Dataset Inspection (`docs/.agents/hsc_physics_chemistry_constants.json`)**:
+  - `metadata` (version `1.0.0`, generated `2026-10-26`, `symbol_notes`, `limitations`) and `sources` (5 entries).
+  - `syllabus_map`: `physics.first_paper` (10 chapters), `physics.second_paper` (11 chapters), `chemistry.first_paper` (5 chapters), `chemistry.second_paper` (5 chapters) — 31 chapters total, each with `chapter`, `id`, `name_en`, and Bangla `name_bn`.
+  - `constants`: 61 entries across 21 distinct `constant_type` strings.
+  - `mathematical_constants_used_in_physics_and_chemistry`: 4 entries (`pi`, `euler_number`, `natural_log_2`, `natural_log_10`).
+  - `condition_dependent_reference_values`: 12 entries.
+  - `common_hsc_atomic_masses`: 39 entries (`atomic_number`, `symbol`, `element`, `school_atomic_mass`, `unit`, `modern_CIAAW_value`).
+  - `unit_conversions`: 14 entries (13 numeric `from`/`to`/`factor` sets + 1 formula-only `temperature` entry).
+  - `derived_formula_reference`: 14 entries (`id`, `name`, `expression`, `value`, `unit`, `notes`).
+  - `chapter_constant_map`: 31 entries mapping chapters to `constant_ids`, plus `chapter_map_aliases` (`pi`, `mathematical_constants`, `common_hsc_atomic_masses`, `temperature`, `calorie_to_joule`).
+  - `not_fixed_constants_or_condition_dependent_tables`: 8 entries explaining why spring constant `k`, resistivity, `Kc`/`Kp`, etc. are not fixed constants.
+
+## Build Order
+1. **Step 0 — Recon**: Document recon findings, build order, resolved ambiguities, and suspicious dataset entries in `DEV_NOTES.md`.
+2. **Phase 1 — Assets, Loader, Validation & Overrides**:
+   - Copy `hsc_physics_chemistry_constants.json` unchanged into `app/src/main/assets/hsc_physics_chemistry_constants.json`.
+   - Add `app/src/main/assets/constants_overrides.json` with a top how-to comment and per-id override support (`courseMantissa`, `courseExponent`, `tolerance`, `enabled`, `displaySymbol`, `extraConfusableIds`).
+   - Remove the 3 sample entries from `ConstantsData.kt`.
+   - Implement background-thread loading (`ConstantsRepository` / `ConstantsData`) with in-memory caching, debug-loud / release-skipping validation, chapter inversion (with `"General physics"` fallback for the 4 unmapped constants), 3-tier reliability classification, course value extraction, and automatic + overridden confusable resolution.
+3. **Phase 2 — Rich-Text Normalization (Symbols & 85+ Units)**:
+   - Normalize all symbols (short display symbol before first `=` or `(` for rows/drills; full symbol for detail view; multi-character subscripts like `N_A`, `v_esc,⊕`, `t_(1/2)`, `V_m°`, `m_e c²`, Unicode subscripts/superscripts) and all 85+ distinct unit strings (`m^3 kg^-1 s^-2`, `MeV/c^2`, `(mol L^-1)^2`, `cal_th`, `°C`, `°F`, `Å`, `Ω m`, `dimensionless`/`1` -> `"no unit"`) with zero raw `^` or `_` left on screen.
+4. **Phase 3 — Revision Tabs & Bangla Verification**:
+   - Update `RevisionScreen.kt` with Paper (`Physics 1st`, `Physics 2nd`, `Chemistry 1st`, `Chemistry 2nd`) and Chapter (`name_en` + Bangla `name_bn`) filters, reliability class chips, search, Constants / Reference Values / Math Constants list with expandable details, Atomic Masses table (39), Unit Conversions table (14), Derived Formulas list (14), `"About constants"` info card (`symbol_notes` + `not_fixed_constants_or_condition_dependent_tables`), and `sources`/`metadata` footer.
+5. **Phase 4 — Constants Drill Upgrade**:
+   - Upgrade `GameSetupScreen.kt`, `QuestionGenerator.kt`, `AnswerChecker.kt`, and `GameScreen.kt` for Constants drill: Paper/Chapter filters, reliability class toggles (all 3 on by default), `"Include alternate unit systems"` toggle (off by default; unit shown under name when enabled, hidden when SI-only), dual-key answer checking (accepting either precise value or course value within tolerance, with `0.01` absolute tolerance for zero-valued entries), post-answer feedback card (precise value, course value, unit, chapters, notes, confusables), and missed-item weighting with topic tag grouped under `"constants"`.
+6. **Phase 5 — Extra Drills**:
+   - Add drill support for Atomic Masses (symbol -> mass, element -> mass, tolerance `0.05`), Unit Conversions (forward and reverse numeric conversions, tolerance `1%`, skipping formula-only `temperature`), Math Constants (`pi`, `e`, `ln 2`, `ln 10` accepting any listed approximation including `22/7`), and Reference Values (12 condition-dependent entries).
+7. **Phase 6 — Section 8 Unit Tests, Device Verification, Version Bump & Tag**:
+   - Add Section 8 unit tests against the real JSON file, verify Bangla chapter rendering on device/emulator, bump version (`versionCode = 5`, `versionName = "1.2.0"`), update `CHANGELOG.md` and `DEV_NOTES.md`, commit, and tag `v1.2.0`.
+
+## Ambiguities & Decisions Made
+- **Primary Variant Rule**: The first `values` entry whose `system` starts with `"SI"`, otherwise `values.first()`. For the 6 constants whose first entry is non-SI (`fine_structure_constant`, `molar_volume_stp_100kpa`, `molar_volume_stp_1atm`, `ionic_product_water_25C`, `standard_hydrogen_electrode_potential`, `vacuum_refractive_index`), `values.first()` is treated as primary per Section 3 (`22.71095464 L mol^-1` and `22.41396954 L mol^-1` for the two molar volumes, with SI `m^3 mol^-1` treated as an alternate unit variant).
+- **Course Value Extraction**: Precedence is (1) `constants_overrides.json`, (2) numeric approximation parsed from `common_hsc_approximation` when its unit/scale matches the variant's unit (including `1/137` -> `0.00729927...` for `fine_structure_constant`), (3) fallback to the precise value rounded to 4 significant figures (`BigDecimal(precise).round(MathContext(4, RoundingMode.HALF_UP))`). When `common_hsc_approximation` states an approximation in an alternate unit (e.g. `13.6 eV` for `rydberg_energy` whose primary variant is in `J`), the primary `J` variant uses the 4-sig-fig SI course value (`2.180 × 10⁻¹⁸ J`) while the `eV` alternate variant uses `13.6 eV`.
+- **Automatic Confusable Grouping**: Constants are grouped into confusable sets by normalized base symbol root (e.g. `g`/`g₀`/`g_Moon`, `e`/`e/m_e`/`euler_number`, `n₀` pair, `R`/`R_H`/`R∞`/`R_⊕`/`R_☉`, `k_e`/`k_B`, `σ`, `μ₀`/`μ_N`/`μ_B`, `m_e`/`m_p`/`m_n`, `L_f`/`L_v`/`L_☉`, `M_⊕`/`M_☉`, `V_m`/`V_m°`, `T₀`/`T_room`, `c`/`c_water`, `ρ_*`, `γ` pair, `E_R`/`E°`) merged with `extraConfusableIds` from `constants_overrides.json`.
+
+## Suspicious Entries in `hsc_physics_chemistry_constants.json` (Left Untouched in JSON)
+1. **`rydberg_constant_infinity` (`R∞`)**: `common_hsc_approximation` is written as `"R_H ≈ 1.097 × 10^7 m^-1"`, using symbol `R_H` instead of `R∞` (even though `rydberg_constant_hydrogen` is a separate entry with symbol `R_H`).
+2. **`water_absolute_zero`**: Placed in `condition_dependent_reference_values` with name `"Absolute zero"`, id `"water_absolute_zero"`, and symbol `"0 K"` (a value+unit string rather than a symbol, and not water-specific).
+3. **Duplicate Symbols**:
+   - `heat_capacity_ratio_monatomic_ideal_gas` and `heat_capacity_ratio_diatomic_ideal_gas` share the exact symbol `"γ = C_p/C_v"`.
+   - `loschmidt_constant_100kpa` and `loschmidt_constant_1atm` share the exact symbol `"n₀"`.
+4. **`vacuum_permeability` (`μ₀`)**: Contains two SI `H m^-1` entries in `values` — `"SI (CODATA 2022)"` (`1.25663706127e-06`) and `"school approximation"` (`1.2566370614359173e-06`, which is `4π × 10^-7` to 17 digits).
+5. **Non-SI `common_hsc_approximation` on SI-Primary Constants**: `rydberg_energy` (`"13.6 eV"` vs primary `J`), `electron_rest_energy` (`"0.511 MeV"` vs primary `J`), `proton_rest_energy` (`"938 MeV"` vs primary `J`), `neutron_rest_energy` (`"939.6 MeV"` vs primary `J`), `earth_escape_speed_reference` (`"11.2 km/s"` vs primary `m s^-1`), and `standard_atmosphere` (`"1 atm = 760 mmHg = 101.325 kPa"` vs primary `101325 Pa`). Handled in the loader by matching approximation units to variant units and falling back to 4-sig-fig rounding for the SI primary variant.
+6. **`common_hsc_atomic_masses` (`Ni` vs `Co` and `modern_CIAAW_value` formats)**: Both Nickel (`Ni`, `Z=28`, CIAAW `about 58.6934`) and Cobalt (`Co`, `Z=27`, CIAAW `about 58.933194`) list `school_atomic_mass = 59.0`. Additionally, `modern_CIAAW_value` mixes bracketed intervals (`"[1.00784, 1.00811]"`), parenthesized uncertainties (`"4.002602(2)"`), and prose (`"about 22.98976928"`), so it is kept as a display-only string.
