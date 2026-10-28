@@ -5,6 +5,15 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-10-28
+
+### Fixed
+- **Revision & Drill HSC Course Values**: Displayed HSC textbook course values (`courseMantissa` / `courseExponent` / `courseValue`) as primary on revision cards and in drills (`MathProblem.answer` and decomposition), while continuing to accept precise values as secondary keys.
+- **Revision Instant Drill Button Removed**: Removed the practice drill shortcut button (`practice_drill_btn`) and container row from `RevisionScreen` to free vertical space and let the revision list reflow cleanly, while keeping drills accessible from the Main Menu.
+- **Gameplay Next Question Flow**: Fixed wrong-answer flow where missing manual next button or coroutine delay caused input drops and required a double tap. The visible "Next Question" button is now positioned directly below the answer/feedback display, the central question container is scrollable (`Modifier.verticalScroll`), and tapping Next (or pressing Enter) advances to the next question with a single tap across all drill types without double-triggering streak or score updates.
+- **Option Toggles Layout**: Fixed squeezed toggle controls in `GameSetupScreen` (e.g. "Include alternate unit systems" and "Multiple Choice") by assigning text descriptions `Modifier.weight(1f)` with wrapping and giving the toggle a fixed non-shrinkable 48dp touch target container.
+- **Answer Checking Relative Tolerance**: Fixed `AnswerChecker.isWithinRelativeTolerance` treating constants `< 1e-9` (such as Planck's constant or electron mass) as 0.0.
+
 ## [1.2.0] - 2026-10-28
 
 ### Added

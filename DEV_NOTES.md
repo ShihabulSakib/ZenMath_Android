@@ -237,3 +237,31 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 - Built debug APK (`./gradlew assembleDebug`): verified APK builds cleanly without errors.
 - Bumped version in `app/build.gradle.kts`: `versionCode = 5`, `versionName = "1.2.0"`.
 - Updated `CHANGELOG.md` with release notes for `1.2.0`.
+
+---
+
+# Targeted Revisions & Drill Fixes (v1.2.1)
+
+### 1. Revision & Drill HSC Course Values
+- In `RevisionScreen.kt`, updated `ConstantCard` so the unexpanded card row displays `courseRich` (`courseMantissa` & `courseExponent`) as primary rather than `preciseRich`, keeping units formatted with `RichTextHelper.formatUnit(entry.unit)`. The expanded card shows `Precise value: <preciseRich> <unit>` alongside textbook approximations.
+- In `QuestionGenerator.kt`, decomposed `targetCourseVal` into `targetMantissa` and `targetExponent` in `generateConstantQuestion` and `generateReferenceValueQuestion` so `MathProblem.answer` and `AnswerSpec.ScientificValue` expect the HSC course value that students learn, while `alsoAcceptDoubles` keeps the precise value accepted as a secondary key.
+
+### 2. Remove "Practice Drill ⚡" Button from Revision
+- Removed `practice_drill_btn` container row and `onStartDrill` callback from `RevisionScreen.kt` and `ZenMathApp.kt`.
+- Cleaned up unused `GameMode` import in `RevisionScreen.kt` and let the revision list reflow cleanly into the freed space. Drills remain fully accessible from the Main Menu grid.
+
+### 3. Wrong Answer Single Tap & Visible Next Button
+- Fixed root cause of double tap bug: wrong answers were either gated behind `settingsFlow.value.requireManualNextOnWrong` (which fell back to an 800ms delayed auto-advance where inputs were swallowed) or the Next button was placed below the multi-line Solution Steps card inside an unscrollable container, pushing it off-screen behind the keypad.
+- Moved `next_question_btn` directly below the Answer/Feedback display, added `Modifier.verticalScroll(rememberScrollState())` to the question column, and ensured wrong answers always activate manual next so one tap on Next (or pressing Enter) immediately advances to the next question.
+- Verified single-increment behavior: score and streak updates only occur once in `submitAnswer` and cannot double count.
+- Fixed sub-nanoscale bug in `AnswerChecker.isWithinRelativeTolerance` where `expectedVal <= 1e-9` was erroneously treated as `0.0`.
+
+### 4. Option Toggles UI Fixes
+- In `GameSetupScreen.kt`, updated `ToggleCardRow` to give the title/subtitle Column `Modifier.weight(1f)` with wrapping and placed `ZenToggle` inside a fixed `Modifier.size(48.dp)` container with full-card clickable area.
+- Reviewed and updated all option toggles across `GameSetupScreen.kt` and `SettingsScreen.kt` (mixed operations, memory categories, reliability classes, chapter filters, speed round topics) with non-shrinkable 48dp touch targets.
+
+### 5. Verification & Version Bump
+- Ran full test suite (`./gradlew testDebugUnitTest`): 25 tests passed, 0 failures.
+- Built debug APK (`./gradlew assembleDebug`): verified APK builds cleanly.
+- Bumped version in `app/build.gradle.kts`: `versionCode = 6`, `versionName = "1.2.1"`.
+- Updated `CHANGELOG.md` with release notes for `1.2.1`.
