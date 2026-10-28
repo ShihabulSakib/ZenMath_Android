@@ -428,6 +428,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun handleKeyPress(key: String) {
+        if (_waitingForManualNext.value) {
+            if (key == "enter") {
+                onManualNextClicked()
+            }
+            return
+        }
         if (_feedback.value != FeedbackType.NONE || isProcessingAnswer) return
         val marker = ScientificInputParser.SCI_MARKER
 
@@ -557,7 +563,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     generateNextQuestion(nextIdx)
                 }
             }
-        } else if (!isCorrect && settingsFlow.value.requireManualNextOnWrong) {
+        } else if (!isCorrect) {
             _waitingForManualNext.value = true
         } else {
             viewModelScope.launch {
@@ -576,13 +582,14 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         _feedback.value = FeedbackType.TIMEOUT
         _streak.value = 0
 
-        if (settingsFlow.value.requireManualNextOnWrong) {
-            _waitingForManualNext.value = true
-        } else {
+        val isSpeedRound = _selectedMode.value == GameMode.SPEED_ROUND
+        if (isSpeedRound) {
             viewModelScope.launch {
-                delay(1200L)
+                delay(200L)
                 advanceToNext()
             }
+        } else {
+            _waitingForManualNext.value = true
         }
     }
 

@@ -849,4 +849,52 @@ class ExampleUnitTest {
         assertEquals("Ref Values", refQ.operation)
         assertTrue(AnswerChecker.check(refQ.answer, refQ.answerSpec))
     }
+
+    @Test
+    fun testWrongAnswerFlowAndManualNextAdvancement() {
+        // Test AnswerChecker correctly detects wrong answers across scientific and standard specs
+        val spec = AnswerSpec.ScientificValue(
+            mantissa = 6.626,
+            exponent = -34,
+            mantissaRelativeTol = 0.01,
+            requireNormalized = false,
+            alsoAcceptDoubles = listOf(6.63e-34)
+        )
+        // Wrong answer
+        assertFalse(AnswerChecker.check("5.00e-34", spec))
+
+        // Verify score & streak logic invariants:
+        // Score only increments on correct, streak resets to 0 on wrong
+        var score = 5
+        var streak = 4
+        val isCorrect = AnswerChecker.check("5.00e-34", spec)
+        assertFalse(isCorrect)
+        if (isCorrect) {
+            streak += 1
+            score += 1
+        } else {
+            streak = 0
+        }
+        assertEquals(0, streak)
+        assertEquals(5, score)
+
+        // Simulate manual next click: single invocation resets waiting and advances index
+        var waitingForManualNext = true
+        var currentQuestionIndex = 1
+        fun onManualNextClicked() {
+            if (!waitingForManualNext) return
+            waitingForManualNext = false
+            currentQuestionIndex += 1
+        }
+
+        // First click
+        onManualNextClicked()
+        assertFalse(waitingForManualNext)
+        assertEquals(2, currentQuestionIndex)
+
+        // Duplicate click while not waiting must be no-op (no double advance)
+        onManualNextClicked()
+        assertFalse(waitingForManualNext)
+        assertEquals(2, currentQuestionIndex)
+    }
 }

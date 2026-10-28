@@ -443,7 +443,7 @@ object AnswerChecker {
     }
 
     fun isWithinRelativeTolerance(userVal: Double, expectedVal: Double, relTol: Double): Boolean {
-        if (abs(expectedVal) <= EXACT_FLOAT_EPSILON) {
+        if (expectedVal == 0.0) {
             // Section 4 & Section 8 zero-valued entries (standard_hydrogen_electrode_potential, water_absolute_zero)
             // have an absolute tolerance of 0.01.
             val absTol = if (relTol > 0.005) 0.01 else maxOf(EXACT_FLOAT_EPSILON, relTol)

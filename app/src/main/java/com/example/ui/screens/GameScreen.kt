@@ -8,6 +8,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -322,6 +324,9 @@ fun GameScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -510,6 +515,34 @@ fun GameScreen(
                         }
                     }
 
+                    if (waitingForManualNext) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = onManualNext,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .height(46.dp)
+                                .testTag("next_question_btn")
+                        ) {
+                            Text(
+                                text = "Next Question",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Next",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
                     // Solution Steps Card (shown when Hint tapped OR on answer feedback)
                     val steps = problem?.solutionSteps.orEmpty()
                     val showStepsCard = steps.isNotEmpty() && (hintRevealed || feedback != FeedbackType.NONE)
@@ -572,34 +605,6 @@ fun GameScreen(
                                     )
                                 }
                             }
-                        }
-                    }
-
-                    if (waitingForManualNext) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = onManualNext,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.primary,
-                                contentColor = colors.onPrimary
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f)
-                                .height(46.dp)
-                                .testTag("next_question_btn")
-                        ) {
-                            Text(
-                                text = "Next Question",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "Next",
-                                modifier = Modifier.size(16.dp)
-                            )
                         }
                     }
                 }
