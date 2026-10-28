@@ -225,16 +225,21 @@ fun GameSetupScreen(
                                             )
                                         }
 
-                                        ZenToggle(
-                                            checked = checked,
-                                            onCheckedChange = { newVal ->
-                                                val updated = mixedOps.toMutableList()
-                                                updated[idx] = newVal
-                                                if (updated.any { it }) {
-                                                    onMixedOpsChange(updated)
+                                        Box(
+                                            modifier = Modifier.size(48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ZenToggle(
+                                                checked = checked,
+                                                onCheckedChange = { newVal ->
+                                                    val updated = mixedOps.toMutableList()
+                                                    updated[idx] = newVal
+                                                    if (updated.any { it }) {
+                                                        onMixedOpsChange(updated)
+                                                    }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -616,17 +621,23 @@ fun GameSetupScreen(
                                             text = cat.displayName,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = colors.textMain
+                                            color = colors.textMain,
+                                            modifier = Modifier.weight(1f).padding(end = 12.dp)
                                         )
-                                        ZenToggle(
-                                            checked = checked,
-                                            onCheckedChange = { newVal ->
-                                                val updated = if (newVal) memoryCategories + cat else memoryCategories - cat
-                                                if (updated.isNotEmpty()) {
-                                                    onMemoryCategoriesChange(updated)
+                                        Box(
+                                            modifier = Modifier.size(48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ZenToggle(
+                                                checked = checked,
+                                                onCheckedChange = { newVal ->
+                                                    val updated = if (newVal) memoryCategories + cat else memoryCategories - cat
+                                                    if (updated.isNotEmpty()) {
+                                                        onMemoryCategoriesChange(updated)
+                                                    }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -873,21 +884,26 @@ fun GameSetupScreen(
                                                 color = colors.textSecondary
                                             )
                                         }
-                                        ZenToggle(
-                                            checked = checked,
-                                            onCheckedChange = { newVal ->
-                                                val updated = if (newVal) {
-                                                    constantsSelectedReliability + rel
-                                                } else {
-                                                    if (constantsSelectedReliability.size > 1) {
-                                                        constantsSelectedReliability - rel
+                                        Box(
+                                            modifier = Modifier.size(48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ZenToggle(
+                                                checked = checked,
+                                                onCheckedChange = { newVal ->
+                                                    val updated = if (newVal) {
+                                                        constantsSelectedReliability + rel
                                                     } else {
-                                                        constantsSelectedReliability
+                                                        if (constantsSelectedReliability.size > 1) {
+                                                            constantsSelectedReliability - rel
+                                                        } else {
+                                                            constantsSelectedReliability
+                                                        }
                                                     }
+                                                    onConstantsSelectedReliabilityChange(updated)
                                                 }
-                                                onConstantsSelectedReliabilityChange(updated)
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -981,7 +997,7 @@ fun GameSetupScreen(
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Column(modifier = Modifier.weight(1f)) {
+                                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                                     Text(
                                                         text = "${chap.paper.displayName} • Ch ${chap.chapterNumber}: ${chap.nameEn}",
                                                         fontSize = 12.sp,
@@ -994,24 +1010,29 @@ fun GameSetupScreen(
                                                         color = colors.textSecondary
                                                     )
                                                 }
-                                                ZenToggle(
-                                                    checked = isChecked,
-                                                    onCheckedChange = { newVal ->
-                                                        val activeSet = if (constantsSelectedChapters.isEmpty()) {
-                                                            filteredChapters.map { it.key }.toSet()
-                                                        } else {
-                                                            constantsSelectedChapters
+                                                Box(
+                                                    modifier = Modifier.size(48.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    ZenToggle(
+                                                        checked = isChecked,
+                                                        onCheckedChange = { newVal ->
+                                                            val activeSet = if (constantsSelectedChapters.isEmpty()) {
+                                                                filteredChapters.map { it.key }.toSet()
+                                                            } else {
+                                                                constantsSelectedChapters
+                                                            }
+                                                            val updated = if (newVal) {
+                                                                val next = activeSet + chap.key
+                                                                if (next.size == filteredChapters.size) emptySet() else next
+                                                            } else {
+                                                                val next = activeSet - chap.key
+                                                                if (next.isEmpty() || next.size == filteredChapters.size) emptySet() else next
+                                                            }
+                                                            onConstantsSelectedChaptersChange(updated)
                                                         }
-                                                        val updated = if (newVal) {
-                                                            val next = activeSet + chap.key
-                                                            if (next.size == filteredChapters.size) emptySet() else next
-                                                        } else {
-                                                            val next = activeSet - chap.key
-                                                            if (next.isEmpty() || next.size == filteredChapters.size) emptySet() else next
-                                                        }
-                                                        onConstantsSelectedChaptersChange(updated)
-                                                    }
-                                                )
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1097,17 +1118,23 @@ fun GameSetupScreen(
                                             text = topicMode.displayName,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = colors.textMain
+                                            color = colors.textMain,
+                                            modifier = Modifier.weight(1f).padding(end = 12.dp)
                                         )
-                                        ZenToggle(
-                                            checked = checked,
-                                            onCheckedChange = { newVal ->
-                                                val updated = if (newVal) speedRoundTopics + topicMode else speedRoundTopics - topicMode
-                                                if (updated.isNotEmpty()) {
-                                                    onSpeedRoundTopicsChange(updated)
+                                        Box(
+                                            modifier = Modifier.size(48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ZenToggle(
+                                                checked = checked,
+                                                onCheckedChange = { newVal ->
+                                                    val updated = if (newVal) speedRoundTopics + topicMode else speedRoundTopics - topicMode
+                                                    if (updated.isNotEmpty()) {
+                                                        onSpeedRoundTopicsChange(updated)
+                                                    }
                                                 }
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -1199,45 +1226,53 @@ private fun ToggleCardRow(
             .clip(cardShape)
             .background(colors.card)
             .border(1.dp, colors.cardBorder, cardShape)
+            .clickable { onCheckedChange(!checked) }
             .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(colors.primary.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = colors.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        text = title,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textMain
-                    )
-                    Text(
-                        text = subtitle,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textSecondary
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(colors.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = colors.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textMain
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.textSecondary
+                )
             }
 
-            ZenToggle(checked = checked, onCheckedChange = onCheckedChange)
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ZenToggle(checked = checked, onCheckedChange = onCheckedChange)
+            }
         }
     }
 }
