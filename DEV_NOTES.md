@@ -189,3 +189,7 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 - Copied `hsc_physics_chemistry_constants.json` unchanged into `app/src/main/assets/hsc_physics_chemistry_constants.json` and added `app/src/main/assets/constants_overrides.json` with a top-of-file `_comment` how-to guide.
 - Removed the 3 hardcoded sample entries from `ConstantsData.kt` and wired background preload (`Dispatchers.IO`) in `MainActivity.kt` and `ZenMathViewModel.kt`.
 - Implemented `SimpleJson.kt` (RFC 8259 parser) and `ConstantsLoader.getDataset()` in `ConstantsSchema.kt` with debug-loud / release-skipping validation, inverted chapter mapping (`General physics` fallback for the 4 unmapped entries), 3-tier reliability classification, course value extraction, and automatic + overridden confusables.
+
+### Phase 2 Completed — Rich-Text Symbol & Unit Normalization
+- Extended `RichTextHelper.kt` (`formatSymbol`, `formatRawSymbol`, `formatUnit`, `formatRawUnit`, `formatMathText`) to normalize all symbols (short form before `=` or `(` for list rows and drills vs full form for detail views) and all 85+ distinct unit strings across the dataset (`m^3 kg^-1 s^-2` -> `m³·kg⁻¹·s⁻²`, `(mol L^-1)^2` -> `(mol·L⁻¹)²`, `cal_th`, `MeV/c^2`, `°C`, `°F`, `Å`, `Ω m`, and `"dimensionless"`/`"1"` -> `"no unit"`).
+- Added `testSymbolAndUnitNormalizationAcrossEntireDataset` in `ExampleUnitTest.kt` verifying that zero raw `^` or `_` characters remain in any rendered symbol, unit, conversion factor, or formula.

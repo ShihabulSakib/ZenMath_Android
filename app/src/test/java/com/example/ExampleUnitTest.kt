@@ -23,6 +23,7 @@ import com.example.domain.QuestionGenerator
 import com.example.domain.SciNotationSubtype
 import com.example.domain.ScientificInputParser
 import com.example.domain.TolerancePreset
+import com.example.ui.components.RichTextHelper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -515,5 +516,104 @@ class ExampleUnitTest {
         assertEquals(7, perfDays.size)
         assertEquals(10, perfDays.last().totalQuestions) // Today (2026-10-25 in Dhaka)
         assertEquals(10, perfDays[perfDays.size - 2].totalQuestions) // Yesterday (2026-10-24 in Dhaka)
+    }
+
+    // =========================================================================
+    // 7. Rich-Text Symbol & Unit Normalization across Real HSC Dataset
+    // =========================================================================
+    @Test
+    fun testSymbolAndUnitNormalizationAcrossEntireDataset() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+        val allEntries = dataset.constants + dataset.referenceValues
+
+        // 1. Short vs full symbol extraction edge cases (Section 3 & Section 8)
+        assertEquals("R", StructuredSymbol.extractShortSymbol("R = N_A k_B"))
+        assertEquals("F", StructuredSymbol.extractShortSymbol("F = N_A e"))
+        assertEquals("E°", StructuredSymbol.extractShortSymbol("E°(H⁺/H₂)"))
+        assertEquals("e", StructuredSymbol.extractShortSymbol("e (math)"))
+        assertEquals("u", StructuredSymbol.extractShortSymbol("u (or m_u)"))
+        assertEquals("0 K", StructuredSymbol.extractShortSymbol("0 K"))
+        assertEquals("m_e c²", StructuredSymbol.extractShortSymbol("m_e c²"))
+        assertEquals("2.303RT/F", StructuredSymbol.extractShortSymbol("2.303RT/F"))
+
+        // 2. Every symbol in constants, reference values, and math constants renders with no raw '^' or '_'
+        for (entry in allEntries) {
+            val shortRendered = RichTextHelper.formatSymbol(entry.symbol, shortForm = true).text
+            val fullRendered = RichTextHelper.formatSymbol(entry.symbol, shortForm = false).text
+            assertTrue("Short symbol empty for ${entry.id}", shortRendered.isNotBlank())
+            assertTrue("Full symbol empty for ${entry.id}", fullRendered.isNotBlank())
+            assertFalse("Raw '^' in short symbol for ${entry.id}: $shortRendered", shortRendered.contains('^'))
+            assertFalse("Raw '_' in short symbol for ${entry.id}: $shortRendered", shortRendered.contains('_'))
+            assertFalse("Raw '^' in full symbol for ${entry.id}: $fullRendered", fullRendered.contains('^'))
+            assertFalse("Raw '_' in full symbol for ${entry.id}: $fullRendered", fullRendered.contains('_'))
+        }
+        for (mc in dataset.mathConstants) {
+            val shortRendered = RichTextHelper.formatSymbol(mc.symbol, shortForm = true).text
+            val fullRendered = RichTextHelper.formatSymbol(mc.symbol, shortForm = false).text
+            assertFalse("Raw '^' in math symbol ${mc.id}: $shortRendered", shortRendered.contains('^'))
+            assertFalse("Raw '_' in math symbol ${mc.id}: $shortRendered", shortRendered.contains('_'))
+            assertFalse("Raw '^' in full math symbol ${mc.id}: $fullRendered", fullRendered.contains('^'))
+            assertFalse("Raw '_' in full math symbol ${mc.id}: $fullRendered", fullRendered.contains('_'))
+        }
+
+        // 3. Every distinct unit string in constants, alternates, reference values, and unit conversions
+        // renders with no raw '^' or '_' and dimensionless/1 renders as "no unit"
+        assertEquals("no unit", RichTextHelper.formatRawUnit("dimensionless").text)
+        assertEquals("no unit", RichTextHelper.formatRawUnit("1").text)
+        assertEquals("no unit", RichTextHelper.formatUnit(StructuredUnit.fromRawUnit("dimensionless")).text)
+        assertEquals("no unit", RichTextHelper.formatUnit(StructuredUnit.fromRawUnit("1")).text)
+
+        // Check specific tricky unit strings from Section 3
+        val bracketedUnit = RichTextHelper.formatRawUnit("(mol L^-1)^2").text
+        assertEquals("(mol·L−1)2", bracketedUnit)
+        assertFalse(bracketedUnit.contains('^'))
+
+        val calThUnit = RichTextHelper.formatRawUnit("cal_th").text
+        assertEquals("calth", calThUnit)
+        assertFalse(calThUnit.contains('_'))
+
+        val mevUnit = RichTextHelper.formatRawUnit("MeV/c^2").text
+        assertEquals("MeV/c2", mevUnit)
+        assertFalse(mevUnit.contains('^'))
+
+        for (entry in allEntries) {
+            val primaryUnitText = RichTextHelper.formatUnit(entry.unit).text
+            assertTrue("Empty unit text for ${entry.id}", primaryUnitText.isNotBlank())
+            assertFalse("Raw '^' in unit for ${entry.id}: $primaryUnitText", primaryUnitText.contains('^'))
+            assertFalse("Raw '_' in unit for ${entry.id}: $primaryUnitText", primaryUnitText.contains('_'))
+
+            for (alt in entry.allAlternateValues) {
+                val altUnitText = RichTextHelper.formatUnit(alt.unit).text
+                assertTrue("Empty alt unit text for ${entry.id}", altUnitText.isNotBlank())
+                assertFalse("Raw '^' in alt unit for ${entry.id}: $altUnitText", altUnitText.contains('^'))
+                assertFalse("Raw '_' in alt unit for ${entry.id}: $altUnitText", altUnitText.contains('_'))
+            }
+        }
+
+        for (group in dataset.unitConversions) {
+            for (item in group.values) {
+                item.fromUnit?.let { fromUnit ->
+                    val fromText = RichTextHelper.formatUnit(fromUnit).text
+                    assertFalse("Raw '^' in conversion from '${fromUnit.toPlainString()}': $fromText", fromText.contains('^'))
+                    assertFalse("Raw '_' in conversion from '${fromUnit.toPlainString()}': $fromText", fromText.contains('_'))
+                }
+                item.toUnit?.let { toUnit ->
+                    val toText = RichTextHelper.formatUnit(toUnit).text
+                    assertFalse("Raw '^' in conversion to '${toUnit.toPlainString()}': $toText", toText.contains('^'))
+                    assertFalse("Raw '_' in conversion to '${toUnit.toPlainString()}': $toText", toText.contains('_'))
+                }
+                item.formula?.let { formula ->
+                    val fText = RichTextHelper.formatMathText(formula).text
+                    assertFalse("Raw '^' in formula '$formula': $fText", fText.contains('^'))
+                    assertFalse("Raw '_' in formula '$formula': $fText", fText.contains('_'))
+                }
+            }
+        }
+
+        for (df in dataset.derivedFormulas) {
+            val fText = RichTextHelper.formatMathText(df.formula).text
+            assertFalse("Raw '^' in derived formula '${df.id}': $fText", fText.contains('^'))
+            assertFalse("Raw '_' in derived formula '${df.id}': $fText", fText.contains('_'))
+        }
     }
 }

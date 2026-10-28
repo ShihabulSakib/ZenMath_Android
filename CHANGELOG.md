@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Imported `hsc_physics_chemistry_constants.json` into `app/src/main/assets/` unchanged, with `constants_overrides.json` support and runtime background loading/caching (`ConstantsLoader`, `SimpleJson`).
 - Removed the 3 placeholder sample entries from `ConstantsData.kt` and added chapter inversion, 3-tier reliability classification, course value extraction, and automatic confusable grouping across all 61 constants, 12 reference values, 4 math constants, 39 atomic masses, 14 unit conversion groups, 14 derived formulas, and 8 non-fixed tables.
+- Enhanced `RichTextHelper` to normalize all short/full symbols and all 85+ distinct unit strings (`(mol L^-1)^2`, `cal_th`, `MeV/c^2`, `°C`, `°F`, `Å`, `Ω m`, and `"dimensionless"`/`"1"` -> `"no unit"`) with zero raw `^` or `_` characters.
 
 ## [1.1.0] - 2026-10-24
 

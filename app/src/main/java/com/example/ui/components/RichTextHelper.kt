@@ -98,35 +98,126 @@ object RichTextHelper {
 
     /**
      * Formats a [StructuredSymbol] (e.g., k_e, ε_0, μ_0, N_A) with rich subscript/superscript spans.
+     * Uses the short display symbol by default (`shortForm = true`), or the full symbol (`R = N_A k_B`)
+     * when `shortForm = false` (e.g. in the Revision detail view).
      */
-    fun formatSymbol(symbol: StructuredSymbol): AnnotatedString {
+    fun formatSymbol(symbol: StructuredSymbol, shortForm: Boolean = true): AnnotatedString {
+        if (!shortForm && !symbol.rawFullSymbol.isNullOrBlank()) {
+            return formatRawSymbol(symbol.rawFullSymbol, shortForm = false)
+        }
+        val shortDisplay = symbol.shortDisplaySymbol
+        if (!shortDisplay.isNullOrBlank() && (shortDisplay.contains('_') || shortDisplay.contains('^') ||
+                shortDisplay.contains(' ') || shortDisplay.contains('/') ||
+                shortDisplay.any { it in UNICODE_SUP_TO_ASCII || it in UNICODE_SUB_TO_ASCII })
+        ) {
+            return formatRawSymbol(shortDisplay, shortForm = true)
+        }
         return buildAnnotatedString {
             withStyle(SpanStyle(fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold)) {
-                append(symbol.base)
+                append(formatMathText(symbol.base))
             }
             if (!symbol.subscript.isNullOrEmpty()) {
-                appendSubscript(symbol.subscript)
+                appendSubscript(formatMathText(symbol.subscript).text)
             }
             if (!symbol.superscript.isNullOrEmpty()) {
-                appendSuperscript(symbol.superscript)
+                appendSuperscript(formatMathText(symbol.superscript).text)
             }
         }
     }
 
     /**
-     * Formats a [StructuredUnit] (e.g. N·m^2·C^-2 or m·s^-2) using rich superscript spans.
+     * Normalizes a raw symbol string from `hsc_physics_chemistry_constants.json` into a rich
+     * [AnnotatedString] with subscripts and superscripts (Section 3 & Phase 2).
+     * When [shortForm] is `true`, extracts the short symbol before the first `=` or `(`.
+     */
+    fun formatRawSymbol(rawSymbol: String, shortForm: Boolean = true): AnnotatedString {
+        val target = if (shortForm) {
+            StructuredSymbol.extractShortSymbol(rawSymbol)
+        } else {
+            rawSymbol.trim()
+        }
+        return buildAnnotatedString {
+            withStyle(SpanStyle(fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold)) {
+                append(formatMathText(target))
+            }
+        }
+    }
+
+    /**
+     * Formats a [StructuredUnit] (e.g. N·m^2·C^-2, m/s², (mol L^-1)^2, cal_th, or "no unit")
+     * using rich superscript and subscript spans (Section 3 & Phase 2).
      */
     fun formatUnit(unit: StructuredUnit): AnnotatedString {
-        if (unit.factors.isEmpty()) return AnnotatedString("")
+        if (unit.isDimensionless) return AnnotatedString("no unit")
+        val raw = unit.rawUnitString?.trim()
+        if (!raw.isNullOrEmpty()) {
+            return formatRawUnit(raw)
+        }
+        if (unit.factors.isEmpty()) return AnnotatedString("no unit")
         return buildAnnotatedString {
             unit.factors.forEachIndexed { idx, factor ->
                 if (idx > 0) append("·")
-                append(factor.symbol)
+                append(formatMathText(factor.symbol))
                 if (factor.exponent != 1) {
                     appendSuperscript(factor.exponent.toString())
                 }
             }
         }
+    }
+
+    /**
+     * Normalizes any raw unit string from `hsc_physics_chemistry_constants.json` into a rich
+     * [AnnotatedString] with real superscript and subscript spans:
+     * - `"dimensionless"`, `"1"`, `"no unit"`, or blank -> `"no unit"`
+     * - Space-separated factors (`"m^3 kg^-1 s^-2"`, `"J mol^-1 K^-1"`) -> `"m³·kg⁻¹·s⁻²"` (joined with `·`)
+     * - Bracketed exponents (`"(mol L^-1)^2"`) -> `"(mol·L⁻¹)²"`
+     * - Slashes (`"MeV/c^2"`, `"W/m²"`, `"J/kg"`, `"m/s²"`) -> `"MeV/c²"`, `"W/m²"`
+     * - Subscripts (`"cal_th"`, `"Hz (cR_∞)"`) -> `"cal"` with subscript `"th"`
+     * - Special units (`"°C"`, `"°F"`, `"Å"`, `"Ω m"`) preserved with proper rich formatting.
+     */
+    fun formatRawUnit(rawUnit: String): AnnotatedString {
+        val trimmed = rawUnit.trim()
+        if (trimmed.isEmpty() ||
+            trimmed.equals("dimensionless", ignoreCase = true) ||
+            trimmed == "1" ||
+            trimmed.equals("no unit", ignoreCase = true)
+        ) {
+            return AnnotatedString("no unit")
+        }
+
+        val normalized = normalizeUnitSpacingToMidDots(trimmed)
+        return formatMathText(normalized)
+    }
+
+    private fun normalizeUnitSpacingToMidDots(unitStr: String): String {
+        // Keep explanatory parenthetical notes separated by space (e.g. "Hz (cR_∞)", "statC (esu)")
+        val parenNoteIdx = unitStr.indexOf(" (")
+        if (parenNoteIdx > 0) {
+            val left = normalizeUnitSpacingToMidDots(unitStr.substring(0, parenNoteIdx))
+            val right = unitStr.substring(parenNoteIdx) // keep leading space before '('
+            return left + right
+        }
+
+        // Convert spaces inside or between unit factors into middots '·'
+        val sb = StringBuilder()
+        var i = 0
+        while (i < unitStr.length) {
+            val ch = unitStr[i]
+            if (ch == ' ') {
+                while (i < unitStr.length && unitStr[i] == ' ') i++
+                if (sb.isNotEmpty() && i < unitStr.length) {
+                    val prev = sb.last()
+                    val next = unitStr[i]
+                    if (prev != '/' && next != '/') {
+                        sb.append('·')
+                    }
+                }
+            } else {
+                sb.append(ch)
+                i++
+            }
+        }
+        return sb.toString()
     }
 
     /**
@@ -140,7 +231,7 @@ object RichTextHelper {
     ): AnnotatedString {
         return buildAnnotatedString {
             append(formatScientificNumber(mantissa, exponent, omitZeroExponent))
-            if (unit.factors.isNotEmpty()) {
+            if (!unit.isDimensionless) {
                 append(" ")
                 append(formatUnit(unit))
             }
@@ -190,13 +281,22 @@ object RichTextHelper {
                                 append(c)
                                 i++
                             }
+                        } else if (text[i + 1] == '(') {
+                            val end = text.indexOf(')', i + 2)
+                            if (end > i + 1) {
+                                appendSuperscript(text.substring(i + 2, end))
+                                i = end + 1
+                            } else {
+                                append(c)
+                                i++
+                            }
                         } else {
                             val start = i + 1
                             var end = start
                             if (end < n && (text[end] == '-' || text[end] == '+' || text[end] == '−')) {
                                 end++
                             }
-                            while (end < n && (text[end].isDigit() || text[end] == 'n' || text[end] == 'x' || text[end] == 'b')) {
+                            while (end < n && (text[end].isLetterOrDigit() || text[end] == '/' || text[end] == '.' || text[end] == '-' || text[end] == '+' || text[end] == '−')) {
                                 end++
                             }
                             if (end > start) {
@@ -219,14 +319,23 @@ object RichTextHelper {
                                 append(c)
                                 i++
                             }
+                        } else if (text[i + 1] == '(') {
+                            val end = text.indexOf(')', i + 2)
+                            if (end > i + 1) {
+                                appendSubscript(text.substring(i + 2, end))
+                                i = end + 1
+                            } else {
+                                append(c)
+                                i++
+                            }
                         } else {
                             val start = i + 1
                             var end = start
-                            while (end < n && (text[end].isLetterOrDigit() || text[end] == '+' || text[end] == '-')) {
+                            while (end < n && !text[end].isWhitespace() && text[end] !in "()[]{}=;:/^") {
                                 end++
                             }
                             if (end > start) {
-                                appendSubscript(text.substring(start, end))
+                                appendSubscript(text.substring(start, end).replace("_", " "))
                                 i = end
                             } else {
                                 append(c)
