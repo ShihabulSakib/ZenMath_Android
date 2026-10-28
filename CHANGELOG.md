@@ -5,13 +5,18 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-10-28
 
 ### Added
-- Imported `hsc_physics_chemistry_constants.json` into `app/src/main/assets/` unchanged, with `constants_overrides.json` support and runtime background loading/caching (`ConstantsLoader`, `SimpleJson`).
-- Removed the 3 placeholder sample entries from `ConstantsData.kt` and added chapter inversion, 3-tier reliability classification, course value extraction, and automatic confusable grouping across all 61 constants, 12 reference values, 4 math constants, 39 atomic masses, 14 unit conversion groups, 14 derived formulas, and 8 non-fixed tables.
-- Enhanced `RichTextHelper` to normalize all short/full symbols and all 85+ distinct unit strings (`(mol L^-1)^2`, `cal_th`, `MeV/c^2`, `°C`, `°F`, `Å`, `Ω m`, and `"dimensionless"`/`"1"` -> `"no unit"`) with zero raw `^` or `_` characters.
-- Expanded Constants Revision screen with 7 sub-tabs: Constants (61), Reference Values (12), Math Constants (4), Atomic Masses (39), Unit Conversions (14), Derived Formulas (14), and About & Sources with bilingual chapter filters and reliability classes.
+- Imported `hsc_physics_chemistry_constants.json` into `app/src/main/assets/` unchanged, with `constants_overrides.json` per-ID override support and pure-Kotlin RFC 8259 JSON parser (`SimpleJson.kt`).
+- Removed placeholder sample entries from `ConstantsData.kt` and wired runtime background loading and caching (`ConstantsLoader`).
+- Implemented syllabus chapter inversion (`General physics` fallback for unmapped constants), 3-tier reliability classification, course value extraction, and automatic confusable grouping across all 61 constants, 12 reference values, 4 math constants, 39 atomic masses, 14 unit conversion groups, 14 derived formulas, and 8 non-fixed tables.
+- Enhanced `RichTextHelper` to normalize all short/full symbols and all 85+ distinct unit strings (`(mol L^-1)^2`, `cal_th`, `MeV/c^2`, `°C`, `°F`, `Å`, `Ω m`, and `"dimensionless"`/`"1"` -> `"no unit"`) with zero raw `^` or `_` characters remaining on screen.
+- Expanded Constants Revision screen with 7 specialized sub-tabs: Constants (61), Reference Values (12), Math Constants (4), Atomic Masses (39), Unit Conversions (14), Derived Formulas (14), and About & Sources with bilingual chapter filters and reliability classes.
+- Upgraded Constants Drill with paper multi-select filters (`Physics 1st`, `Physics 2nd`, `Chemistry 1st`, `Chemistry 2nd`), bilingual chapter filters, reliability toggles (`Fundamental`, `Conventions`, `Reference & Approx`), alternate unit systems toggle (`Include alternate unit systems`), dual-key answer acceptance (precise value or course value; `0.01` absolute tolerance for zero-valued entries; `g = 10` rejected at 1% tolerance), and post-answer solution card with confusable warnings.
+- Added 4 extra drills from the dataset: Atomic Masses (39 elements, tolerance `0.05`), Unit Conversions (13 numeric factor groups, forward/reverse, tolerance `1%`), Math Constants (accepting listed approximations including fraction `22/7`), and Reference Values (12 condition-dependent values).
+- Added quick "Practice Drill ⚡" launch buttons directly from each corresponding Revision sub-tab and added all 4 new drill modes to the Main Menu grid.
+- Added comprehensive Section 8 test suite in `ExampleUnitTest.kt` covering exact dataset counts, no duplicate IDs, syllabus chapter resolution, parsable approximation tolerances, primary variant rules, skipped trivial alternates, zero-valued entries, overrides precedence, dual-key checking, and extra drill mechanics.
 
 ## [1.1.0] - 2026-10-24
 

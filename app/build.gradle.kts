@@ -12,8 +12,8 @@ android {
     applicationId = "com.shihabulsakib.zenmath"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "1.1.0"
+    versionCode = 5
+    versionName = "1.2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -51,7 +51,12 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      isReturnDefaultValues = true
+    }
+  }
   sourceSets {
     getByName("test").assets.srcDirs("$projectDir/schemas")
     getByName("androidTest").assets.srcDirs("$projectDir/schemas")

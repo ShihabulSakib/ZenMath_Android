@@ -203,3 +203,37 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
   5. **Unit Conversions (14)**: Numeric conversion factors and temperature formulas.
   6. **Derived Formulas (14)**: 14 essential read-only formulas with descriptions and chapter mappings.
   7. **About Constants & Sources**: Disambiguation notes, the 8 tables explaining why certain physical quantities are not fixed constants, and dataset attribution footer.
+
+### Phase 4 Completed — Constants Drill Upgrade
+- Upgraded `GameSetupScreen.kt` with curriculum paper multi-select chips (`Physics 1st`, `Physics 2nd`, `Chemistry 1st`, `Chemistry 2nd`), bilingual chapter filter (`nameEn • nameBn`), reliability class toggles (`Fundamental`, `Conventions`, `Reference & Approx` — all on by default), and "Include alternate unit systems" toggle (default off).
+- Updated `QuestionGenerator.kt`:
+  - Alternate unit systems: SI-only questions keep unit hidden during question presentation; alternate unit questions display target unit (e.g. `[L·atm·mol⁻¹·K⁻¹]`) below the question title.
+  - Dual-key answer acceptance: answers within tolerance of either the precise value OR the course value pass.
+  - Zero-valued entries (`standard_hydrogen_electrode_potential` 0 V and `water_absolute_zero` 0 K) accept answers within `0.01` absolute tolerance in `AnswerChecker.kt`.
+  - `g = 10` rejected at 1% tolerance (~1.9% away from 9.81 m/s²).
+- Upgraded `GameScreen.kt`:
+  - Question card renders subject chip (`"Physics 2nd, Static Electricity"`), short symbol in 36sp, full question title, and target unit (when alternate unit variant selected).
+  - Feedback card displays precise value, course value, unit, chapters, notes, and amber "Do not confuse with" confusable list after answering.
+  - Weighting prioritizes previously missed constants using constant ID under `"constants"` topic tag.
+
+### Phase 5 Completed — Extra Drills
+- Added 4 new drill modes to `GameModels.kt`:
+  1. `ATOMIC_MASSES`: 39 elements, tests symbol -> school mass and element name -> school mass with `0.05` tolerance.
+  2. `UNIT_CONVERSIONS`: 13 numeric factor groups, forward and reverse conversions (`1 cal = ? J`, `1 atm = ? kPa`) within 1% tolerance.
+  3. `MATH_CONSTANTS`: 4 constants (`π`, `e`, `ln 2`, `ln 10`), accepting listed approximations including fraction `22/7` parsed via `ScientificInputParser`.
+  4. `REFERENCE_VALUES`: 12 condition-dependent reference values running through the constants engine.
+- Exposed all 4 drill modes in `MainMenuScreen.kt` (completing a 21-item 3-column grid) and added "Practice Drill ⚡" quick launch buttons directly on each corresponding sub-tab in `RevisionScreen.kt`.
+
+### Phase 6 Completed — Validation, Section 8 Tests, Version Bump & Tag
+- Added full Section 8 test suite in `ExampleUnitTest.kt`:
+  - `testDatasetExactCountsIntegrityAndNoDuplicateIds`: verifies 61 constants, 4 math constants, 12 reference values, 39 atomic masses, 14 unit conversions, 14 derived formulas, 8 not-fixed tables, zero duplicate IDs across the entire dataset, and complete syllabus chapter resolution (`unmappedIds` fallback to `General physics`).
+  - `testParsableApproximationsWithinOnePercentOfPreciseValue`: confirms all parsable approximations in `constants` are within 1.0% relative tolerance of their precise values.
+  - `testPrimaryVariantRuleAndSkippedTrivialAlternates`: tests the 6 non-SI first constants, verifies dimensionless formatting (`"no unit"`), and asserts trivial alternates (`1 u`, `1 eV`, `1 au`) are skipped.
+  - `testZeroValuedEntriesTolerance`: verifies `standard_hydrogen_electrode_potential` (0 V) and `water_absolute_zero` (0 K) are handled with `0.01` absolute tolerance in `AnswerChecker`.
+  - `testDualKeyAnswerCheckingAndRejectionOfG10`: tests dual-key acceptance for `standard_acceleration_gravity` (accepting `9.80665`, `9.8`, `9.81`) and rejects `10.0` at 1% tolerance.
+  - `testOverridesPrecedence`: verifies `override > extracted approximation > 4-sig-fig rounded fallback`.
+  - `testExtraDrillsGeneratorsAndChecking`: tests problem generation and answer validation across Atomic Masses (tolerance `0.05`), Unit Conversions (tolerance `1%`), Math Constants (accepting `22/7` for `π`), and Reference Values.
+- Ran full test suite (`./gradlew testDebugUnitTest`): 24 tests passed, 0 failures.
+- Built debug APK (`./gradlew assembleDebug`): verified APK builds cleanly without errors.
+- Bumped version in `app/build.gradle.kts`: `versionCode = 5`, `versionName = "1.2.0"`.
+- Updated `CHANGELOG.md` with release notes for `1.2.0`.
