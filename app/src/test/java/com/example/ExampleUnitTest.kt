@@ -1,9 +1,11 @@
 package com.example
 
 import com.example.data.ConstantEntry
+import com.example.data.ConstantOverride
 import com.example.data.ConstantsData
 import com.example.data.ConstantsLoader
 import com.example.data.CourseValuesData
+import com.example.data.HscPaper
 import com.example.data.MemoryTableCategory
 import com.example.data.PhSpeciesData
 import com.example.data.StructuredSymbol
@@ -615,5 +617,236 @@ class ExampleUnitTest {
             assertFalse("Raw '^' in derived formula '${df.id}': $fText", fText.contains('^'))
             assertFalse("Raw '_' in derived formula '${df.id}': $fText", fText.contains('_'))
         }
+    }
+
+    // =========================================================================
+    // 8. Section 8 Verification: Dataset Integrity, Approximations, Rules, and Drills
+    // =========================================================================
+
+    @Test
+    fun testDatasetExactCountsIntegrityAndNoDuplicateIds() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+
+        // Exact counts as specified in Section 2 & Section 8
+        assertEquals("Constants count must be 61", 61, dataset.constants.size)
+        assertEquals("Math constants count must be 4", 4, dataset.mathConstants.size)
+        assertEquals("Reference values count must be 12", 12, dataset.referenceValues.size)
+        assertEquals("Atomic masses count must be 39", 39, dataset.atomicMasses.size)
+        assertEquals("Unit conversions count must be 14", 14, dataset.unitConversions.size)
+        assertEquals("Derived formulas count must be 14", 14, dataset.derivedFormulas.size)
+        assertEquals("Not-fixed tables count must be 8", 8, dataset.notFixedTables.size)
+
+        // Verify no duplicate IDs across all entities
+        val allIds = mutableListOf<String>()
+        dataset.constants.forEach { allIds.add(it.id) }
+        dataset.referenceValues.forEach { allIds.add(it.id) }
+        dataset.mathConstants.forEach { allIds.add(it.id) }
+        dataset.derivedFormulas.forEach { allIds.add(it.id) }
+        dataset.unitConversions.forEach { allIds.add(it.id) }
+        dataset.notFixedTables.forEach { allIds.add(it.id) }
+
+        val duplicates = allIds.groupingBy { it }.eachCount().filter { it.value > 1 }
+        assertTrue("Duplicate IDs found across dataset: $duplicates", duplicates.isEmpty())
+
+        // Verify chapter mapping: all mapped chapters exist in syllabus, unmapped entries fallback to General physics
+        val unmappedIds = setOf("reduced_planck_constant", "fine_structure_constant", "loschmidt_constant_100kpa", "loschmidt_constant_1atm")
+        for (c in dataset.constants) {
+            if (c.id in unmappedIds) {
+                assertEquals("Unmapped constant ${c.id} should have General physics paper", setOf(HscPaper.GENERAL_PHYSICS), c.papers)
+            } else {
+                assertTrue("Constant ${c.id} should have mapped syllabus chapters", c.chapters.isNotEmpty())
+                for (chap in c.chapters) {
+                    assertFalse("Empty chapter name for ${c.id}", chap.nameEn.isBlank())
+                    assertFalse("Empty Bangla chapter name for ${c.id}", chap.nameBn.isBlank())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testParsableApproximationsWithinOnePercentOfPreciseValue() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+        val allEntries = dataset.constants
+
+        var checkedCount = 0
+        for (entry in allEntries) {
+            val approxRaw = entry.commonHscApproximationRaw ?: continue
+            val approxVal = entry.courseValue
+            if (entry.isZeroValued) continue
+
+            val preciseVal = entry.preciseValue
+            if (abs(preciseVal) > 1e-15) {
+                val relDiff = abs(approxVal - preciseVal) / abs(preciseVal)
+                assertTrue(
+                    "Approximation for ${entry.id} ($approxVal) differs by ${(relDiff * 100)}% from precise ($preciseVal), which exceeds 1%",
+                    relDiff <= 0.01
+                )
+                checkedCount++
+            }
+        }
+        assertTrue("Expected to verify multiple parsable approximations", checkedCount > 20)
+    }
+
+    @Test
+    fun testPrimaryVariantRuleAndSkippedTrivialAlternates() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+
+        // 6 Non-SI first entries specified in Section 3
+        val fineStructure = dataset.constants.find { it.id == "fine_structure_constant" }!!
+        assertEquals("no unit", fineStructure.unit.toPlainString())
+        assertTrue(fineStructure.unit.isDimensionless)
+        assertEquals("no unit", RichTextHelper.formatUnit(fineStructure.unit).text)
+        assertTrue("Fine structure constant precise value should be ~0.007297", abs(fineStructure.preciseValue - 0.0072973525643) < 1e-7)
+
+        val molarVolume100kPa = dataset.constants.find { it.id == "molar_volume_stp_100kpa" }!!
+        assertEquals("L mol^-1", molarVolume100kPa.unit.toPlainString())
+        assertEquals(22.71, molarVolume100kPa.courseValue, 1e-4)
+
+        val molarVolume1atm = dataset.constants.find { it.id == "molar_volume_stp_1atm" }!!
+        assertEquals("L mol^-1", molarVolume1atm.unit.toPlainString())
+        assertEquals(22.4, molarVolume1atm.courseValue, 1e-4)
+
+        val waterKw = dataset.constants.find { it.id == "water_ion_product_25c" }!!
+        assertEquals("(mol L^-1)^2", waterKw.unit.toPlainString())
+        assertEquals(1.0e-14, waterKw.courseValue, 1e-18)
+
+        val she = dataset.constants.find { it.id == "standard_hydrogen_electrode_potential" }!!
+        assertEquals("V", she.unit.toPlainString())
+        assertEquals(0.0, she.courseValue, 1e-15)
+        assertTrue(she.isZeroValued)
+
+        val refractiveVacuum = dataset.constants.find { it.id == "refractive_index_vacuum" }!!
+        assertEquals("no unit", refractiveVacuum.unit.toPlainString())
+        assertTrue(refractiveVacuum.unit.isDimensionless)
+        assertEquals(1.0, refractiveVacuum.preciseValue, 1e-15)
+
+        // Verify skipped trivial alternates: 1 u, 1 eV, 1 au
+        for (c in dataset.constants) {
+            for (alt in c.allAlternateValues) {
+                assertFalse("Trivial alternate '1 u' must be skipped in ${c.id}", alt.mantissa == 1.0 && alt.exponent == 0 && alt.unit.toPlainString() == "u")
+                assertFalse("Trivial alternate '1 eV' must be skipped in ${c.id}", alt.mantissa == 1.0 && alt.exponent == 0 && alt.unit.toPlainString() == "eV")
+                assertFalse("Trivial alternate '1 au' must be skipped in ${c.id}", alt.mantissa == 1.0 && alt.exponent == 0 && alt.unit.toPlainString() == "au")
+            }
+        }
+    }
+
+    @Test
+    fun testZeroValuedEntriesTolerance() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+        val she = dataset.constants.find { it.id == "standard_hydrogen_electrode_potential" }!!
+        val absZero = dataset.referenceValues.find { it.id == "water_absolute_zero" }!!
+
+        assertTrue(she.isZeroValued)
+        assertTrue(absZero.isZeroValued)
+
+        val sheSpec = AnswerSpec.ScientificValue(
+            mantissa = 0.0,
+            exponent = 0,
+            mantissaRelativeTol = 0.01,
+            alsoAcceptDoubles = listOf(0.0)
+        )
+        // 0.01 absolute tolerance should accept answers within 0.01 of 0
+        assertTrue(AnswerChecker.check("0", sheSpec))
+        assertTrue(AnswerChecker.check("0.0", sheSpec))
+        assertTrue(AnswerChecker.check("0.005", sheSpec))
+        assertTrue(AnswerChecker.check("-0.005", sheSpec))
+        assertTrue(AnswerChecker.check("0.01", sheSpec))
+        assertTrue(AnswerChecker.check("-0.01", sheSpec))
+        assertFalse(AnswerChecker.check("0.02", sheSpec))
+        assertFalse(AnswerChecker.check("0.05", sheSpec))
+    }
+
+    @Test
+    fun testDualKeyAnswerCheckingAndRejectionOfG10() {
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+        val g = dataset.constants.find { it.id == "standard_acceleration_gravity" }!!
+
+        val accepted = listOf(g.preciseValue, g.courseValue) // 9.80665 and 9.8
+        val gSpec = AnswerSpec.ScientificValue(
+            mantissa = g.mantissa,
+            exponent = g.exponent,
+            mantissaRelativeTol = 0.01,
+            alsoAcceptDoubles = accepted
+        )
+
+        // Precise value passes
+        assertTrue(AnswerChecker.check("9.80665", gSpec))
+        assertTrue(AnswerChecker.check("9.807", gSpec))
+
+        // Course value passes
+        assertTrue(AnswerChecker.check("9.8", gSpec))
+        assertTrue(AnswerChecker.check("9.81", gSpec))
+
+        // g = 10 differs by ~1.9% from 9.81 and ~2% from 9.80665, rejected at 1% tolerance
+        assertFalse("g = 10 must be rejected under 1% tolerance", AnswerChecker.check("10", gSpec))
+        assertFalse("g = 10.0 must be rejected under 1% tolerance", AnswerChecker.check("10.0", gSpec))
+    }
+
+    @Test
+    fun testOverridesPrecedence() {
+        val preciseVal = 123.4567
+
+        // 1. Fallback: precise value rounded to 4 significant figures when no approximation or override
+        val fallbackCourse = ConstantsLoader.roundToSignificantFigures(preciseVal, 4)
+        assertEquals(123.5, fallbackCourse, 1e-3)
+
+        // 2. Extracted approximation: takes precedence over 4-sig-fig rounding
+        val extractedApprox = ConstantsLoader.extractCourseApproximationForValue("1.23 × 10^2", preciseVal)
+        assertNotNull(extractedApprox)
+        assertEquals(123.0, extractedApprox!!, 1e-3)
+
+        // 3. Override: override courseMantissa & courseExponent takes highest precedence
+        val override = ConstantOverride(
+            id = "test_const",
+            courseMantissa = 1.25,
+            courseExponent = 2
+        )
+        val overrideCourseVal = override.courseNumericValue!!
+        assertEquals(125.0, overrideCourseVal, 1e-3)
+
+        // Precedence order: override (125.0) > approx (123.0) > fallback (123.5)
+        val selectedVal = override.courseNumericValue ?: (extractedApprox ?: fallbackCourse)
+        assertEquals(125.0, selectedVal, 1e-3)
+    }
+
+    @Test
+    fun testExtraDrillsGeneratorsAndChecking() {
+        // 1. Atomic Masses Drill (39 elements, tolerance 0.05)
+        val atomicQ = QuestionGenerator.generateAtomicMassQuestion()
+        assertNotNull(atomicQ.questionDisplay)
+        assertTrue(atomicQ.questionDisplay.startsWith("Atomic mass of "))
+        assertEquals("Atomic Masses", atomicQ.operation)
+        assertTrue(AnswerChecker.check(atomicQ.answer, atomicQ.answerSpec))
+
+        val expectedMass = atomicQ.numericAnswer
+        assertTrue(AnswerChecker.check((expectedMass + 0.04).toString(), atomicQ.answerSpec))
+        assertTrue(AnswerChecker.check((expectedMass - 0.04).toString(), atomicQ.answerSpec))
+        assertFalse(AnswerChecker.check((expectedMass + 0.1).toString(), atomicQ.answerSpec))
+
+        // 2. Unit Conversions Drill (1% tolerance, skips temperature)
+        val convQ = QuestionGenerator.generateUnitConversionQuestion()
+        assertTrue(convQ.questionDisplay.contains(" = ? "))
+        assertEquals("Conversions", convQ.operation)
+        assertTrue(AnswerChecker.check(convQ.answer, convQ.answerSpec))
+
+        // 3. Math Constants Drill (accepts fraction 22/7 for pi)
+        val mathQ = QuestionGenerator.generateMathConstantQuestion()
+        assertEquals("Math Constants", mathQ.operation)
+        assertTrue(AnswerChecker.check(mathQ.answer, mathQ.answerSpec))
+
+        val piSpec = AnswerSpec.RelativeTolerance(
+            expected = Math.PI,
+            relativeToleranceOverride = 0.01,
+            exactCourseValues = listOf(Math.PI, 3.14, 3.1416, 22.0 / 7.0)
+        )
+        assertTrue("Exact pi string passes", AnswerChecker.check("3.14159", piSpec))
+        assertTrue("Course approx 3.14 passes", AnswerChecker.check("3.14", piSpec))
+        assertTrue("Course approx 3.1416 passes", AnswerChecker.check("3.1416", piSpec))
+        assertTrue("Fraction 22/7 passes for pi", AnswerChecker.check("22/7", piSpec))
+
+        // 4. Reference Values Drill
+        val refQ = QuestionGenerator.generateReferenceValueQuestion()
+        assertEquals("Ref Values", refQ.operation)
+        assertTrue(AnswerChecker.check(refQ.answer, refQ.answerSpec))
     }
 }
