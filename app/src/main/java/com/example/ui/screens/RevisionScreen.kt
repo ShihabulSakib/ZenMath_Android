@@ -69,6 +69,7 @@ import com.example.data.NotFixedTableEntry
 import com.example.data.PhSpeciesData
 import com.example.data.ReliabilityClass
 import com.example.data.UnitConversionEntry
+import com.example.domain.GameMode
 import com.example.ui.components.RichTextHelper
 import com.example.ui.theme.ZenTheme
 import java.util.Locale
@@ -84,6 +85,7 @@ enum class RevisionTab(val label: String, val icon: androidx.compose.ui.graphics
 
 @Composable
 fun RevisionScreen(
+    onStartDrill: ((GameMode) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -177,7 +179,7 @@ fun RevisionScreen(
                 RevisionTab.FRACTIONS -> FractionsTab()
                 RevisionTab.MEMORY -> MemoryTablesTab()
                 RevisionTab.PH -> PhRevisionTab()
-                RevisionTab.CONSTANTS -> ConstantsRevisionTab()
+                RevisionTab.CONSTANTS -> ConstantsRevisionTab(onStartDrill = onStartDrill)
             }
         }
     }
@@ -846,7 +848,9 @@ private enum class ConstantsSubTab(val label: String) {
 }
 
 @Composable
-private fun ConstantsRevisionTab() {
+private fun ConstantsRevisionTab(
+    onStartDrill: ((GameMode) -> Unit)? = null
+) {
     val colors = ZenTheme.colors
     val dataset = remember { ConstantsLoader.getDataset(failLoudly = false) }
     val allEntriesAndRefs = remember(dataset) { dataset.constants + dataset.referenceValues }
@@ -900,6 +904,40 @@ private fun ConstantsRevisionTab() {
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isSelected) colors.onPrimary else colors.textSecondary
+                    )
+                }
+            }
+        }
+
+        val drillMode = when (activeSubTab) {
+            ConstantsSubTab.CONSTANTS -> GameMode.CONSTANTS
+            ConstantsSubTab.REFERENCE_VALUES -> GameMode.REFERENCE_VALUES
+            ConstantsSubTab.MATH_CONSTANTS -> GameMode.MATH_CONSTANTS
+            ConstantsSubTab.ATOMIC_MASSES -> GameMode.ATOMIC_MASSES
+            ConstantsSubTab.UNIT_CONVERSIONS -> GameMode.UNIT_CONVERSIONS
+            else -> null
+        }
+        if (drillMode != null && onStartDrill != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.primary)
+                        .clickable { onStartDrill(drillMode) }
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
+                        .testTag("practice_drill_btn"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Practice ${activeSubTab.label.substringBefore(" (")} Drill ⚡",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onPrimary
                     )
                 }
             }

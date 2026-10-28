@@ -42,6 +42,10 @@ enum class GameMode(
     COMPOSITE_LOGS_ROOTS("composite-logs-roots", "Logs & Roots", "log k", usesDifficulty = true, supportsMcqOption = true),
     CUBES_AND_POWERS("cubes-and-powers", "Cubes & Powers", "x³", usesDifficulty = false, supportsMcqOption = true),
     CONSTANTS("constants", "Constants", "kₑ", usesDifficulty = false, supportsMcqOption = true),
+    ATOMIC_MASSES("atomic-masses", "Atomic Masses", "Mᵣ", usesDifficulty = false, supportsMcqOption = true),
+    UNIT_CONVERSIONS("unit-conversions", "Conversions", "⇄", usesDifficulty = false, supportsMcqOption = true),
+    MATH_CONSTANTS("math-constants", "Math Constants", "π", usesDifficulty = false, supportsMcqOption = true),
+    REFERENCE_VALUES("reference-values", "Ref Values", "ref", usesDifficulty = false, supportsMcqOption = true),
     SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = false),
     WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false);
 

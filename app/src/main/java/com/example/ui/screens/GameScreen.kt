@@ -47,8 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.ConstantEntry
 import com.example.data.ConstantsData
 import com.example.data.ConstantsLoader
+import com.example.data.MathConstantEntry
 import com.example.domain.GameMode
 import com.example.domain.MathProblem
 import com.example.domain.ScientificInputParser
@@ -96,10 +98,11 @@ fun GameScreen(
                 GameMode.SCIENTIFIC_NOTATION,
                 GameMode.COMPOSITE_LOGS_ROOTS,
                 GameMode.CONSTANTS,
+                GameMode.REFERENCE_VALUES,
                 GameMode.SPEED_ROUND,
                 GameMode.WEAK_SPOTS
             )
-    val showFraction = mode == GameMode.FRACTION
+    val showFraction = mode == GameMode.FRACTION || mode == GameMode.MATH_CONSTANTS
     val showDecimal = mode in listOf(
         GameMode.FRACTION,
         GameMode.DIVISION,
@@ -111,6 +114,10 @@ fun GameScreen(
         GameMode.PH_POH,
         GameMode.COMPOSITE_LOGS_ROOTS,
         GameMode.CONSTANTS,
+        GameMode.ATOMIC_MASSES,
+        GameMode.UNIT_CONVERSIONS,
+        GameMode.MATH_CONSTANTS,
+        GameMode.REFERENCE_VALUES,
         GameMode.SPEED_ROUND,
         GameMode.WEAK_SPOTS
     )
@@ -120,6 +127,8 @@ fun GameScreen(
         GameMode.PH_POH,
         GameMode.COMPOSITE_LOGS_ROOTS,
         GameMode.CONSTANTS,
+        GameMode.UNIT_CONVERSIONS,
+        GameMode.REFERENCE_VALUES,
         GameMode.SPEED_ROUND,
         GameMode.WEAK_SPOTS
     )
@@ -367,6 +376,19 @@ fun GameScreen(
                         modifier = Modifier.testTag("question_text")
                     )
 
+                    if (mode == GameMode.CONSTANTS && !problem?.unitText.isNullOrEmpty()) {
+                        Text(
+                            text = "[${RichTextHelper.formatMathText(problem?.unitText ?: "")}]",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = RichTextHelper.MathFontFamily,
+                            color = colors.textSecondary,
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .testTag("constant_target_unit")
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Answer / Feedback Display
@@ -488,18 +510,19 @@ fun GameScreen(
                         }
                     }
 
-                    // Solution Steps Card (shown when Hint tapped OR on wrong answer / timeout)
+                    // Solution Steps Card (shown when Hint tapped OR on answer feedback)
                     val steps = problem?.solutionSteps.orEmpty()
-                    val showStepsCard = steps.isNotEmpty() && (hintRevealed || feedback == FeedbackType.INCORRECT || feedback == FeedbackType.TIMEOUT)
+                    val showStepsCard = steps.isNotEmpty() && (hintRevealed || feedback != FeedbackType.NONE)
                     if (showStepsCard) {
                         Spacer(modifier = Modifier.height(12.dp))
                         val cardShape = RoundedCornerShape(16.dp)
-                        val allConstants = remember {
-                            ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
-                        }
+                        val dataset = remember { ConstantsLoader.getDataset(failLoudly = false) }
                         val confusableNotes = remember(problem?.confusableIds) {
+                            val allEntities = dataset.constants.associateBy { it.id } +
+                                    dataset.referenceValues.associateBy { it.id } +
+                                    dataset.mathConstants.associateBy { it.id }
                             problem?.confusableIds.orEmpty().mapNotNull { cid ->
-                                allConstants.find { it.id == cid }
+                                allEntities[cid]
                             }
                         }
 
@@ -514,7 +537,11 @@ fun GameScreen(
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
-                                    text = if (feedback == FeedbackType.NONE) "HINT / STEPS" else "SOLUTION STEPS",
+                                    text = when {
+                                        mode == GameMode.CONSTANTS -> "CONSTANT DETAILS & MEMORY AID"
+                                        feedback == FeedbackType.NONE -> "HINT / STEPS"
+                                        else -> "SOLUTION STEPS"
+                                    },
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Black,
                                     letterSpacing = 1.2.sp,
@@ -530,7 +557,11 @@ fun GameScreen(
                                 }
                                 if (confusableNotes.isNotEmpty() && feedback != FeedbackType.NONE) {
                                     val cText = confusableNotes.joinToString("; ") { c ->
-                                        "${c.name} (${c.symbol.toPlainString()}, ${c.subject})"
+                                        when (c) {
+                                            is ConstantEntry -> "${c.name} (${c.symbol.shortSymbol})"
+                                            is MathConstantEntry -> "${c.name} (${c.symbol.shortSymbol})"
+                                            else -> ""
+                                        }
                                     }
                                     Text(
                                         text = "Do not confuse with: $cText",

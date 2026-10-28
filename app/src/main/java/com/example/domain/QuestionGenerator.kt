@@ -8,6 +8,7 @@ import com.example.data.MemoryTableCategory
 import com.example.data.PhSpeciesData
 import com.example.data.StructuredSymbol
 import com.example.data.StructuredUnit
+import com.example.ui.components.RichTextHelper
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -39,7 +40,8 @@ data class MathProblem(
     val mcqOptions: List<String>? = null,
     val confusableIds: List<String> = emptyList(),
     val constantSymbol: StructuredSymbol? = null,
-    val structuredUnit: StructuredUnit? = null
+    val structuredUnit: StructuredUnit? = null,
+    val constantEntry: ConstantEntry? = null
 )
 
 object QuestionGenerator {
@@ -1692,69 +1694,91 @@ object QuestionGenerator {
     // 5.4 Constants Drill Generator
     // =========================================================================
     fun generateConstantQuestion(
-        subjects: Set<String> = emptySet(),
+        papers: Set<com.example.data.HscPaper> = emptySet(),
+        chapters: Set<String> = emptySet(),
+        reliabilityClasses: Set<com.example.data.ReliabilityClass> = emptySet(),
+        includeAlternateUnits: Boolean = false,
         missedCounts: Map<String, Int> = emptyMap()
     ): MathProblem {
-        val allLoaded = ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
-        val filtered = if (subjects.isEmpty()) {
-            allLoaded
-        } else {
-            allLoaded.filter {
-                it.subject.displayName in subjects || it.subject.id in subjects
-            }.ifEmpty { allLoaded }
-        }
-        val entry: ConstantEntry = selectWeightedConstant(filtered, missedCounts)
-        val expectedVal = entry.numericValue
-        val ansStr = if (entry.exponent == 0) {
-            formatCleanDouble(entry.mantissa)
-        } else {
-            "${formatCleanDouble(entry.mantissa)}×10^${entry.exponent}"
-        }
-        val unitPlain = entry.unit.toPlainString()
-        val relTol = entry.relativeToleranceOverride ?: 0.01
+        val dataset = ConstantsLoader.getDataset(failLoudly = false)
+        val allConstants = dataset.constants
+        val filtered = allConstants.filter { c ->
+            val matchesPaper = papers.isEmpty() || c.papers.any { it in papers }
+            val matchesChapter = chapters.isEmpty() || c.chapters.any { it.key in chapters }
+            val matchesRel = reliabilityClasses.isEmpty() || c.reliabilityClass in reliabilityClasses
+            matchesPaper && matchesChapter && matchesRel
+        }.ifEmpty { allConstants }
 
-        val alternateDoubles = buildList {
-            add(expectedVal)
-            entry.alternateValues.forEach { alt ->
-                add(alt.mantissa * 10.0.pow(alt.exponent.toDouble()))
-            }
+        val entry = selectWeightedConstant(filtered, missedCounts)
+
+        // Alternate units logic (Section 4):
+        // If includeAlternateUnits toggle is on AND the entry has alternate values,
+        // randomly choose between primary and an alternate variant with 30% chance.
+        val useAlternate = includeAlternateUnits && entry.allAlternateValues.isNotEmpty() && Random.nextInt(100) < 30
+        val alt = if (useAlternate) entry.allAlternateValues.random() else null
+
+        val (targetMantissa, targetExponent, targetUnit, targetVal, targetCourseVal) = if (alt != null) {
+            Tuple5(alt.mantissa, alt.exponent, alt.unit, alt.preciseValue, alt.courseValue)
+        } else {
+            Tuple5(entry.mantissa, entry.exponent, entry.unit, entry.preciseValue, entry.courseValue)
         }
+
+        val ansStr = if (targetExponent == 0) {
+            formatCleanDouble(targetMantissa)
+        } else {
+            "${formatCleanDouble(targetMantissa)}×10^$targetExponent"
+        }
+        val unitPlain = targetUnit.toPlainString()
+        val relTol = entry.toleranceOverride ?: 0.01
+
+        val acceptedValues = mutableListOf(targetVal, targetCourseVal)
+        val shortSym = entry.symbol.shortSymbol
+        val formattedUnitText = RichTextHelper.formatUnit(targetUnit).text
+        val unitDisplaySuffix = if (targetUnit.isDimensionless || formattedUnitText == "no unit") "" else " $formattedUnitText"
 
         val steps = buildList {
-            add("${entry.name} (${entry.symbol.toPlainString()}): $ansStr $unitPlain")
-            entry.notes?.let { add(it) }
-            if (entry.alternateValues.isNotEmpty()) {
-                val altSummary = entry.alternateValues.joinToString("; ") { alt ->
-                    val s = if (alt.exponent == 0) formatCleanDouble(alt.mantissa) else "${formatCleanDouble(alt.mantissa)}×10^${alt.exponent}"
-                    "$s ${alt.unit.toPlainString()}"
-                }
-                add("Alternate units: $altSummary")
+            add("${entry.name} ($shortSym): $ansStr$unitDisplaySuffix")
+            add("Precise value: ${formatCleanDouble(targetVal)}$unitDisplaySuffix")
+            add("Course value: ${formatCleanDouble(targetCourseVal)}$unitDisplaySuffix")
+            if (entry.chapters.isNotEmpty()) {
+                val chapList = entry.chapters.joinToString(", ") { "${it.paper.displayName}, ${it.nameEn}" }
+                add("Chapters: $chapList")
             }
+            entry.notes?.let { add("Note: $it") }
         }
 
         return MathProblem(
-            num1 = entry.mantissa,
-            num2 = entry.exponent.toDouble(),
+            num1 = targetMantissa,
+            num2 = targetExponent.toDouble(),
             operation = "Constants",
-            questionDisplay = "${entry.name} (${entry.symbol.toPlainString()})",
+            questionDisplay = entry.name,
             answer = ansStr,
-            numericAnswer = expectedVal,
-            topicTag = "constant-${entry.id}",
+            numericAnswer = targetVal,
+            topicTag = entry.id,
             answerSpec = AnswerSpec.ScientificValue(
-                mantissa = entry.mantissa,
-                exponent = entry.exponent,
+                mantissa = targetMantissa,
+                exponent = targetExponent,
                 mantissaRelativeTol = relTol,
                 requireNormalized = false,
-                alsoAcceptDoubles = alternateDoubles
+                alsoAcceptDoubles = acceptedValues
             ),
-            unitText = unitPlain,
-            subjectLabel = entry.subject.displayName,
+            unitText = if (alt != null) formattedUnitText else null,
+            subjectLabel = entry.subjectLabel,
             solutionSteps = steps,
-            confusableIds = entry.confusableWith,
+            confusableIds = entry.confusableIds,
             constantSymbol = entry.symbol,
-            structuredUnit = entry.unit
+            structuredUnit = targetUnit,
+            constantEntry = entry
         )
     }
+
+    private data class Tuple5<A, B, C, D, E>(
+        val first: A,
+        val second: B,
+        val third: C,
+        val fourth: D,
+        val fifth: E
+    )
 
     private fun selectWeightedConstant(
         entries: List<ConstantEntry>,
@@ -1769,6 +1793,182 @@ object QuestionGenerator {
             if (roll < 0) return entries[i]
         }
         return entries.last()
+    }
+
+    // =========================================================================
+    // 5.5 Extra Drills (Atomic Masses, Unit Conversions, Math Constants, Ref Values)
+    // =========================================================================
+
+    /**
+     * Atomic Masses Drill (39 elements):
+     * Tests symbol -> school atomic mass or element name -> school atomic mass (tolerance 0.05).
+     */
+    fun generateAtomicMassQuestion(): MathProblem {
+        val dataset = ConstantsLoader.getDataset(failLoudly = false)
+        val entry = dataset.atomicMasses.random()
+        val askSymbol = Random.nextBoolean()
+        val prompt = if (askSymbol) {
+            "Atomic mass of ${entry.symbol}"
+        } else {
+            "Atomic mass of ${entry.element}"
+        }
+        val mass = entry.relativeAtomicMassSchool
+        val ansStr = formatCleanDouble(mass)
+
+        return MathProblem(
+            num1 = mass,
+            num2 = 0.0,
+            operation = "Atomic Masses",
+            questionDisplay = prompt,
+            answer = ansStr,
+            numericAnswer = mass,
+            topicTag = "atomic-mass-${entry.symbol.lowercase()}",
+            answerSpec = AnswerSpec.AbsoluteTolerance(
+                expected = mass,
+                tolerance = 0.05,
+                exactCourseValues = listOf(mass)
+            ),
+            unitText = "g/mol",
+            subjectLabel = "Chemistry",
+            solutionSteps = listOf(
+                "${entry.element} (${entry.symbol}): School mass = $ansStr g/mol (u)",
+                "Modern CIAAW value: ${entry.modernCiaawValue}",
+                entry.notes ?: "Standard HSC Chemistry atomic mass value."
+            )
+        )
+    }
+
+    /**
+     * Unit Conversions Drill (13 numeric groups, temperature is revision-only):
+     * Forward or reverse conversion with 1% relative tolerance.
+     */
+    fun generateUnitConversionQuestion(): MathProblem {
+        val dataset = ConstantsLoader.getDataset(failLoudly = false)
+        val numericGroups = dataset.unitConversions.filter { !it.isFormulaOnly }
+        val group = numericGroups.random()
+        val numericItems = group.values.filter { it.isNumericFactor }
+        val item = numericItems.random()
+
+        val isForward = Random.nextBoolean()
+        val fromUnit = if (isForward) item.fromUnit!! else item.toUnit!!
+        val toUnit = if (isForward) item.toUnit!! else item.fromUnit!!
+        val factor = if (isForward) item.factor!! else (1.0 / item.factor!!)
+
+        val (m, e) = ConstantsLoader.decomposeToMantissaAndExponent(factor)
+        val ansStr = if (e == 0) formatCleanDouble(m) else "${formatCleanDouble(m)}×10^$e"
+        val fromStr = fromUnit.toPlainString()
+        val toStr = toUnit.toPlainString()
+
+        return MathProblem(
+            num1 = m,
+            num2 = e.toDouble(),
+            operation = "Conversions",
+            questionDisplay = "1 $fromStr = ? $toStr",
+            answer = ansStr,
+            numericAnswer = factor,
+            topicTag = "conversion-${group.id}",
+            answerSpec = AnswerSpec.ScientificValue(
+                mantissa = m,
+                exponent = e,
+                mantissaRelativeTol = 0.01,
+                requireNormalized = false,
+                alsoAcceptDoubles = listOf(factor)
+            ),
+            unitText = toStr,
+            subjectLabel = group.quantity,
+            solutionSteps = listOf(
+                "1 $fromStr = $ansStr $toStr",
+                "Summary: ${group.conversionSummary}"
+            ),
+            structuredUnit = toUnit
+        )
+    }
+
+    /**
+     * Mathematical Constants Drill (4 constants: π, e, ln 2, ln 10):
+     * Name -> value, accepting any listed approximation including fractions like 22/7.
+     */
+    fun generateMathConstantQuestion(): MathProblem {
+        val dataset = ConstantsLoader.getDataset(failLoudly = false)
+        val mc = dataset.mathConstants.random()
+        val ansStr = formatCleanDouble(mc.value)
+        val shortSym = mc.symbol.shortSymbol
+
+        val acceptedList = mutableListOf(mc.value)
+        acceptedList.addAll(mc.acceptedNumericApproximations)
+
+        return MathProblem(
+            num1 = mc.value,
+            num2 = 0.0,
+            operation = "Math Constants",
+            questionDisplay = "${mc.name} ($shortSym)",
+            answer = ansStr,
+            numericAnswer = mc.value,
+            topicTag = "math-constant-${mc.id}",
+            answerSpec = AnswerSpec.RelativeTolerance(
+                expected = mc.value,
+                relativeToleranceOverride = 0.01,
+                exactCourseValues = acceptedList
+            ),
+            subjectLabel = "Mathematics",
+            solutionSteps = listOf(
+                "${mc.name} ($shortSym) = ${formatCleanDouble(mc.value)}",
+                "Approximations accepted: ${mc.commonApproximations.joinToString(", ")}",
+                "Curriculum uses: ${mc.relevance.joinToString("; ")}"
+            ),
+            constantSymbol = mc.symbol
+        )
+    }
+
+    /**
+     * Condition-Dependent Reference Values Drill (12 entries):
+     * Runs through the same engine as constants, clearly labelled as Reference Values.
+     */
+    fun generateReferenceValueQuestion(
+        missedCounts: Map<String, Int> = emptyMap()
+    ): MathProblem {
+        val dataset = ConstantsLoader.getDataset(failLoudly = false)
+        val refList = dataset.referenceValues
+        val entry = selectWeightedConstant(refList, missedCounts)
+
+        val ansStr = if (entry.exponent == 0) {
+            formatCleanDouble(entry.mantissa)
+        } else {
+            "${formatCleanDouble(entry.mantissa)}×10^${entry.exponent}"
+        }
+        val unitPlain = entry.unit.toPlainString()
+        val shortSym = entry.symbol.shortSymbol
+        val relTol = entry.toleranceOverride ?: 0.015
+
+        val accepted = listOf(entry.preciseValue, entry.courseValue).distinct()
+
+        return MathProblem(
+            num1 = entry.mantissa,
+            num2 = entry.exponent.toDouble(),
+            operation = "Ref Values",
+            questionDisplay = "${entry.name} ($shortSym)",
+            answer = ansStr,
+            numericAnswer = entry.preciseValue,
+            topicTag = "reference-${entry.id}",
+            answerSpec = AnswerSpec.ScientificValue(
+                mantissa = entry.mantissa,
+                exponent = entry.exponent,
+                mantissaRelativeTol = relTol,
+                requireNormalized = false,
+                alsoAcceptDoubles = accepted
+            ),
+            unitText = unitPlain,
+            subjectLabel = entry.subjectLabel,
+            solutionSteps = listOf(
+                "${entry.name} ($shortSym): Reference value = $ansStr $unitPlain",
+                entry.definitionOrMeaning?.let { "Conditions: $it" } ?: "",
+                entry.notes?.let { "Notes: $it" } ?: ""
+            ).filter { it.isNotBlank() },
+            confusableIds = entry.confusableIds,
+            constantSymbol = entry.symbol,
+            structuredUnit = entry.unit,
+            constantEntry = entry
+        )
     }
 
     internal fun formatCleanDouble(v: Double): String {

@@ -53,7 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.ConstantsData
 import com.example.data.ConstantsLoader
+import com.example.data.HscPaper
 import com.example.data.MemoryTableCategory
+import com.example.data.ReliabilityClass
 import com.example.domain.CompositeLogRootSubtype
 import com.example.domain.CubesPowersSubtype
 import com.example.domain.Difficulty
@@ -114,6 +116,14 @@ fun GameSetupScreen(
     onSpeedRoundDurationMinChange: (Int) -> Unit = {},
     onSpeedRoundTopicsChange: (Set<GameMode>) -> Unit = {},
     onConstantSubjectsChange: (Set<String>) -> Unit = {},
+    constantsIncludeAlternateUnits: Boolean = false,
+    constantsSelectedPapers: Set<HscPaper> = emptySet(),
+    constantsSelectedChapters: Set<String> = emptySet(),
+    constantsSelectedReliability: Set<ReliabilityClass> = ReliabilityClass.entries.toSet(),
+    onConstantsIncludeAlternateUnitsChange: (Boolean) -> Unit = {},
+    onConstantsSelectedPapersChange: (Set<HscPaper>) -> Unit = {},
+    onConstantsSelectedChaptersChange: (Set<String>) -> Unit = {},
+    onConstantsSelectedReliabilityChange: (Set<ReliabilityClass>) -> Unit = {},
     onStart: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -764,27 +774,85 @@ fun GameSetupScreen(
                     }
                 }
 
-                // 5.4 Constants Subject Filter
+                // 5.4 Constants Setup: Paper, Chapter, Reliability, Alternate Units
                 if (mode == GameMode.CONSTANTS) {
                     item {
-                        val allSubjects = remember {
-                            ConstantsLoader.subjects(
-                                ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false)
-                            )
+                        val dataset = remember { ConstantsLoader.getDataset(failLoudly = false) }
+                        val allChapters = dataset.syllabusChapters
+
+                        // 1. Paper Filter
+                        SectionHeader(title = "CURRICULUM PAPERS")
+                        val papers = listOf(
+                            HscPaper.PHYSICS_1ST,
+                            HscPaper.PHYSICS_2ND,
+                            HscPaper.CHEMISTRY_1ST,
+                            HscPaper.CHEMISTRY_2ND
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            papers.forEach { paper ->
+                                val isSelected = constantsSelectedPapers.isEmpty() || paper in constantsSelectedPapers
+                                val cardShape = RoundedCornerShape(12.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(cardShape)
+                                        .background(if (isSelected && constantsSelectedPapers.isNotEmpty()) colors.primary else colors.card)
+                                        .border(
+                                            1.dp,
+                                            if (isSelected && constantsSelectedPapers.isNotEmpty()) colors.primary else colors.cardBorder,
+                                            cardShape
+                                        )
+                                        .clickable {
+                                            val updated = if (constantsSelectedPapers.isEmpty()) {
+                                                setOf(paper)
+                                            } else if (paper in constantsSelectedPapers) {
+                                                val next = constantsSelectedPapers - paper
+                                                if (next.isEmpty()) emptySet() else next
+                                            } else {
+                                                val next = constantsSelectedPapers + paper
+                                                if (next.size == papers.size) emptySet() else next
+                                            }
+                                            onConstantsSelectedPapersChange(updated)
+                                        }
+                                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = paper.displayName.replace(" ", "\n"),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        color = if (isSelected && constantsSelectedPapers.isNotEmpty()) colors.onPrimary else colors.textMain,
+                                        lineHeight = 14.sp
+                                    )
+                                }
+                            }
                         }
-                        SectionHeader(title = "SUBJECT FILTER (EMPTY = ALL)")
-                        val cardShape = RoundedCornerShape(20.dp)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 2. Reliability Class Filter
+                        SectionHeader(title = "RELIABILITY CLASS")
+                        val relShape = RoundedCornerShape(20.dp)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(cardShape)
+                                .clip(relShape)
                                 .background(colors.card)
-                                .border(1.dp, colors.cardBorder, cardShape)
+                                .border(1.dp, colors.cardBorder, relShape)
                                 .padding(vertical = 4.dp)
                         ) {
                             Column {
-                                allSubjects.forEach { subj ->
-                                    val checked = constantSubjects.isEmpty() || subj in constantSubjects
+                                ReliabilityClass.entries.forEach { rel ->
+                                    val checked = rel in constantsSelectedReliability
+                                    val (title, subtitle) = when (rel) {
+                                        ReliabilityClass.FUNDAMENTAL -> "Fundamental" to "Defined or measured fundamental values"
+                                        ReliabilityClass.CONVENTIONS -> "Conventions" to "Conventional, defined & condition-specific"
+                                        ReliabilityClass.REFERENCE_AND_APPROXIMATE -> "Reference & Approx" to "Empirical & reference approximations"
+                                    }
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -792,22 +860,160 @@ fun GameSetupScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = subj,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = colors.textMain
-                                        )
+                                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                            Text(
+                                                text = title,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textMain
+                                            )
+                                            Text(
+                                                text = subtitle,
+                                                fontSize = 11.sp,
+                                                color = colors.textSecondary
+                                            )
+                                        }
                                         ZenToggle(
                                             checked = checked,
                                             onCheckedChange = { newVal ->
-                                                val currentActive = if (constantSubjects.isEmpty()) allSubjects.toSet() else constantSubjects
-                                                val updated = if (newVal) currentActive + subj else currentActive - subj
-                                                if (updated.isNotEmpty()) {
-                                                    onConstantSubjectsChange(if (updated.size == allSubjects.size) emptySet() else updated)
+                                                val updated = if (newVal) {
+                                                    constantsSelectedReliability + rel
+                                                } else {
+                                                    if (constantsSelectedReliability.size > 1) {
+                                                        constantsSelectedReliability - rel
+                                                    } else {
+                                                        constantsSelectedReliability
+                                                    }
                                                 }
+                                                onConstantsSelectedReliabilityChange(updated)
                                             }
                                         )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 3. Unit Systems
+                        SectionHeader(title = "UNIT SYSTEMS")
+                        ToggleCardRow(
+                            title = "Include Alternate Unit Systems",
+                            subtitle = if (constantsIncludeAlternateUnits) "Includes non-SI variants (e.g. R in L·atm, h in eV·s)" else "Standard SI units only",
+                            icon = Icons.Default.Calculate,
+                            checked = constantsIncludeAlternateUnits,
+                            onCheckedChange = onConstantsIncludeAlternateUnitsChange
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 4. Chapters Filter (Bilingual English + Bangla)
+                        var chaptersExpanded by remember { mutableStateOf(false) }
+                        val filteredChapters = remember(constantsSelectedPapers) {
+                            if (constantsSelectedPapers.isEmpty()) allChapters
+                            else allChapters.filter { it.paper in constantsSelectedPapers }
+                        }
+                        val selectedCount = if (constantsSelectedChapters.isEmpty()) {
+                            filteredChapters.size
+                        } else {
+                            filteredChapters.count { it.key in constantsSelectedChapters }
+                        }
+
+                        SectionHeader(title = "CHAPTER FILTER ($selectedCount/${filteredChapters.size})")
+                        val chapCardShape = RoundedCornerShape(16.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(chapCardShape)
+                                .background(colors.card)
+                                .border(1.dp, colors.cardBorder, chapCardShape)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { chaptersExpanded = !chaptersExpanded }
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (constantsSelectedChapters.isEmpty()) "All Chapters Active" else "$selectedCount Chapters Selected",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textMain
+                                    )
+                                    Text(
+                                        text = if (chaptersExpanded) "Hide ▲" else "Edit ▼",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary
+                                    )
+                                }
+
+                                if (chaptersExpanded) {
+                                    Column(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        filteredChapters.forEach { chap ->
+                                            val isChecked = constantsSelectedChapters.isEmpty() || chap.key in constantsSelectedChapters
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clickable {
+                                                        val activeSet = if (constantsSelectedChapters.isEmpty()) {
+                                                            filteredChapters.map { it.key }.toSet()
+                                                        } else {
+                                                            constantsSelectedChapters
+                                                        }
+                                                        val updated = if (chap.key in activeSet) {
+                                                            val next = activeSet - chap.key
+                                                            if (next.isEmpty() || next.size == filteredChapters.size) emptySet() else next
+                                                        } else {
+                                                            val next = activeSet + chap.key
+                                                            if (next.size == filteredChapters.size) emptySet() else next
+                                                        }
+                                                        onConstantsSelectedChaptersChange(updated)
+                                                    }
+                                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "${chap.paper.displayName} • Ch ${chap.chapterNumber}: ${chap.nameEn}",
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = colors.textMain
+                                                    )
+                                                    Text(
+                                                        text = chap.nameBn,
+                                                        fontSize = 11.sp,
+                                                        color = colors.textSecondary
+                                                    )
+                                                }
+                                                ZenToggle(
+                                                    checked = isChecked,
+                                                    onCheckedChange = { newVal ->
+                                                        val activeSet = if (constantsSelectedChapters.isEmpty()) {
+                                                            filteredChapters.map { it.key }.toSet()
+                                                        } else {
+                                                            constantsSelectedChapters
+                                                        }
+                                                        val updated = if (newVal) {
+                                                            val next = activeSet + chap.key
+                                                            if (next.size == filteredChapters.size) emptySet() else next
+                                                        } else {
+                                                            val next = activeSet - chap.key
+                                                            if (next.isEmpty() || next.size == filteredChapters.size) emptySet() else next
+                                                        }
+                                                        onConstantsSelectedChaptersChange(updated)
+                                                    }
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

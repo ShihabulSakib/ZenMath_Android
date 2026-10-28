@@ -71,6 +71,10 @@ fun ZenMathApp(
     val speedRoundDurationMin by viewModel.speedRoundDurationMin.collectAsState()
     val speedRoundTopics by viewModel.speedRoundTopics.collectAsState()
     val constantSubjects by viewModel.constantSubjects.collectAsState()
+    val constantsIncludeAlternateUnits by viewModel.constantsIncludeAlternateUnits.collectAsState()
+    val constantsSelectedPapers by viewModel.constantsSelectedPapers.collectAsState()
+    val constantsSelectedChapters by viewModel.constantsSelectedChapters.collectAsState()
+    val constantsSelectedReliability by viewModel.constantsSelectedReliability.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -180,6 +184,14 @@ fun ZenMathApp(
                         onSpeedRoundDurationMinChange = { viewModel.setSpeedRoundDurationMin(it) },
                         onSpeedRoundTopicsChange = { viewModel.setSpeedRoundTopics(it) },
                         onConstantSubjectsChange = { viewModel.setConstantSubjects(it) },
+                        constantsIncludeAlternateUnits = constantsIncludeAlternateUnits,
+                        constantsSelectedPapers = constantsSelectedPapers,
+                        constantsSelectedChapters = constantsSelectedChapters,
+                        constantsSelectedReliability = constantsSelectedReliability,
+                        onConstantsIncludeAlternateUnitsChange = { viewModel.setConstantsIncludeAlternateUnits(it) },
+                        onConstantsSelectedPapersChange = { viewModel.setConstantsSelectedPapers(it) },
+                        onConstantsSelectedChaptersChange = { viewModel.setConstantsSelectedChapters(it) },
+                        onConstantsSelectedReliabilityChange = { viewModel.setConstantsSelectedReliability(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )
@@ -233,7 +245,9 @@ fun ZenMathApp(
                 }
 
                 ZenScreen.REVISION -> {
-                    RevisionScreen()
+                    RevisionScreen(
+                        onStartDrill = { mode -> viewModel.onSelectMode(mode) }
+                    )
                 }
 
                 ZenScreen.STATS -> {

@@ -217,6 +217,24 @@ object ScientificInputParser {
             .replace(" ", "")
         if (cleaned.isEmpty() || cleaned.length > MAX_INPUT_LENGTH) return null
 
+        // Support simple fractions like 22/7 in math constants
+        if (cleaned.contains('/') && !cleaned.contains('e') && !cleaned.contains('E') && !cleaned.contains(SCI_MARKER)) {
+            val parts = cleaned.split('/')
+            if (parts.size == 2) {
+                val num = parts[0].toDoubleOrNull()
+                val den = parts[1].toDoubleOrNull()
+                if (num != null && den != null && den != 0.0) {
+                    val fracVal = num / den
+                    return ParsedScientificInput(
+                        value = fracVal,
+                        mantissa = fracVal,
+                        exponent = null,
+                        isScientific = false
+                    )
+                }
+            }
+        }
+
         // Check for scientific separator
         val matchedSep = SCI_SEPARATORS.firstOrNull { cleaned.contains(it) }
         if (matchedSep != null) {
@@ -426,7 +444,10 @@ object AnswerChecker {
 
     fun isWithinRelativeTolerance(userVal: Double, expectedVal: Double, relTol: Double): Boolean {
         if (abs(expectedVal) <= EXACT_FLOAT_EPSILON) {
-            return abs(userVal) <= maxOf(EXACT_FLOAT_EPSILON, relTol)
+            // Section 4 & Section 8 zero-valued entries (standard_hydrogen_electrode_potential, water_absolute_zero)
+            // have an absolute tolerance of 0.01.
+            val absTol = if (relTol > 0.005) 0.01 else maxOf(EXACT_FLOAT_EPSILON, relTol)
+            return abs(userVal) <= absTol + EXACT_FLOAT_EPSILON
         }
         val relError = abs(userVal - expectedVal) / abs(expectedVal)
         return relError <= relTol + EXACT_FLOAT_EPSILON

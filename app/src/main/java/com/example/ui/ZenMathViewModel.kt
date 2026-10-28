@@ -176,6 +176,20 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _constantSubjects = MutableStateFlow<Set<String>>(emptySet())
     val constantSubjects: StateFlow<Set<String>> = _constantSubjects.asStateFlow()
 
+    private val _constantsIncludeAlternateUnits = MutableStateFlow(false)
+    val constantsIncludeAlternateUnits: StateFlow<Boolean> = _constantsIncludeAlternateUnits.asStateFlow()
+
+    private val _constantsSelectedPapers = MutableStateFlow<Set<com.example.data.HscPaper>>(emptySet())
+    val constantsSelectedPapers: StateFlow<Set<com.example.data.HscPaper>> = _constantsSelectedPapers.asStateFlow()
+
+    private val _constantsSelectedChapters = MutableStateFlow<Set<String>>(emptySet())
+    val constantsSelectedChapters: StateFlow<Set<String>> = _constantsSelectedChapters.asStateFlow()
+
+    private val _constantsSelectedReliability = MutableStateFlow<Set<com.example.data.ReliabilityClass>>(
+        com.example.data.ReliabilityClass.entries.toSet()
+    )
+    val constantsSelectedReliability: StateFlow<Set<com.example.data.ReliabilityClass>> = _constantsSelectedReliability.asStateFlow()
+
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
@@ -316,6 +330,10 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         if (topics.isNotEmpty()) _speedRoundTopics.value = topics
     }
     fun setConstantSubjects(subjects: Set<String>) { _constantSubjects.value = subjects }
+    fun setConstantsIncludeAlternateUnits(include: Boolean) { _constantsIncludeAlternateUnits.value = include }
+    fun setConstantsSelectedPapers(papers: Set<com.example.data.HscPaper>) { _constantsSelectedPapers.value = papers }
+    fun setConstantsSelectedChapters(chapters: Set<String>) { _constantsSelectedChapters.value = chapters }
+    fun setConstantsSelectedReliability(rels: Set<com.example.data.ReliabilityClass>) { _constantsSelectedReliability.value = rels }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
 
     fun revealHint() {
@@ -464,7 +482,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
             "/" -> {
-                if (_selectedMode.value == GameMode.FRACTION && !_userInput.value.contains("/") && !_userInput.value.contains(marker) && _userInput.value.isNotEmpty()) {
+                val mode = _selectedMode.value
+                val allowSlash = mode == GameMode.FRACTION || mode == GameMode.MATH_CONSTANTS
+                if (allowSlash && !_userInput.value.contains("/") && !_userInput.value.contains(marker) && _userInput.value.isNotEmpty()) {
                     _userInput.value = _userInput.value + "/"
                 }
             }
@@ -786,13 +806,26 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             )
             GameMode.CONSTANTS -> {
                 val missedMap = _allQuestions.value
-                    .filter { !it.isCorrect && it.topicTag.startsWith("constant-") }
+                    .filter { !it.isCorrect && (it.topicTag.startsWith("constant-") || it.topicTag.isNotEmpty()) }
                     .groupingBy { it.topicTag.removePrefix("constant-") }
                     .eachCount()
                 QuestionGenerator.generateConstantQuestion(
-                    subjects = _constantSubjects.value,
+                    papers = _constantsSelectedPapers.value,
+                    chapters = _constantsSelectedChapters.value,
+                    reliabilityClasses = _constantsSelectedReliability.value,
+                    includeAlternateUnits = _constantsIncludeAlternateUnits.value,
                     missedCounts = missedMap
                 )
+            }
+            GameMode.ATOMIC_MASSES -> QuestionGenerator.generateAtomicMassQuestion()
+            GameMode.UNIT_CONVERSIONS -> QuestionGenerator.generateUnitConversionQuestion()
+            GameMode.MATH_CONSTANTS -> QuestionGenerator.generateMathConstantQuestion()
+            GameMode.REFERENCE_VALUES -> {
+                val missedMap = _allQuestions.value
+                    .filter { !it.isCorrect && it.topicTag.startsWith("reference-") }
+                    .groupingBy { it.topicTag.removePrefix("reference-") }
+                    .eachCount()
+                QuestionGenerator.generateReferenceValueQuestion(missedMap)
             }
             else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
         }
