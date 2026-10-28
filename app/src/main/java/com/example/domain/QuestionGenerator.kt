@@ -1629,31 +1629,38 @@ object QuestionGenerator {
             )
             for (dVal in rawOffsets) {
                 val rounded = if (correctStr.contains(".")) {
-                    val decimals = correctStr.substringAfter(".").length.coerceIn(1, 3)
+                    val decimals = correctStr.substringAfter(".").length.coerceIn(1, 4)
                     val factor = 10.0.pow(decimals.toDouble())
                     (dVal * factor).roundToInt() / factor
                 } else {
                     dVal.roundToLong().toDouble()
                 }
-                candidates.add(Pair(rounded, formatCleanDouble(rounded)))
+                val dStr = formatCleanDouble(rounded)
+                val parsedVal = ScientificInputParser.parseToDouble(dStr) ?: rounded
+                candidates.add(Pair(parsedVal, dStr))
             }
         }
 
-        val chosen = mutableListOf(Pair(correctVal, correctStr))
+        for ( dVal in candidates ) {
+            // Note: also ensure correctVal in chosen uses the parsed value of correctStr so options[i] comparison matches
+        }
+        val parsedCorrectVal = ScientificInputParser.parseToDouble(correctStr) ?: correctVal
+        val chosen = mutableListOf(Pair(parsedCorrectVal, correctStr))
         for (cand in candidates) {
             if (chosen.size >= 4) break
+            val candParsedVal = ScientificInputParser.parseToDouble(cand.second) ?: cand.first
             if (cand.second != correctStr &&
                 chosen.none { it.second == cand.second } &&
-                chosen.all { abs(it.first - cand.first) >= minSpacing - 1e-9 }
+                chosen.all { abs(it.first - candParsedVal) >= minSpacing - 1e-9 }
             ) {
-                chosen.add(cand)
+                chosen.add(Pair(candParsedVal, cand.second))
             }
         }
 
         // Fallback if still < 4 options: step outward by 1.5 * minSpacing
         var k = 1
         while (chosen.size < 4) {
-            val dVal = correctVal + k * maxOf(minSpacing * 1.5, 1.0)
+            val dVal = parsedCorrectVal + k * maxOf(minSpacing * 1.5, 1.0)
             val dStr = if (isSciDisplay && problem.answerSpec is AnswerSpec.ScientificValue) {
                 val e = problem.answerSpec.exponent + k
                 val m = problem.answerSpec.mantissa

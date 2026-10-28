@@ -70,6 +70,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val repository = ZenMathRepository(db.dao(), preferencesManager)
 
     init {
+        com.example.data.ConstantsData.preload(application)
         val settings = preferencesManager.loadSettings()
         if (settings.notificationsEnabled) {
             NotificationScheduler.scheduleReminders(application, settings.notificationTimes)

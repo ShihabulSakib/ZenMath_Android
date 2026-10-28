@@ -1,0 +1,4075 @@
+{
+  "metadata": {
+    "title": "Bangladesh HSC Science: Physics and Chemistry Constants Reference",
+    "file_format": "JSON",
+    "version": "1.0.0",
+    "generated_date": "2026-10-26",
+    "language": "English with Bangla chapter names",
+    "target": "Bangladesh HSC Science curriculum; Physics 1st and 2nd Papers, Chemistry 1st and 2nd Papers",
+    "scope": "A syllabus-mapped, high-coverage reference of fundamental constants, conventional HSC approximations, condition-dependent reference values, unit conversions, important mathematical constants and common school atomic masses.",
+    "important_limitations": [
+      "No individual NCTB textbook edition or publisher text was supplied; the chapter map was checked against publicly available Bangladesh HSC chapter indexes and a recent HSC 2027 school syllabus distribution, and numerical constants were cross-checked against NIST/CODATA and other institutional references.",
+      "The file distinguishes universal/defined constants from approximations and material-/condition-dependent reference values. Not every tabulated quantity in every publisher's textbook is a universal constant.",
+      "Some advanced supplementary constants are included because they are relevant to named HSC topics, but they may not need to be memorized for the Bangladesh board examination unless specified in the text/question.",
+      "Use the value and unit explicitly supplied by an exam question when it conflicts with a rounded reference value here; textbook questions commonly use rounded values for arithmetic simplicity."
+    ],
+    "value_precision_policy": "Modern fixed/fundamental values generally use CODATA 2022 (NIST page indicates data content updated May 2024). HSC-friendly approximations are separate fields. Condition-dependent values state the conditions where known.",
+    "unit_systems_guide": {
+      "SI": "International System of Units; preferred for most HSC calculations.",
+      "CGS": "centimetre–gram–second; energy is often in erg, mass in g and length in cm.",
+      "chemistry_customary": "Common litre–atmosphere, bar, torr, calorie and molar units used in chemistry calculations.",
+      "mixed": "Consistent combinations such as eV, L·kPa or MeV/c²; dimensions must be checked.",
+      "dimensionless": "No physical unit. Relative atomic mass, refractive index and mathematical constants are dimensionless."
+    },
+    "symbol_notes": [
+      "The letter e can mean elementary charge or Euler's number; they are separate entries here.",
+      "The symbol R may mean molar gas constant, Rydberg constant, radius or resistance depending on context; use the chapter/formula context.",
+      "The symbol k may mean Coulomb's constant, Boltzmann's constant, spring constant or another quantity; the full label disambiguates it.",
+      "The Greek letter σ is used for the Stefan–Boltzmann constant and also for other quantities such as surface charge density; interpret by formula."
+    ]
+  },
+  "sources": [
+    {
+      "id": "nist_codata_2022_wallet",
+      "organization": "National Institute of Standards and Technology (NIST) / CODATA",
+      "title": "2022 CODATA Recommended Values of the Fundamental Constants of Physics and Chemistry (Wallet Card; published 2024)",
+      "url": "https://physics.nist.gov/cuu/pdf/wallet_2022.pdf",
+      "used_for": "Core SI/CODATA values: c, h, ħ, e, NA, kB, R, eV, u, G, alpha, mu0, epsilon0, electron/proton mass, Bohr radius, Rydberg and related constants."
+    },
+    {
+      "id": "nist_codata_database",
+      "organization": "NIST",
+      "title": "Fundamental Physical Constants Database (CODATA 2022 values)",
+      "url": "https://physics.nist.gov/cuu/Constants/",
+      "used_for": "Cross-check and additional CODATA values; last content update shown by NIST is May 2024."
+    },
+    {
+      "id": "ciaaw_atomic_weights_2024",
+      "organization": "Commission on Isotopic Abundances and Atomic Weights (CIAAW/IUPAC)",
+      "title": "Standard Atomic Weights 2024",
+      "url": "https://ciaaw.org/atomic-weights.htm",
+      "used_for": "Modern standard atomic-weight intervals/values; school rounded molar masses are separately marked as approximations."
+    },
+    {
+      "id": "hscscience_chapter_index",
+      "organization": "HSC SCIENCE",
+      "title": "HSC Science formula index: Physics and Chemistry chapter lists",
+      "url": "https://hscscience.com/formula/physics-first-paper/",
+      "used_for": "Bangladesh HSC first/second paper chapter headings for Physics and Chemistry."
+    },
+    {
+      "id": "bangladesh_hsc_physics_textbook_index",
+      "organization": "Abswer.com (textbook chapter index)",
+      "title": "HSC Physics 1st Paper chapter index",
+      "url": "https://www.abswer.com/hsc-physics-1st-paper/",
+      "used_for": "Cross-check of Physics first-paper chapter sequence."
+    },
+    {
+      "id": "bangladesh_hsc_2027_school_syllabus",
+      "organization": "Cantonment English School & College, Chattogram",
+      "title": "HSC 2027 Science Syllabus Book (session 2025–2026), Physics and Chemistry subject pages",
+      "url": "https://cesc.edu.bd/public/ckfinder/userfiles/files/Syllabus_XI_%26_XII_%28Science%29_HSC%202027.pdf",
+      "used_for": "A recent school examination distribution confirms names/codes and chapter allocation; it is not represented as the national board-issued syllabus itself."
+    },
+    {
+      "id": "utexas_physical_constants",
+      "organization": "University of Texas at Austin, General Chemistry",
+      "title": "Physical Constants reference table",
+      "url": "https://gchem.cm.utexas.edu/data/physical-constants.php",
+      "used_for": "Common chemistry-class versions of R in different units, atomic constants and temperature conversions."
+    },
+    {
+      "id": "ucalgary_constants",
+      "organization": "University of Calgary, Chemistry Textbook",
+      "title": "Appendix: Fundamental Physical Constants",
+      "url": "https://chem-textbook.ucalgary.ca/version2/appendices/appendix-fundamental-physical-constants/",
+      "used_for": "Cross-check of Avogadro, Faraday, R, atomic mass unit and particle values."
+    },
+    {
+      "id": "jpl_astro_parameters",
+      "organization": "NASA Jet Propulsion Laboratory (JPL)",
+      "title": "Astrodynamic Parameters",
+      "url": "https://ssd.jpl.nasa.gov/astro_par.html",
+      "used_for": "Astronomical unit, Julian year, speed of light and selected solar-system parameters."
+    },
+    {
+      "id": "iau_measuring_universe",
+      "organization": "International Astronomical Union (IAU)",
+      "title": "Measuring the Universe: astronomical units",
+      "url": "https://iauarchive.eso.org/public/themes/measuring/",
+      "used_for": "Definitions/conversions for astronomical unit, light-year and parsec."
+    },
+    {
+      "id": "jpl_au_definition",
+      "organization": "NASA Jet Propulsion Laboratory (JPL)",
+      "title": "Astronomical unit (au) definition",
+      "url": "https://ssd.jpl.nasa.gov/glossary/au.html",
+      "used_for": "Exact AU definition: 149,597,870,700 m."
+    },
+    {
+      "id": "nist_water_webbook",
+      "organization": "NIST Chemistry WebBook",
+      "title": "Water thermochemical and thermophysical data",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=water&cTC=on",
+      "used_for": "Reference for water-property data; textbook approximations are labelled as condition-dependent rather than universal constants."
+    }
+  ],
+  "syllabus_map": {
+    "physics": {
+      "first_paper": [
+        {
+          "chapter": 1,
+          "name_en": "Physical World and Measurement",
+          "name_bn": "ভৌতজগৎ ও পরিমাপ",
+          "constant_topics": [
+            "SI and CGS units",
+            "significant figures",
+            "dimensional analysis",
+            "unit conversions"
+          ]
+        },
+        {
+          "chapter": 2,
+          "name_en": "Vectors",
+          "name_bn": "ভেক্টর",
+          "constant_topics": [
+            "no chapter-specific universal numerical constant"
+          ]
+        },
+        {
+          "chapter": 3,
+          "name_en": "Dynamics",
+          "name_bn": "গতিবিদ্যা",
+          "constant_topics": [
+            "speed of sound is an illustrative medium/temperature-dependent reference only"
+          ]
+        },
+        {
+          "chapter": 4,
+          "name_en": "Newtonian Mechanics",
+          "name_bn": "নিউটনীয় বলবিদ্যা",
+          "constant_topics": [
+            "standard gravity",
+            "local gravitational acceleration"
+          ]
+        },
+        {
+          "chapter": 5,
+          "name_en": "Work, Energy and Power",
+          "name_bn": "কাজ, শক্তি ও ক্ষমতা",
+          "constant_topics": [
+            "joule/erg/electronvolt conversions"
+          ]
+        },
+        {
+          "chapter": 6,
+          "name_en": "Gravitation and Gravity",
+          "name_bn": "মহাকর্ষ ও অভিকর্ষ",
+          "constant_topics": [
+            "Newtonian gravitational constant",
+            "standard gravity",
+            "Earth/Moon/Sun parameters",
+            "astronomical distances"
+          ]
+        },
+        {
+          "chapter": 7,
+          "name_en": "Structural Properties of Matter",
+          "name_bn": "পদার্থের গাঠনিক ধর্ম",
+          "constant_topics": [
+            "water density and specific heat as approximations",
+            "material-dependent elastic/surface properties"
+          ]
+        },
+        {
+          "chapter": 8,
+          "name_en": "Periodic Motion",
+          "name_bn": "পর্যাবৃত্তিক গতি",
+          "constant_topics": [
+            "pi",
+            "standard gravity when using pendula",
+            "material/system-dependent spring constant"
+          ]
+        },
+        {
+          "chapter": 9,
+          "name_en": "Waves",
+          "name_bn": "তরঙ্গ",
+          "constant_topics": [
+            "speed of light in vacuum",
+            "speed of sound is medium/temperature-dependent",
+            "pi"
+          ]
+        },
+        {
+          "chapter": 10,
+          "name_en": "Ideal Gas and Kinetic Theory of Gases",
+          "name_bn": "আদর্শ গ্যাস ও গ্যাসের গতিতত্ত্ব",
+          "constant_topics": [
+            "molar gas constant",
+            "Boltzmann constant",
+            "Avogadro constant",
+            "molar volume under stated STP convention"
+          ]
+        }
+      ],
+      "second_paper": [
+        {
+          "chapter": 1,
+          "name_en": "Thermodynamics",
+          "name_bn": "তাপগতিবিদ্যা",
+          "constant_topics": [
+            "molar gas constant",
+            "Boltzmann constant",
+            "water specific heat as a reference",
+            "Stefan–Boltzmann constant if thermal radiation is invoked"
+          ]
+        },
+        {
+          "chapter": 2,
+          "name_en": "Static Electricity",
+          "name_bn": "স্থির তড়িৎ",
+          "constant_topics": [
+            "elementary charge",
+            "vacuum permittivity",
+            "Coulomb constant"
+          ]
+        },
+        {
+          "chapter": 3,
+          "name_en": "Current Electricity",
+          "name_bn": "চল তড়িৎ",
+          "constant_topics": [
+            "elementary charge",
+            "material-dependent resistivity and temperature coefficient"
+          ]
+        },
+        {
+          "chapter": 4,
+          "name_en": "Magnetic Effects of Electric Current and Magnetism",
+          "name_bn": "তড়িৎ প্রবাহের চৌম্বক ক্রিয়া ও চুম্বকত্ব",
+          "constant_topics": [
+            "vacuum magnetic permeability",
+            "elementary charge and particle mass where relevant"
+          ]
+        },
+        {
+          "chapter": 5,
+          "name_en": "Electromagnetic Induction and Alternating Current",
+          "name_bn": "তড়িৎচৌম্বকীয় আবেশ ও পরিবর্তী প্রবাহ",
+          "constant_topics": [
+            "vacuum permeability/permittivity",
+            "speed of light in vacuum"
+          ]
+        },
+        {
+          "chapter": 6,
+          "name_en": "Geometrical Optics",
+          "name_bn": "জ্যামিতিক আলোকবিজ্ঞান",
+          "constant_topics": [
+            "speed of light in vacuum",
+            "vacuum refractive index is exactly one; material indices vary"
+          ]
+        },
+        {
+          "chapter": 7,
+          "name_en": "Physical Optics",
+          "name_bn": "ভৌত আলোকবিজ্ঞান",
+          "constant_topics": [
+            "speed of light in vacuum",
+            "Planck constant if photon energy is used",
+            "pi"
+          ]
+        },
+        {
+          "chapter": 8,
+          "name_en": "Introduction to Modern Physics",
+          "name_bn": "আধুনিক পদার্থবিজ্ঞানের সূচনা",
+          "constant_topics": [
+            "Planck constant",
+            "speed of light",
+            "elementary charge/electronvolt",
+            "electron rest mass"
+          ]
+        },
+        {
+          "chapter": 9,
+          "name_en": "Atomic Model and Nuclear Physics",
+          "name_bn": "পরমাণুর মডেল ও নিউক্লীয় পদার্থবিজ্ঞান",
+          "constant_topics": [
+            "electron/proton/neutron masses",
+            "atomic mass constant",
+            "Rydberg/Bohr constants",
+            "nuclear radius coefficient is empirical"
+          ]
+        },
+        {
+          "chapter": 10,
+          "name_en": "Semiconductor and Electronics",
+          "name_bn": "অর্ধপরিবাহী ও ইলেকট্রনিক্স",
+          "constant_topics": [
+            "elementary charge",
+            "Boltzmann constant in thermal relations; device properties vary"
+          ]
+        },
+        {
+          "chapter": 11,
+          "name_en": "Astronomy",
+          "name_bn": "জ্যোতির্বিজ্ঞান",
+          "constant_topics": [
+            "speed of light",
+            "Newtonian gravitational constant",
+            "astronomical unit, light-year, parsec",
+            "Earth/Sun reference parameters"
+          ]
+        }
+      ]
+    },
+    "chemistry": {
+      "first_paper": [
+        {
+          "chapter": 1,
+          "name_en": "Safe Use of Laboratory",
+          "name_bn": "ল্যাবরেটরির নিরাপদ ব্যবহার",
+          "constant_topics": [
+            "SI units and common concentration/unit conversions; no universal subject-specific constant"
+          ]
+        },
+        {
+          "chapter": 2,
+          "name_en": "Qualitative Chemistry",
+          "name_bn": "গুণগত রসায়ন",
+          "constant_topics": [
+            "electron charge and atomic/ionic data may appear; species-specific values vary"
+          ]
+        },
+        {
+          "chapter": 3,
+          "name_en": "Periodic Properties of Elements and Chemical Bonds",
+          "name_bn": "মৌলের পর্যায়বৃত্ত ধর্ম ও রাসায়নিক বন্ধন",
+          "constant_topics": [
+            "relative atomic masses/molar masses",
+            "element-specific atomic radii, ionization energies, electronegativities and bond energies are tabulated data, not universal constants"
+          ]
+        },
+        {
+          "chapter": 4,
+          "name_en": "Chemical Changes",
+          "name_bn": "রাসায়নিক পরিবর্তন",
+          "constant_topics": [
+            "R, NA and kB",
+            "equilibrium constants are species/temperature-specific",
+            "water ion product at 25 °C as a common approximation",
+            "thermochemical calorie/Joule conversion"
+          ]
+        },
+        {
+          "chapter": 5,
+          "name_en": "Vocational Chemistry",
+          "name_bn": "কর্মমুখী রসায়ন",
+          "constant_topics": [
+            "process and material properties are context-dependent"
+          ]
+        }
+      ],
+      "second_paper": [
+        {
+          "chapter": 1,
+          "name_en": "Environmental Chemistry",
+          "name_bn": "পরিবেশ রসায়ন",
+          "constant_topics": [
+            "gas laws: R, NA, kB; pressure and STP conventions",
+            "Henry's law constants and atmospheric composition depend on conditions/source"
+          ]
+        },
+        {
+          "chapter": 2,
+          "name_en": "Organic Chemistry",
+          "name_bn": "জৈব রসায়ন",
+          "constant_topics": [
+            "atomic/molar masses",
+            "bond energies and physical properties are compound-specific"
+          ]
+        },
+        {
+          "chapter": 3,
+          "name_en": "Quantitative Chemistry",
+          "name_bn": "পরিমাণগত রসায়ন",
+          "constant_topics": [
+            "NA, R, kB, molar volume under stated conditions, atomic/molar masses"
+          ]
+        },
+        {
+          "chapter": 4,
+          "name_en": "Electrochemistry",
+          "name_bn": "তড়িৎ রসায়ন",
+          "constant_topics": [
+            "Faraday constant",
+            "elementary charge",
+            "standard hydrogen electrode is defined as 0 V",
+            "Nernst factors at a stated temperature",
+            "standard electrode potentials vary by redox couple"
+          ]
+        },
+        {
+          "chapter": 5,
+          "name_en": "Economic Chemistry",
+          "name_bn": "অর্থনৈতিক রসায়ন",
+          "constant_topics": [
+            "industrial yields, concentrations, calorific values and material properties vary by process/material"
+          ]
+        }
+      ]
+    }
+  },
+  "constants": [
+    {
+      "id": "speed_of_light_vacuum",
+      "name": "Speed of light in vacuum",
+      "symbol": "c",
+      "category": "electromagnetic_and_modern_physics",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Speed of electromagnetic radiation in vacuum.",
+      "values": [
+        {
+          "value": 299792458,
+          "unit": "m s^-1",
+          "system": "SI",
+          "formatted": "2.99792458 × 10^8 m/s"
+        },
+        {
+          "value": 29979245800.0,
+          "unit": "cm s^-1",
+          "system": "CGS",
+          "formatted": "2.99792458 × 10^10 cm/s"
+        },
+        {
+          "value": 1079252848.8,
+          "unit": "km h^-1",
+          "system": "derived",
+          "formatted": "1.07925 × 10^9 km/h"
+        }
+      ],
+      "common_hsc_approximation": "3.00 × 10^8 m/s",
+      "formula_uses": [
+        "Physics 1st: Waves",
+        "Physics 2nd: Electromagnetic Induction and AC; Optics; Modern Physics; Astronomy"
+      ],
+      "notes": [
+        "Exact by SI definition."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "newtonian_gravitational_constant",
+      "name": "Newtonian constant of gravitation",
+      "symbol": "G",
+      "category": "mechanics_and_astronomy",
+      "constant_type": "measured",
+      "definition_or_meaning": "Proportionality constant in Newton's law of gravitation.",
+      "values": [
+        {
+          "value": 6.6743e-11,
+          "unit": "m^3 kg^-1 s^-2",
+          "system": "SI",
+          "formatted": "6.67430(15) × 10^-11 m^3 kg^-1 s^-2"
+        },
+        {
+          "value": 6.6743e-08,
+          "unit": "cm^3 g^-1 s^-2",
+          "system": "CGS",
+          "formatted": "6.67430(15) × 10^-8 cm^3 g^-1 s^-2"
+        }
+      ],
+      "common_hsc_approximation": "6.67 × 10^-11 N m^2 kg^-2",
+      "formula_uses": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Measured; the parenthetical digits in the CODATA value indicate standard uncertainty."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "standard_acceleration_gravity",
+      "name": "Standard acceleration of gravity",
+      "symbol": "g₀",
+      "category": "mechanics",
+      "constant_type": "conventional",
+      "definition_or_meaning": "Conventional reference acceleration, not the local acceleration at every location.",
+      "values": [
+        {
+          "value": 9.80665,
+          "unit": "m s^-2",
+          "system": "SI",
+          "formatted": "9.80665 m/s^2"
+        },
+        {
+          "value": 980.665,
+          "unit": "cm s^-2",
+          "system": "CGS",
+          "formatted": "980.665 cm/s^2"
+        }
+      ],
+      "common_hsc_approximation": "9.8 m/s² or 10 m/s² when explicitly allowed",
+      "formula_uses": [
+        "Physics 1st: Newtonian Mechanics; Gravitation and Gravity"
+      ],
+      "notes": [
+        "Do not confuse g₀ with local gravitational acceleration g."
+      ],
+      "sources": [
+        "ucalgary_constants"
+      ]
+    },
+    {
+      "id": "earth_surface_g_approx",
+      "name": "Earth-surface gravitational acceleration (approximate)",
+      "symbol": "g",
+      "category": "condition_dependent_reference",
+      "constant_type": "approximate",
+      "definition_or_meaning": "Representative value near Earth's surface; varies with latitude, altitude, geology and convention.",
+      "values": [
+        {
+          "value": 9.81,
+          "unit": "m s^-2",
+          "system": "SI",
+          "formatted": "about 9.81 m/s^2"
+        },
+        {
+          "value": 981,
+          "unit": "cm s^-2",
+          "system": "CGS",
+          "formatted": "about 981 cm/s^2"
+        }
+      ],
+      "common_hsc_approximation": "9.8 m/s²",
+      "formula_uses": [
+        "Physics 1st: Newtonian Mechanics; Gravitation and Gravity"
+      ],
+      "notes": [
+        "This is not a universal constant. Use the value stated by the question when provided."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "planck_constant",
+      "name": "Planck constant",
+      "symbol": "h",
+      "category": "quantum_and_modern_physics",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Relates photon energy to frequency: E = hν.",
+      "values": [
+        {
+          "value": 6.62607015e-34,
+          "unit": "J s",
+          "system": "SI",
+          "formatted": "6.62607015 × 10^-34 J s"
+        },
+        {
+          "value": 6.62607015e-27,
+          "unit": "erg s",
+          "system": "CGS",
+          "formatted": "6.62607015 × 10^-27 erg s"
+        },
+        {
+          "value": 4.135667696e-15,
+          "unit": "eV s",
+          "system": "mixed",
+          "formatted": "4.135667696 × 10^-15 eV s"
+        }
+      ],
+      "common_hsc_approximation": "6.626 × 10^-34 J s",
+      "formula_uses": [
+        "Physics 2nd: Physical Optics; Introduction to Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Exact by SI definition."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "reduced_planck_constant",
+      "name": "Reduced Planck constant",
+      "symbol": "ħ = h/(2π)",
+      "category": "quantum_and_modern_physics",
+      "constant_type": "derived_from_exact_constants",
+      "definition_or_meaning": "Planck constant divided by 2π.",
+      "values": [
+        {
+          "value": 1.054571817e-34,
+          "unit": "J s",
+          "system": "SI",
+          "formatted": "1.054571817 × 10^-34 J s"
+        },
+        {
+          "value": 1.054571817e-27,
+          "unit": "erg s",
+          "system": "CGS",
+          "formatted": "1.054571817 × 10^-27 erg s"
+        }
+      ],
+      "common_hsc_approximation": "1.055 × 10^-34 J s",
+      "formula_uses": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Commonly written h-bar; exact underlying value follows h and the mathematical value of π."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "elementary_charge_magnitude",
+      "name": "Elementary charge magnitude",
+      "symbol": "e",
+      "category": "electrical_and_chemical",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Magnitude of the charge of a proton; an electron carries charge -e.",
+      "values": [
+        {
+          "value": 1.602176634e-19,
+          "unit": "C",
+          "system": "SI",
+          "formatted": "1.602176634 × 10^-19 C"
+        },
+        {
+          "value": 4.80320471257e-10,
+          "unit": "statC (esu)",
+          "system": "CGS electrostatic",
+          "formatted": "about 4.803204713 × 10^-10 statC"
+        }
+      ],
+      "common_hsc_approximation": "1.6 × 10^-19 C",
+      "formula_uses": [
+        "Physics 2nd: Static Electricity; Current Electricity; Modern Physics; Nuclear Physics; Semiconductor and Electronics",
+        "Chemistry 2nd: Electrochemistry"
+      ],
+      "notes": [
+        "For electrons, the signed charge is −e. CGS electrostatic charge units are system-dependent; use SI in most HSC calculations."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "avogadro_constant",
+      "name": "Avogadro constant",
+      "symbol": "N_A",
+      "category": "physicochemical",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Number of specified elementary entities per mole.",
+      "values": [
+        {
+          "value": 6.02214076e+23,
+          "unit": "mol^-1",
+          "system": "SI",
+          "formatted": "6.02214076 × 10^23 mol^-1"
+        }
+      ],
+      "common_hsc_approximation": "6.02 × 10^23 mol^-1",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Chemistry 1st: Chemical Changes; Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "Exact by SI definition. 'Avogadro's number' is the numerical value; the constant has unit mol^-1."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "ciaaw_atomic_weights_2024"
+      ]
+    },
+    {
+      "id": "boltzmann_constant",
+      "name": "Boltzmann constant",
+      "symbol": "k_B",
+      "category": "thermodynamics_and_gases",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Relates average microscopic energy scale to absolute temperature.",
+      "values": [
+        {
+          "value": 1.380649e-23,
+          "unit": "J K^-1",
+          "system": "SI",
+          "formatted": "1.380649 × 10^-23 J K^-1"
+        },
+        {
+          "value": 1.380649e-16,
+          "unit": "erg K^-1",
+          "system": "CGS",
+          "formatted": "1.380649 × 10^-16 erg K^-1"
+        },
+        {
+          "value": 8.617333262e-05,
+          "unit": "eV K^-1",
+          "system": "mixed",
+          "formatted": "8.617333262 × 10^-5 eV K^-1"
+        }
+      ],
+      "common_hsc_approximation": "1.38 × 10^-23 J K^-1",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 1st: Chemical Changes; Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "Exact by SI definition."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "molar_gas_constant",
+      "name": "Molar (universal) gas constant",
+      "symbol": "R = N_A k_B",
+      "category": "thermodynamics_and_gases",
+      "constant_type": "derived_exact_from_defined_constants",
+      "definition_or_meaning": "Constant in the ideal-gas equation PV=nRT.",
+      "values": [
+        {
+          "value": 8.31446261815324,
+          "unit": "J mol^-1 K^-1",
+          "system": "SI",
+          "formatted": "8.314462618… J mol^-1 K^-1"
+        },
+        {
+          "value": 83144626.1815324,
+          "unit": "erg mol^-1 K^-1",
+          "system": "CGS",
+          "formatted": "8.314462618… × 10^7 erg mol^-1 K^-1"
+        },
+        {
+          "value": 0.08205736608096,
+          "unit": "L atm mol^-1 K^-1",
+          "system": "chemistry customary",
+          "formatted": "0.082057366… L atm mol^-1 K^-1"
+        },
+        {
+          "value": 0.0831446261815,
+          "unit": "L bar mol^-1 K^-1",
+          "system": "chemistry customary",
+          "formatted": "0.083144626… L bar mol^-1 K^-1"
+        },
+        {
+          "value": 8.31446261815324,
+          "unit": "L kPa mol^-1 K^-1",
+          "system": "mixed (1 kPa·L = 1 J)",
+          "formatted": "8.314462618… L kPa mol^-1 K^-1"
+        },
+        {
+          "value": 62.36359822,
+          "unit": "L torr mol^-1 K^-1",
+          "system": "chemistry customary",
+          "formatted": "62.3636 L torr mol^-1 K^-1"
+        },
+        {
+          "value": 1.98720425864,
+          "unit": "cal_th mol^-1 K^-1",
+          "system": "thermochemical calorie",
+          "formatted": "1.98720 cal mol^-1 K^-1"
+        }
+      ],
+      "common_hsc_approximation": "8.314 J mol^-1 K^-1; 0.0821 L atm mol^-1 K^-1; 1.987 cal mol^-1 K^-1",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 1st: Chemical Changes; Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "Choose the version whose pressure and volume units match the problem. 1 cal_th = 4.184 J; textbook rounded values differ slightly."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants",
+        "ucalgary_constants"
+      ]
+    },
+    {
+      "id": "faraday_constant",
+      "name": "Faraday constant",
+      "symbol": "F = N_A e",
+      "category": "electrochemistry",
+      "constant_type": "derived_exact_from_defined_constants",
+      "definition_or_meaning": "Electric charge carried by one mole of elementary charges.",
+      "values": [
+        {
+          "value": 96485.33212,
+          "unit": "C mol^-1",
+          "system": "SI",
+          "formatted": "96485.33212… C mol^-1"
+        },
+        {
+          "value": 96485.33212,
+          "unit": "A s mol^-1",
+          "system": "SI equivalent",
+          "formatted": "96485.33212… A s mol^-1"
+        }
+      ],
+      "common_hsc_approximation": "96500 C mol^-1",
+      "formula_uses": [
+        "Chemistry 2nd: Electrochemistry"
+      ],
+      "notes": [
+        "For school calculations, 96500 C mol^-1 is common. The sign of charge is handled separately in reaction stoichiometry."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "ucalgary_constants"
+      ]
+    },
+    {
+      "id": "atomic_mass_constant",
+      "name": "Unified atomic mass constant",
+      "symbol": "u (or m_u)",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured",
+      "definition_or_meaning": "One twelfth of the mass of a neutral carbon-12 atom in its ground state.",
+      "values": [
+        {
+          "value": 1.66053906892e-27,
+          "unit": "kg",
+          "system": "SI",
+          "formatted": "1.66053906892(52) × 10^-27 kg"
+        },
+        {
+          "value": 1.66053906892e-24,
+          "unit": "g",
+          "system": "CGS",
+          "formatted": "1.66053906892 × 10^-24 g"
+        },
+        {
+          "value": 1.0,
+          "unit": "u",
+          "system": "atomic mass unit",
+          "formatted": "1 u by definition"
+        },
+        {
+          "value": 931.49410372,
+          "unit": "MeV/c^2",
+          "system": "particle-physics equivalent",
+          "formatted": "931.4941 MeV/c^2"
+        }
+      ],
+      "common_hsc_approximation": "1 u ≈ 1.66 × 10^-27 kg; 1 u c² ≈ 931.5 MeV",
+      "formula_uses": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics",
+        "Chemistry 1st: Periodic Properties; Chemistry 2nd: Quantitative Chemistry"
+      ],
+      "notes": [
+        "The numerical value 1 g mol^-1 is closely related to the molar mass constant; do not confuse u (mass of one particle) with g mol^-1 (molar mass)."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "electron_rest_mass",
+      "name": "Electron rest mass",
+      "symbol": "m_e",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured",
+      "definition_or_meaning": "Rest mass of the electron.",
+      "values": [
+        {
+          "value": 9.1093837139e-31,
+          "unit": "kg",
+          "system": "SI",
+          "formatted": "9.1093837139(28) × 10^-31 kg"
+        },
+        {
+          "value": 9.1093837139e-28,
+          "unit": "g",
+          "system": "CGS",
+          "formatted": "9.1093837139 × 10^-28 g"
+        },
+        {
+          "value": 0.000548579909,
+          "unit": "u",
+          "system": "atomic mass unit",
+          "formatted": "about 5.485799 × 10^-4 u"
+        },
+        {
+          "value": 0.51099895069,
+          "unit": "MeV/c^2",
+          "system": "particle-physics equivalent",
+          "formatted": "0.51099895 MeV/c^2"
+        }
+      ],
+      "common_hsc_approximation": "9.11 × 10^-31 kg; 0.511 MeV/c²",
+      "formula_uses": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics; Semiconductor and Electronics",
+        "Chemistry 1st: Qualitative Chemistry; Periodic Properties"
+      ],
+      "notes": [
+        "Use the precision required by the question."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "proton_rest_mass",
+      "name": "Proton rest mass",
+      "symbol": "m_p",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured",
+      "definition_or_meaning": "Rest mass of the proton.",
+      "values": [
+        {
+          "value": 1.67262192595e-27,
+          "unit": "kg",
+          "system": "SI",
+          "formatted": "1.67262192595(52) × 10^-27 kg"
+        },
+        {
+          "value": 1.67262192595e-24,
+          "unit": "g",
+          "system": "CGS",
+          "formatted": "1.67262192595 × 10^-24 g"
+        },
+        {
+          "value": 1.0072764665789,
+          "unit": "u",
+          "system": "atomic mass unit",
+          "formatted": "1.0072764665789(83) u"
+        },
+        {
+          "value": 938.27208943,
+          "unit": "MeV/c^2",
+          "system": "particle-physics equivalent",
+          "formatted": "938.27208943(29) MeV/c^2"
+        }
+      ],
+      "common_hsc_approximation": "1.673 × 10^-27 kg; approximately 1 u",
+      "formula_uses": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "A proton is slightly less massive than a neutral hydrogen atom and is not exactly 1 u."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "neutron_rest_mass",
+      "name": "Neutron rest mass",
+      "symbol": "m_n",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured",
+      "definition_or_meaning": "Rest mass of the neutron.",
+      "values": [
+        {
+          "value": 1.67492750056e-27,
+          "unit": "kg",
+          "system": "SI",
+          "formatted": "1.67492750056(85) × 10^-27 kg"
+        },
+        {
+          "value": 1.67492750056e-24,
+          "unit": "g",
+          "system": "CGS",
+          "formatted": "1.67492750056 × 10^-24 g"
+        },
+        {
+          "value": 1.00866491606,
+          "unit": "u",
+          "system": "atomic mass unit",
+          "formatted": "about 1.008664916 u"
+        },
+        {
+          "value": 939.56542052,
+          "unit": "MeV/c^2",
+          "system": "particle-physics equivalent",
+          "formatted": "about 939.56542 MeV/c^2"
+        }
+      ],
+      "common_hsc_approximation": "1.675 × 10^-27 kg; approximately 1 u",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "For nuclear mass-defect calculations, follow the mass convention specified in the problem (atomic masses versus bare nuclear/particle masses)."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "vacuum_permittivity",
+      "name": "Vacuum electric permittivity",
+      "symbol": "ε₀",
+      "category": "electromagnetic",
+      "constant_type": "measured_in_post_2019_SI",
+      "definition_or_meaning": "Constant appearing in SI electrostatics and Maxwell equations.",
+      "values": [
+        {
+          "value": 8.8541878188e-12,
+          "unit": "F m^-1",
+          "system": "SI",
+          "formatted": "8.8541878188(14) × 10^-12 F/m"
+        },
+        {
+          "value": 8.8541878188e-12,
+          "unit": "C^2 N^-1 m^-2",
+          "system": "SI equivalent",
+          "formatted": "8.8541878188 × 10^-12 C^2/(N m^2)"
+        }
+      ],
+      "common_hsc_approximation": "8.854 × 10^-12 F m^-1",
+      "formula_uses": [
+        "Physics 2nd: Static Electricity; Electromagnetic Induction and AC"
+      ],
+      "notes": [
+        "Since the 2019 SI redefinition, μ₀ is measured and ε₀ is related to μ₀ and c; the older school approximation μ₀ = 4π × 10^-7 is rounded rather than exact."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "vacuum_permeability",
+      "name": "Vacuum magnetic permeability",
+      "symbol": "μ₀",
+      "category": "electromagnetic",
+      "constant_type": "measured_in_post_2019_SI",
+      "definition_or_meaning": "Magnetic constant in SI electromagnetism.",
+      "values": [
+        {
+          "value": 1.25663706127e-06,
+          "unit": "H m^-1",
+          "system": "SI",
+          "formatted": "1.25663706127(20) × 10^-6 H/m"
+        },
+        {
+          "value": 1.25663706127e-06,
+          "unit": "N A^-2",
+          "system": "SI equivalent",
+          "formatted": "1.25663706127 × 10^-6 N/A^2"
+        },
+        {
+          "value": 1.2566370614359173e-06,
+          "unit": "H m^-1",
+          "system": "school approximation",
+          "formatted": "4π × 10^-7 H/m ≈ 1.25663706144 × 10^-6 H/m"
+        }
+      ],
+      "common_hsc_approximation": "μ₀ ≈ 4π × 10^-7 H m^-1",
+      "formula_uses": [
+        "Physics 2nd: Magnetic Effects of Current and Magnetism; Electromagnetic Induction and AC"
+      ],
+      "notes": [
+        "4π × 10^-7 H/m was exact in the pre-2019 SI system; use it as a school approximation, not the current exact definition."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "coulomb_constant",
+      "name": "Coulomb constant",
+      "symbol": "k_e = 1/(4πε₀)",
+      "category": "electromagnetic",
+      "constant_type": "derived",
+      "definition_or_meaning": "Proportionality factor in Coulomb's law in SI vacuum.",
+      "values": [
+        {
+          "value": 8987551786.2,
+          "unit": "N m^2 C^-2",
+          "system": "SI",
+          "formatted": "8.9875517862 × 10^9 N m^2/C^2"
+        },
+        {
+          "value": 8987551786.2,
+          "unit": "J m C^-2",
+          "system": "SI equivalent",
+          "formatted": "8.9875517862 × 10^9 J m/C^2"
+        },
+        {
+          "value": 1.0,
+          "unit": "dyne cm^2 statC^-2",
+          "system": "Gaussian-cgs convention",
+          "formatted": "numerical factor 1 in the Gaussian-cgs Coulomb law"
+        }
+      ],
+      "common_hsc_approximation": "9.0 × 10^9 N m² C⁻²",
+      "formula_uses": [
+        "Physics 2nd: Static Electricity"
+      ],
+      "notes": [
+        "The CGS note refers to the Gaussian electrostatic convention; it is not a direct unit conversion of the SI numerical value."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "fine_structure_constant",
+      "name": "Fine-structure constant",
+      "symbol": "α",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured_dimensionless",
+      "definition_or_meaning": "Dimensionless electromagnetic coupling constant.",
+      "values": [
+        {
+          "value": 0.0072973525643,
+          "unit": "1",
+          "system": "dimensionless",
+          "formatted": "7.2973525643(11) × 10^-3"
+        },
+        {
+          "value": 137.035999177,
+          "unit": "1/α",
+          "system": "dimensionless inverse",
+          "formatted": "α^-1 = 137.035999177(21)"
+        }
+      ],
+      "common_hsc_approximation": "α ≈ 1/137",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Usually unnecessary for routine HSC calculations unless specifically introduced."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "rydberg_constant_infinity",
+      "name": "Rydberg constant (infinite nuclear mass limit)",
+      "symbol": "R∞",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured",
+      "definition_or_meaning": "Wavenumber constant in hydrogen-like spectral formula for an infinitely massive nucleus.",
+      "values": [
+        {
+          "value": 10973731.568157,
+          "unit": "m^-1",
+          "system": "SI",
+          "formatted": "1.0973731568157 × 10^7 m^-1"
+        },
+        {
+          "value": 109737.31568157,
+          "unit": "cm^-1",
+          "system": "CGS length unit",
+          "formatted": "1.0973731568157 × 10^5 cm^-1"
+        },
+        {
+          "value": 3289841960250800.0,
+          "unit": "Hz (cR∞)",
+          "system": "frequency equivalent",
+          "formatted": "cR∞ ≈ 3.2898419602508 × 10^15 Hz"
+        }
+      ],
+      "common_hsc_approximation": "R_H ≈ 1.097 × 10^7 m^-1",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "For actual hydrogen, the finite proton mass gives a slightly different hydrogen-specific Rydberg constant R_H."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "hydrogen_rydberg_constant",
+      "name": "Hydrogen spectral Rydberg constant (approx.)",
+      "symbol": "R_H",
+      "category": "atomic_and_nuclear",
+      "constant_type": "derived_measured_reference",
+      "definition_or_meaning": "Rydberg wavenumber constant for ordinary hydrogen, accounting for the proton's finite mass.",
+      "values": [
+        {
+          "value": 10967758.34,
+          "unit": "m^-1",
+          "system": "SI approximation",
+          "formatted": "about 1.096775834 × 10^7 m^-1"
+        }
+      ],
+      "common_hsc_approximation": "1.097 × 10^7 m^-1",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "For HSC, the question/book may use 1.097 × 10^7 m^-1 without distinguishing R_H and R∞."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "bohr_radius",
+      "name": "Bohr radius",
+      "symbol": "a₀",
+      "category": "atomic_and_nuclear",
+      "constant_type": "measured_derived",
+      "definition_or_meaning": "Characteristic radius of the ground-state Bohr hydrogen orbit.",
+      "values": [
+        {
+          "value": 5.29177210544e-11,
+          "unit": "m",
+          "system": "SI",
+          "formatted": "5.29177210544(82) × 10^-11 m"
+        },
+        {
+          "value": 0.529177210544,
+          "unit": "Å",
+          "system": "angstrom",
+          "formatted": "0.529177210544 Å"
+        },
+        {
+          "value": 52.9177210544,
+          "unit": "pm",
+          "system": "picometre",
+          "formatted": "52.9177210544 pm"
+        }
+      ],
+      "common_hsc_approximation": "0.529 Å = 5.29 × 10^-11 m",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "This is a characteristic quantum length, not a literal classical path in modern quantum mechanics."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "rydberg_energy",
+      "name": "Rydberg energy / hydrogen ground-state ionization-energy scale",
+      "symbol": "E_R",
+      "category": "atomic_and_nuclear",
+      "constant_type": "derived",
+      "definition_or_meaning": "Magnitude of the hydrogenic ground-state binding-energy scale.",
+      "values": [
+        {
+          "value": 2.1798723611035e-18,
+          "unit": "J",
+          "system": "SI",
+          "formatted": "2.1798723611035 × 10^-18 J"
+        },
+        {
+          "value": 13.605693122994,
+          "unit": "eV",
+          "system": "electronvolt",
+          "formatted": "13.6056931 eV"
+        },
+        {
+          "value": 2.1798723611035e-11,
+          "unit": "erg",
+          "system": "CGS",
+          "formatted": "2.1798723611035 × 10^-11 erg"
+        }
+      ],
+      "common_hsc_approximation": "13.6 eV",
+      "formula_uses": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "The ground-state energy of hydrogen is approximately −13.6 eV; the binding/ionization energy is stated as positive 13.6 eV."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "electron_rest_energy",
+      "name": "Electron rest energy",
+      "symbol": "m_e c²",
+      "category": "modern_physics",
+      "constant_type": "derived",
+      "definition_or_meaning": "Energy equivalent of the electron rest mass.",
+      "values": [
+        {
+          "value": 8.187105788e-14,
+          "unit": "J",
+          "system": "SI",
+          "formatted": "8.1871057880 × 10^-14 J"
+        },
+        {
+          "value": 0.51099895069,
+          "unit": "MeV",
+          "system": "particle-physics energy",
+          "formatted": "0.51099895 MeV"
+        },
+        {
+          "value": 8.187105788e-07,
+          "unit": "erg",
+          "system": "CGS",
+          "formatted": "8.1871057880 × 10^-7 erg"
+        }
+      ],
+      "common_hsc_approximation": "0.511 MeV",
+      "formula_uses": [
+        "Physics 2nd: Introduction to Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Use E=mc²; the MeV form is convenient in particle/nuclear calculations."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "proton_rest_energy",
+      "name": "Proton rest energy",
+      "symbol": "m_p c²",
+      "category": "modern_physics",
+      "constant_type": "derived",
+      "definition_or_meaning": "Energy equivalent of proton rest mass.",
+      "values": [
+        {
+          "value": 1.50327761598e-10,
+          "unit": "J",
+          "system": "SI",
+          "formatted": "about 1.50328 × 10^-10 J"
+        },
+        {
+          "value": 938.27208943,
+          "unit": "MeV",
+          "system": "particle-physics energy",
+          "formatted": "938.27208943 MeV"
+        }
+      ],
+      "common_hsc_approximation": "938 MeV",
+      "formula_uses": [
+        "Physics 2nd: Introduction to Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Often rounded to 938 MeV/c² for proton mass."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "neutron_rest_energy",
+      "name": "Neutron rest energy",
+      "symbol": "m_n c²",
+      "category": "modern_physics",
+      "constant_type": "derived",
+      "definition_or_meaning": "Energy equivalent of neutron rest mass.",
+      "values": [
+        {
+          "value": 1.505349762e-10,
+          "unit": "J",
+          "system": "SI approximation",
+          "formatted": "about 1.50535 × 10^-10 J"
+        },
+        {
+          "value": 939.56542052,
+          "unit": "MeV",
+          "system": "particle-physics energy",
+          "formatted": "about 939.56542 MeV"
+        }
+      ],
+      "common_hsc_approximation": "939.6 MeV",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Approximate values are adequate unless the problem gives more precision."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "electronvolt",
+      "name": "Electronvolt",
+      "symbol": "eV",
+      "category": "energy_and_unit_conversion",
+      "constant_type": "defined_exact_from_charge",
+      "definition_or_meaning": "Energy acquired by a particle of elementary charge magnitude moving through a potential difference of one volt.",
+      "values": [
+        {
+          "value": 1.602176634e-19,
+          "unit": "J",
+          "system": "SI",
+          "formatted": "1.602176634 × 10^-19 J"
+        },
+        {
+          "value": 1.602176634e-12,
+          "unit": "erg",
+          "system": "CGS",
+          "formatted": "1.602176634 × 10^-12 erg"
+        },
+        {
+          "value": 1.0,
+          "unit": "eV",
+          "system": "electronvolt unit",
+          "formatted": "1 eV by definition"
+        }
+      ],
+      "common_hsc_approximation": "1 eV = 1.6 × 10^-19 J",
+      "formula_uses": [
+        "Physics 1st: Work, Energy and Power",
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "eV is a unit of energy, not a separate fundamental constant. It is included because it is used as a fixed conversion value."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "stefan_boltzmann_constant",
+      "name": "Stefan–Boltzmann constant",
+      "symbol": "σ",
+      "category": "thermodynamics_and_astronomy",
+      "constant_type": "derived_exact_from_defined_constants",
+      "definition_or_meaning": "Coefficient in ideal blackbody radiant exitance M = σT⁴.",
+      "values": [
+        {
+          "value": 5.670374419e-08,
+          "unit": "W m^-2 K^-4",
+          "system": "SI",
+          "formatted": "5.670374419… × 10^-8 W m^-2 K^-4"
+        },
+        {
+          "value": 5.670374419e-05,
+          "unit": "erg s^-1 cm^-2 K^-4",
+          "system": "CGS",
+          "formatted": "5.670374419… × 10^-5 erg s^-1 cm^-2 K^-4"
+        }
+      ],
+      "common_hsc_approximation": "5.67 × 10^-8 W m^-2 K^-4",
+      "formula_uses": [
+        "Physics 2nd: Thermodynamics (if thermal radiation is included); Astronomy"
+      ],
+      "notes": [
+        "The symbol σ is also used for surface charge density or other quantities in some contexts; interpret by formula."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "wien_displacement_constant",
+      "name": "Wien displacement constant",
+      "symbol": "b",
+      "category": "thermal_radiation",
+      "constant_type": "measured_derived",
+      "definition_or_meaning": "Constant in the blackbody wavelength-displacement relation λ_max T = b.",
+      "values": [
+        {
+          "value": 0.002897771955,
+          "unit": "m K",
+          "system": "SI",
+          "formatted": "2.897771955 × 10^-3 m K"
+        },
+        {
+          "value": 0.2897771955,
+          "unit": "cm K",
+          "system": "CGS length unit",
+          "formatted": "0.2897771955 cm K"
+        }
+      ],
+      "common_hsc_approximation": "2.90 × 10^-3 m K",
+      "formula_uses": [
+        "Physics 2nd: Astronomy; thermal-radiation applications"
+      ],
+      "notes": [
+        "This is distinct from Wien's frequency-displacement constant."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "standard_pressure",
+      "name": "Standard-state pressure (IUPAC convention)",
+      "symbol": "p°",
+      "category": "gas_laws_and_chemistry",
+      "constant_type": "defined_conventional",
+      "definition_or_meaning": "Common reference pressure for thermodynamic standard states.",
+      "values": [
+        {
+          "value": 100000,
+          "unit": "Pa",
+          "system": "SI",
+          "formatted": "100,000 Pa = 100 kPa"
+        },
+        {
+          "value": 100,
+          "unit": "kPa",
+          "system": "SI",
+          "formatted": "100 kPa"
+        },
+        {
+          "value": 1.0,
+          "unit": "bar",
+          "system": "bar",
+          "formatted": "1 bar"
+        }
+      ],
+      "common_hsc_approximation": "Use 1 bar when a chemistry question explicitly means standard state; many school gas problems instead use 1 atm",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas",
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "Standard pressure of 1 bar is not the same as standard atmosphere (1 atm = 101.325 kPa). Always use the problem's stated convention."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "standard_atmosphere",
+      "name": "Standard atmosphere",
+      "symbol": "atm",
+      "category": "gas_laws_and_unit_conversion",
+      "constant_type": "defined_conventional",
+      "definition_or_meaning": "Conventional pressure unit equal to exactly 101,325 Pa.",
+      "values": [
+        {
+          "value": 101325,
+          "unit": "Pa",
+          "system": "SI",
+          "formatted": "101325 Pa"
+        },
+        {
+          "value": 101.325,
+          "unit": "kPa",
+          "system": "SI",
+          "formatted": "101.325 kPa"
+        },
+        {
+          "value": 1.01325,
+          "unit": "bar",
+          "system": "bar",
+          "formatted": "1.01325 bar"
+        },
+        {
+          "value": 760,
+          "unit": "mmHg",
+          "system": "mercury-column conventional",
+          "formatted": "760 mmHg"
+        },
+        {
+          "value": 760,
+          "unit": "torr",
+          "system": "torr",
+          "formatted": "760 torr"
+        },
+        {
+          "value": 1013250.0,
+          "unit": "dyn cm^-2",
+          "system": "CGS",
+          "formatted": "1.01325 × 10^6 dyn/cm^2"
+        }
+      ],
+      "common_hsc_approximation": "1 atm = 760 mmHg = 101.325 kPa",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas",
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "Use atm only with the compatible version of R or convert pressure to SI."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "standard_temperature",
+      "name": "Common gas-law reference temperature",
+      "symbol": "T₀",
+      "category": "gas_laws_and_unit_conversion",
+      "constant_type": "defined_conventional",
+      "definition_or_meaning": "0 °C expressed on the thermodynamic temperature scale.",
+      "values": [
+        {
+          "value": 273.15,
+          "unit": "K",
+          "system": "SI",
+          "formatted": "273.15 K"
+        },
+        {
+          "value": 0,
+          "unit": "°C",
+          "system": "Celsius",
+          "formatted": "0 °C"
+        },
+        {
+          "value": 32,
+          "unit": "°F",
+          "system": "Fahrenheit",
+          "formatted": "32 °F"
+        }
+      ],
+      "common_hsc_approximation": "273 K or 273.15 K depending on required precision",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "This is a reference temperature, not a thermodynamic law. Not every use of the term NTP/STP uses the same pressure/temperature convention."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "molar_volume_stp_100kpa",
+      "name": "Ideal-gas molar volume at 273.15 K and 100 kPa",
+      "symbol": "V_m°",
+      "category": "gas_laws_and_chemistry",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Ideal-gas molar volume at 0 °C and IUPAC standard-state pressure 100 kPa.",
+      "values": [
+        {
+          "value": 22.71095464,
+          "unit": "L mol^-1",
+          "system": "customary chemistry unit",
+          "formatted": "22.71095464… L/mol"
+        },
+        {
+          "value": 0.02271095464,
+          "unit": "m^3 mol^-1",
+          "system": "SI",
+          "formatted": "2.271095464 × 10^-2 m^3/mol"
+        }
+      ],
+      "common_hsc_approximation": "about 22.71 L mol^-1 at 0 °C and 100 kPa",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "This differs from 22.414 L/mol because the pressure convention differs."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "molar_volume_stp_1atm",
+      "name": "Ideal-gas molar volume at 273.15 K and 1 atm",
+      "symbol": "V_m",
+      "category": "gas_laws_and_chemistry",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Ideal-gas molar volume at 0 °C and standard atmospheric pressure 101.325 kPa.",
+      "values": [
+        {
+          "value": 22.41396954,
+          "unit": "L mol^-1",
+          "system": "customary chemistry unit",
+          "formatted": "22.41396954… L/mol"
+        },
+        {
+          "value": 0.02241396954,
+          "unit": "m^3 mol^-1",
+          "system": "SI",
+          "formatted": "2.241396954 × 10^-2 m^3/mol"
+        }
+      ],
+      "common_hsc_approximation": "22.4 L mol^-1 at 0 °C and 1 atm",
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ],
+      "notes": [
+        "The classic school value 22.4 L/mol assumes 273.15 K and 1 atm. Clearly label the convention when reporting it."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "loschmidt_constant_100kpa",
+      "name": "Loschmidt number density at 273.15 K and 100 kPa",
+      "symbol": "n₀",
+      "category": "gas_laws",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Number of ideal-gas particles per unit volume at specified reference conditions.",
+      "values": [
+        {
+          "value": 2.651645804e+25,
+          "unit": "m^-3",
+          "system": "SI",
+          "formatted": "2.651645804… × 10^25 m^-3"
+        }
+      ],
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases"
+      ],
+      "notes": [
+        "Condition-specific, not a universal fixed number density."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "loschmidt_constant_1atm",
+      "name": "Loschmidt number density at 273.15 K and 1 atm",
+      "symbol": "n₀",
+      "category": "gas_laws",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Number density for an ideal gas at 0 °C and 1 atm.",
+      "values": [
+        {
+          "value": 2.6867811e+25,
+          "unit": "m^-3",
+          "system": "SI",
+          "formatted": "about 2.6867811 × 10^25 m^-3"
+        }
+      ],
+      "formula_uses": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases"
+      ],
+      "notes": [
+        "Condition-specific and therefore different from the 100 kPa value."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "water_density_reference",
+      "name": "Density of liquid water (reference approximation)",
+      "symbol": "ρ_water",
+      "category": "material_reference",
+      "constant_type": "condition_dependent_approximation",
+      "definition_or_meaning": "Convenient approximate liquid-water density near its maximum-density temperature.",
+      "values": [
+        {
+          "value": 1000,
+          "unit": "kg m^-3",
+          "system": "SI",
+          "formatted": "about 1000 kg/m^3"
+        },
+        {
+          "value": 1.0,
+          "unit": "g cm^-3",
+          "system": "CGS",
+          "formatted": "about 1.0 g/cm^3"
+        }
+      ],
+      "common_hsc_approximation": "1000 kg/m³ or 1 g/cm³",
+      "formula_uses": [
+        "Physics 1st: Structural Properties of Matter; dimensional/unit problems"
+      ],
+      "notes": [
+        "Density varies with temperature, pressure and purity; it is not a universal constant."
+      ],
+      "sources": [
+        "nist_water_webbook"
+      ]
+    },
+    {
+      "id": "water_specific_heat_capacity",
+      "name": "Specific heat capacity of liquid water (reference approximation)",
+      "symbol": "c_water",
+      "category": "thermal_reference",
+      "constant_type": "condition_dependent_approximation",
+      "definition_or_meaning": "Heat capacity per unit mass per unit temperature rise, near ordinary temperatures.",
+      "values": [
+        {
+          "value": 4184,
+          "unit": "J kg^-1 K^-1",
+          "system": "SI",
+          "formatted": "about 4184 J kg^-1 K^-1"
+        },
+        {
+          "value": 1.0,
+          "unit": "cal g^-1 °C^-1",
+          "system": "customary",
+          "formatted": "about 1 cal g^-1 °C^-1"
+        },
+        {
+          "value": 4.184,
+          "unit": "J g^-1 K^-1",
+          "system": "mixed",
+          "formatted": "about 4.184 J g^-1 K^-1"
+        }
+      ],
+      "common_hsc_approximation": "4.2 × 10^3 J kg^-1 K^-1",
+      "formula_uses": [
+        "Physics 1st: Structural Properties of Matter",
+        "Physics 2nd: Thermodynamics"
+      ],
+      "notes": [
+        "The value changes slightly with temperature. Many HSC questions use 4200 J kg^-1 K^-1 or provide a value."
+      ],
+      "sources": [
+        "nist_water_webbook",
+        "utexas_physical_constants"
+      ]
+    },
+    {
+      "id": "latent_heat_fusion_water",
+      "name": "Specific latent heat of fusion of ice (approximate)",
+      "symbol": "L_f",
+      "category": "thermal_reference",
+      "constant_type": "condition_dependent_reference",
+      "definition_or_meaning": "Energy required to melt unit mass of ice at its melting point at ordinary pressure.",
+      "values": [
+        {
+          "value": 334000.0,
+          "unit": "J kg^-1",
+          "system": "SI",
+          "formatted": "about 3.34 × 10^5 J/kg"
+        },
+        {
+          "value": 80,
+          "unit": "cal g^-1",
+          "system": "customary",
+          "formatted": "about 80 cal/g"
+        }
+      ],
+      "common_hsc_approximation": "3.34 × 10^5 J/kg or 80 cal/g",
+      "formula_uses": [
+        "Physics 2nd: Thermodynamics"
+      ],
+      "notes": [
+        "A reference property, not universal; depends on pressure and material."
+      ],
+      "sources": [
+        "nist_water_webbook"
+      ]
+    },
+    {
+      "id": "latent_heat_vaporization_water",
+      "name": "Specific latent heat of vaporization of water (approximate)",
+      "symbol": "L_v",
+      "category": "thermal_reference",
+      "constant_type": "condition_dependent_reference",
+      "definition_or_meaning": "Energy required to vaporize unit mass of water at its boiling point at ordinary pressure.",
+      "values": [
+        {
+          "value": 2260000.0,
+          "unit": "J kg^-1",
+          "system": "SI",
+          "formatted": "about 2.26 × 10^6 J/kg"
+        },
+        {
+          "value": 540,
+          "unit": "cal g^-1",
+          "system": "customary",
+          "formatted": "about 540 cal/g"
+        }
+      ],
+      "common_hsc_approximation": "2.26 × 10^6 J/kg or 540 cal/g",
+      "formula_uses": [
+        "Physics 2nd: Thermodynamics"
+      ],
+      "notes": [
+        "Strongly condition-dependent; lower at other temperatures and tends to zero at the critical point."
+      ],
+      "sources": [
+        "nist_water_webbook"
+      ]
+    },
+    {
+      "id": "earth_mass_reference",
+      "name": "Earth mass (astronomical reference)",
+      "symbol": "M_⊕",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Reference mass of Earth, useful in gravity/orbit estimates.",
+      "values": [
+        {
+          "value": 5.9722e+24,
+          "unit": "kg",
+          "system": "SI approximation",
+          "formatted": "about 5.9722 × 10^24 kg"
+        },
+        {
+          "value": 5.9722e+27,
+          "unit": "g",
+          "system": "CGS approximation",
+          "formatted": "about 5.9722 × 10^27 g"
+        }
+      ],
+      "common_hsc_approximation": "6.0 × 10^24 kg",
+      "formula_uses": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "The product GM is known more precisely than separate masses in some celestial calculations; school work usually rounds this value."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "earth_mean_radius_reference",
+      "name": "Earth mean radius (astronomical reference)",
+      "symbol": "R_⊕",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Representative mean radius of Earth.",
+      "values": [
+        {
+          "value": 6371000.0,
+          "unit": "m",
+          "system": "SI approximation",
+          "formatted": "about 6.371 × 10^6 m"
+        },
+        {
+          "value": 6371,
+          "unit": "km",
+          "system": "SI-derived",
+          "formatted": "about 6371 km"
+        }
+      ],
+      "common_hsc_approximation": "6.37 × 10^6 m",
+      "formula_uses": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Earth is not a perfect sphere; radius depends on whether equatorial, polar or mean radius is intended."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "moon_surface_gravity_reference",
+      "name": "Moon-surface gravitational acceleration (approximate)",
+      "symbol": "g_Moon",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Representative gravitational acceleration near the Moon's surface.",
+      "values": [
+        {
+          "value": 1.62,
+          "unit": "m s^-2",
+          "system": "SI approximation",
+          "formatted": "about 1.62 m/s^2"
+        },
+        {
+          "value": 162,
+          "unit": "cm s^-2",
+          "system": "CGS approximation",
+          "formatted": "about 162 cm/s^2"
+        }
+      ],
+      "formula_uses": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Not a universal constant; local value varies slightly with lunar location."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "earth_escape_speed_reference",
+      "name": "Earth escape speed near surface (approximate)",
+      "symbol": "v_esc,⊕",
+      "category": "astronomy",
+      "constant_type": "derived_reference",
+      "definition_or_meaning": "Idealized escape speed from the surface of Earth, ignoring atmosphere and rotation.",
+      "values": [
+        {
+          "value": 11200.0,
+          "unit": "m s^-1",
+          "system": "SI approximation",
+          "formatted": "about 11.2 km/s"
+        },
+        {
+          "value": 11.2,
+          "unit": "km s^-1",
+          "system": "SI-derived",
+          "formatted": "about 11.2 km/s"
+        }
+      ],
+      "common_hsc_approximation": "11.2 km/s",
+      "formula_uses": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Derived from v_esc = sqrt(2GM/R); not a separate fundamental constant."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "astronomical_unit",
+      "name": "Astronomical unit",
+      "symbol": "au",
+      "category": "astronomy_and_unit_conversion",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "IAU-defined unit of length approximately equal to the mean Earth–Sun distance.",
+      "values": [
+        {
+          "value": 149597870700,
+          "unit": "m",
+          "system": "SI definition",
+          "formatted": "149,597,870,700 m exactly"
+        },
+        {
+          "value": 149597870.7,
+          "unit": "km",
+          "system": "SI-derived",
+          "formatted": "149,597,870.7 km"
+        },
+        {
+          "value": 1.0,
+          "unit": "au",
+          "system": "astronomical unit",
+          "formatted": "1 au by definition"
+        }
+      ],
+      "common_hsc_approximation": "1 au ≈ 1.496 × 10^11 m",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "IAU symbol is lower-case au; AU is common in school materials."
+      ],
+      "sources": [
+        "jpl_au_definition",
+        "iau_measuring_universe"
+      ]
+    },
+    {
+      "id": "light_year",
+      "name": "Light-year",
+      "symbol": "ly",
+      "category": "astronomy_and_unit_conversion",
+      "constant_type": "defined_unit",
+      "definition_or_meaning": "Distance traveled by light in vacuum in one Julian year (365.25 days).",
+      "values": [
+        {
+          "value": 9460730472580800.0,
+          "unit": "m",
+          "system": "SI-derived",
+          "formatted": "9.4607304725808 × 10^15 m"
+        },
+        {
+          "value": 9460730472580.8,
+          "unit": "km",
+          "system": "SI-derived",
+          "formatted": "9.4607304725808 × 10^12 km"
+        },
+        {
+          "value": 63241.077,
+          "unit": "au",
+          "system": "astronomical-unit equivalent",
+          "formatted": "about 63,241 au"
+        },
+        {
+          "value": 0.306601,
+          "unit": "pc",
+          "system": "parsec equivalent",
+          "formatted": "about 0.3066 pc"
+        }
+      ],
+      "common_hsc_approximation": "1 ly ≈ 9.46 × 10^15 m",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "An astronomical distance unit; it is not a unit of time."
+      ],
+      "sources": [
+        "iau_measuring_universe",
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "parsec",
+      "name": "Parsec",
+      "symbol": "pc",
+      "category": "astronomy_and_unit_conversion",
+      "constant_type": "defined_unit",
+      "definition_or_meaning": "Distance at which one astronomical unit subtends one arcsecond.",
+      "values": [
+        {
+          "value": 3.085677581491367e+16,
+          "unit": "m",
+          "system": "SI-derived",
+          "formatted": "about 3.08568 × 10^16 m"
+        },
+        {
+          "value": 30856775814913.67,
+          "unit": "km",
+          "system": "SI-derived",
+          "formatted": "about 3.08568 × 10^13 km"
+        },
+        {
+          "value": 3.26156,
+          "unit": "ly",
+          "system": "light-year equivalent",
+          "formatted": "about 3.26156 ly"
+        },
+        {
+          "value": 206264.806,
+          "unit": "au",
+          "system": "astronomical-unit equivalent",
+          "formatted": "about 206,265 au"
+        }
+      ],
+      "common_hsc_approximation": "1 pc ≈ 3.26 ly ≈ 3.086 × 10^16 m",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Use pc for parsec; kpc = 10^3 pc and Mpc = 10^6 pc."
+      ],
+      "sources": [
+        "iau_measuring_universe"
+      ]
+    },
+    {
+      "id": "solar_mass_reference",
+      "name": "Solar mass (astronomical reference)",
+      "symbol": "M_☉",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Representative mass of the Sun.",
+      "values": [
+        {
+          "value": 1.9885e+30,
+          "unit": "kg",
+          "system": "SI approximation",
+          "formatted": "about 1.9885 × 10^30 kg"
+        },
+        {
+          "value": 1.9885e+33,
+          "unit": "g",
+          "system": "CGS approximation",
+          "formatted": "about 1.9885 × 10^33 g"
+        }
+      ],
+      "common_hsc_approximation": "2.0 × 10^30 kg",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Rounded conventional reference; not an exact defining constant for the Sun's evolving physical mass."
+      ],
+      "sources": [
+        "iau_measuring_universe",
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "solar_radius_reference",
+      "name": "Solar radius (astronomical reference)",
+      "symbol": "R_☉",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Representative photospheric radius of the Sun.",
+      "values": [
+        {
+          "value": 695700000.0,
+          "unit": "m",
+          "system": "SI approximation",
+          "formatted": "about 6.957 × 10^8 m"
+        },
+        {
+          "value": 695700.0,
+          "unit": "km",
+          "system": "SI-derived",
+          "formatted": "about 695,700 km"
+        }
+      ],
+      "common_hsc_approximation": "6.96 × 10^8 m",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Conventional reference radius; details depend on definition of the solar surface."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "solar_luminosity_reference",
+      "name": "Solar luminosity (astronomical reference)",
+      "symbol": "L_☉",
+      "category": "astronomy",
+      "constant_type": "measured_reference",
+      "definition_or_meaning": "Representative total radiant power of the Sun.",
+      "values": [
+        {
+          "value": 3.828e+26,
+          "unit": "W",
+          "system": "SI approximation",
+          "formatted": "about 3.828 × 10^26 W"
+        }
+      ],
+      "common_hsc_approximation": "3.8 × 10^26 W",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "The Sun varies slightly; this is a conventional nominal reference."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "solar_irradiance_reference",
+      "name": "Total solar irradiance near Earth's orbit (approximate)",
+      "symbol": "S_☉",
+      "category": "astronomy",
+      "constant_type": "condition_dependent_reference",
+      "definition_or_meaning": "Solar power received per unit area near 1 au before atmospheric absorption.",
+      "values": [
+        {
+          "value": 1361,
+          "unit": "W m^-2",
+          "system": "SI approximation",
+          "formatted": "about 1361 W/m^2"
+        }
+      ],
+      "common_hsc_approximation": "About 1.36 × 10^3 W/m²",
+      "formula_uses": [
+        "Physics 2nd: Astronomy"
+      ],
+      "notes": [
+        "Varies with solar activity and orbital distance; include only if used in the astronomy chapter or a question."
+      ],
+      "sources": [
+        "jpl_astro_parameters"
+      ]
+    },
+    {
+      "id": "nuclear_radius_coefficient",
+      "name": "Empirical nuclear-radius coefficient",
+      "symbol": "r₀",
+      "category": "nuclear_physics",
+      "constant_type": "empirical_approximation",
+      "definition_or_meaning": "Coefficient in nuclear-radius scaling R ≈ r₀ A^(1/3).",
+      "values": [
+        {
+          "value": 1.2e-15,
+          "unit": "m",
+          "system": "SI approximation",
+          "formatted": "about 1.2 × 10^-15 m"
+        },
+        {
+          "value": 1.2,
+          "unit": "fm",
+          "system": "femtometre",
+          "formatted": "about 1.2 fm"
+        }
+      ],
+      "common_hsc_approximation": "1.2 × 10^-15 m",
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Empirical model coefficient, not an exact universal constant; different textbooks may use approximately 1.1–1.3 fm."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "nuclear_magneton",
+      "name": "Nuclear magneton",
+      "symbol": "μ_N",
+      "category": "atomic_and_nuclear",
+      "constant_type": "derived_measured",
+      "definition_or_meaning": "Natural unit of magnetic moment for nuclear particles.",
+      "values": [
+        {
+          "value": 5.0507837461e-27,
+          "unit": "J T^-1",
+          "system": "SI",
+          "formatted": "about 5.0507837461 × 10^-27 J/T"
+        },
+        {
+          "value": 3.152451255e-08,
+          "unit": "eV T^-1",
+          "system": "mixed",
+          "formatted": "about 3.15245 × 10^-8 eV/T"
+        }
+      ],
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Usually beyond routine HSC numerical needs; included as a related atomic/nuclear reference."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "bohr_magneton",
+      "name": "Bohr magneton",
+      "symbol": "μ_B",
+      "category": "atomic_and_nuclear",
+      "constant_type": "derived_measured",
+      "definition_or_meaning": "Natural unit of magnetic moment associated with the electron.",
+      "values": [
+        {
+          "value": 9.2740100657e-24,
+          "unit": "J T^-1",
+          "system": "SI",
+          "formatted": "9.2740100657 × 10^-24 J/T"
+        },
+        {
+          "value": 5.7883817982e-05,
+          "unit": "eV T^-1",
+          "system": "mixed",
+          "formatted": "5.7883817982 × 10^-5 eV/T"
+        }
+      ],
+      "formula_uses": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ],
+      "notes": [
+        "Supplementary atomic constant; may not be required by the core HSC textbook."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "electron_charge_to_mass_ratio",
+      "name": "Electron charge-to-mass ratio magnitude",
+      "symbol": "e/m_e",
+      "category": "electromagnetic_and_atomic",
+      "constant_type": "derived_measured",
+      "definition_or_meaning": "Magnitude of electron charge divided by electron rest mass.",
+      "values": [
+        {
+          "value": 175882000838.0,
+          "unit": "C kg^-1",
+          "system": "SI",
+          "formatted": "about 1.75882 × 10^11 C/kg"
+        }
+      ],
+      "common_hsc_approximation": "1.76 × 10^11 C/kg",
+      "formula_uses": [
+        "Physics 2nd: Magnetic Effects; Introduction to Modern Physics"
+      ],
+      "notes": [
+        "Some older physics problems use experimental e/m results; this is the modern reference value."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "water_ion_product_25c",
+      "name": "Ion product of water at 25 °C",
+      "symbol": "K_w",
+      "category": "aqueous_chemistry",
+      "constant_type": "condition_specific_approximation",
+      "definition_or_meaning": "Equilibrium constant for water autoionization under the common dilute-solution convention.",
+      "values": [
+        {
+          "value": 1e-14,
+          "unit": "(mol L^-1)^2",
+          "system": "concentration convention",
+          "formatted": "approximately 1.0 × 10^-14 (mol/L)^2"
+        },
+        {
+          "value": 1e-14,
+          "unit": "dimensionless",
+          "system": "thermodynamic activity convention",
+          "formatted": "approximately 1.0 × 10^-14 when expressed with standard-state activities"
+        }
+      ],
+      "common_hsc_approximation": "K_w ≈ 1.0 × 10^-14 at 25 °C; pK_w ≈ 14.00",
+      "formula_uses": [
+        "Chemistry 1st: Chemical Changes",
+        "Chemistry 2nd: Environmental Chemistry"
+      ],
+      "notes": [
+        "Not temperature-independent. More rigorous thermodynamic equilibrium constants are defined through activities and are dimensionless; HSC concentration-based problems usually use the simplified concentration form."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "standard_hydrogen_electrode_potential",
+      "name": "Standard hydrogen electrode potential (conventional zero)",
+      "symbol": "E°(H⁺/H₂)",
+      "category": "electrochemistry",
+      "constant_type": "defined_conventional",
+      "definition_or_meaning": "Reference electrode potential assigned zero by convention at standard conditions.",
+      "values": [
+        {
+          "value": 0,
+          "unit": "V",
+          "system": "electrochemical convention",
+          "formatted": "0.000 V by convention"
+        }
+      ],
+      "common_hsc_approximation": "0.00 V",
+      "formula_uses": [
+        "Chemistry 2nd: Electrochemistry"
+      ],
+      "notes": [
+        "This does not mean every electrode potential is zero; standard potentials are defined relative to this reference and depend on the redox couple."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "nernst_rt_over_f_25c",
+      "name": "RT/F at 25 °C",
+      "symbol": "RT/F",
+      "category": "electrochemistry",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Thermal voltage factor in the Nernst equation at T = 298.15 K.",
+      "values": [
+        {
+          "value": 0.0256925791,
+          "unit": "V",
+          "system": "SI-derived",
+          "formatted": "about 0.0256926 V"
+        }
+      ],
+      "common_hsc_approximation": "RT/F ≈ 0.0257 V at 25 °C",
+      "formula_uses": [
+        "Chemistry 2nd: Electrochemistry"
+      ],
+      "notes": [
+        "Changes linearly with absolute temperature T."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "nernst_2p303rt_over_f_25c",
+      "name": "2.303RT/F at 25 °C",
+      "symbol": "2.303RT/F",
+      "category": "electrochemistry",
+      "constant_type": "condition_specific_derived",
+      "definition_or_meaning": "Base-10 logarithmic Nernst-equation factor at T = 298.15 K.",
+      "values": [
+        {
+          "value": 0.0591593495,
+          "unit": "V",
+          "system": "SI-derived",
+          "formatted": "about 0.05916 V"
+        }
+      ],
+      "common_hsc_approximation": "0.0591 or 0.0592 V at 25 °C",
+      "formula_uses": [
+        "Chemistry 2nd: Electrochemistry"
+      ],
+      "notes": [
+        "For an n-electron cell, the common term is (0.05916/n) log₁₀Q at 25 °C; the sign and quotient orientation depend on the form of the Nernst equation used."
+      ],
+      "sources": [
+        "nist_codata_2022_wallet"
+      ]
+    },
+    {
+      "id": "refractive_index_vacuum",
+      "name": "Refractive index of vacuum",
+      "symbol": "n_vacuum",
+      "category": "optics",
+      "constant_type": "defined_exact",
+      "definition_or_meaning": "Ratio c/v for light in a vacuum; vacuum is the reference medium.",
+      "values": [
+        {
+          "value": 1.0,
+          "unit": "dimensionless",
+          "system": "dimensionless",
+          "formatted": "1 exactly"
+        }
+      ],
+      "common_hsc_approximation": "1.00",
+      "formula_uses": [
+        "Physics 2nd: Geometrical Optics; Physical Optics"
+      ],
+      "notes": [
+        "In a material n = c/v and depends on wavelength, temperature, and material conditions."
+      ],
+      "sources": [
+        "nist_codata_database"
+      ]
+    },
+    {
+      "id": "speed_of_sound_air_20c",
+      "name": "Speed of sound in dry air near 20 °C (illustrative)",
+      "symbol": "v_sound",
+      "category": "waves",
+      "constant_type": "condition_dependent_reference",
+      "definition_or_meaning": "Approximate sound speed in dry air near room temperature.",
+      "values": [
+        {
+          "value": 343,
+          "unit": "m s^-1",
+          "system": "SI approximation",
+          "formatted": "about 343 m/s"
+        },
+        {
+          "value": 1234.8,
+          "unit": "km h^-1",
+          "system": "SI-derived",
+          "formatted": "about 1235 km/h"
+        }
+      ],
+      "common_hsc_approximation": "about 340 m/s",
+      "formula_uses": [
+        "Physics 1st: Dynamics; Waves"
+      ],
+      "notes": [
+        "Depends on temperature, humidity, composition and gas properties; do not treat it as a universal constant."
+      ],
+      "sources": [
+        "utexas_physical_constants"
+      ]
+    }
+  ],
+  "mathematical_constants_used_in_physics_and_chemistry": [
+    {
+      "id": "pi",
+      "name": "Pi",
+      "symbol": "π",
+      "value": 3.141592653589793,
+      "unit": "dimensionless",
+      "common_HSC_approximations": [
+        3.14,
+        "22/7"
+      ],
+      "relevance": [
+        "circular motion",
+        "oscillation",
+        "waves",
+        "spherical areas/volumes",
+        "electromagnetic constants"
+      ]
+    },
+    {
+      "id": "euler_number",
+      "name": "Euler's number (not elementary charge)",
+      "symbol": "e (math)",
+      "value": 2.718281828459045,
+      "unit": "dimensionless",
+      "common_HSC_approximations": [
+        2.718,
+        "2.72"
+      ],
+      "relevance": [
+        "exponential growth/decay forms",
+        "radioactive decay and differential equations, where used"
+      ]
+    },
+    {
+      "id": "natural_log_2",
+      "name": "Natural logarithm of 2",
+      "symbol": "ln 2",
+      "value": 0.6931471805599453,
+      "unit": "dimensionless",
+      "common_HSC_approximations": [
+        0.693,
+        0.6931
+      ],
+      "relevance": [
+        "radioactive decay half-life: t_(1/2) = ln(2)/λ"
+      ]
+    },
+    {
+      "id": "natural_log_10",
+      "name": "Natural logarithm of 10",
+      "symbol": "ln 10",
+      "value": 2.302585092994046,
+      "unit": "dimensionless",
+      "common_HSC_approximations": [
+        2.303
+      ],
+      "relevance": [
+        "converting between natural and base-10 logarithms; pH and Nernst equation contexts"
+      ]
+    }
+  ],
+  "common_hsc_atomic_masses": [
+    {
+      "symbol": "H",
+      "element": "Hydrogen",
+      "relative_atomic_mass_school": 1.0,
+      "molar_mass_school_g_mol": 1.0,
+      "modern_CIAAW_value": "[1.00784, 1.00811]",
+      "notes": "School rounding commonly uses 1; natural hydrogen atomic weight varies by sample.",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "He",
+      "element": "Helium",
+      "relative_atomic_mass_school": 4.0,
+      "molar_mass_school_g_mol": 4.0,
+      "modern_CIAAW_value": "4.002602(2)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Li",
+      "element": "Lithium",
+      "relative_atomic_mass_school": 7.0,
+      "molar_mass_school_g_mol": 7.0,
+      "modern_CIAAW_value": "[6.938, 6.997]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Be",
+      "element": "Beryllium",
+      "relative_atomic_mass_school": 9.0,
+      "molar_mass_school_g_mol": 9.0,
+      "modern_CIAAW_value": "9.0121831(5)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "B",
+      "element": "Boron",
+      "relative_atomic_mass_school": 11.0,
+      "molar_mass_school_g_mol": 11.0,
+      "modern_CIAAW_value": "[10.806, 10.821]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "C",
+      "element": "Carbon",
+      "relative_atomic_mass_school": 12.0,
+      "molar_mass_school_g_mol": 12.0,
+      "modern_CIAAW_value": "[12.0096, 12.0116]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "N",
+      "element": "Nitrogen",
+      "relative_atomic_mass_school": 14.0,
+      "molar_mass_school_g_mol": 14.0,
+      "modern_CIAAW_value": "[14.00643, 14.00728]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "O",
+      "element": "Oxygen",
+      "relative_atomic_mass_school": 16.0,
+      "molar_mass_school_g_mol": 16.0,
+      "modern_CIAAW_value": "[15.99903, 15.99977]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "F",
+      "element": "Fluorine",
+      "relative_atomic_mass_school": 19.0,
+      "molar_mass_school_g_mol": 19.0,
+      "modern_CIAAW_value": "18.998403162(5)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ne",
+      "element": "Neon",
+      "relative_atomic_mass_school": 20.0,
+      "molar_mass_school_g_mol": 20.0,
+      "modern_CIAAW_value": "20.1797(6)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Na",
+      "element": "Sodium",
+      "relative_atomic_mass_school": 23.0,
+      "molar_mass_school_g_mol": 23.0,
+      "modern_CIAAW_value": "22.98976928(2)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Mg",
+      "element": "Magnesium",
+      "relative_atomic_mass_school": 24.0,
+      "molar_mass_school_g_mol": 24.0,
+      "modern_CIAAW_value": "[24.304, 24.307]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Al",
+      "element": "Aluminium",
+      "relative_atomic_mass_school": 27.0,
+      "molar_mass_school_g_mol": 27.0,
+      "modern_CIAAW_value": "26.9815384(3)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Si",
+      "element": "Silicon",
+      "relative_atomic_mass_school": 28.0,
+      "molar_mass_school_g_mol": 28.0,
+      "modern_CIAAW_value": "[28.084, 28.086]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "P",
+      "element": "Phosphorus",
+      "relative_atomic_mass_school": 31.0,
+      "molar_mass_school_g_mol": 31.0,
+      "modern_CIAAW_value": "30.973761998(5)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "S",
+      "element": "Sulfur",
+      "relative_atomic_mass_school": 32.0,
+      "molar_mass_school_g_mol": 32.0,
+      "modern_CIAAW_value": "[32.059, 32.076]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Cl",
+      "element": "Chlorine",
+      "relative_atomic_mass_school": 35.5,
+      "molar_mass_school_g_mol": 35.5,
+      "modern_CIAAW_value": "[35.446, 35.457]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ar",
+      "element": "Argon",
+      "relative_atomic_mass_school": 40.0,
+      "molar_mass_school_g_mol": 40.0,
+      "modern_CIAAW_value": "[39.792, 39.963]",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "K",
+      "element": "Potassium",
+      "relative_atomic_mass_school": 39.0,
+      "molar_mass_school_g_mol": 39.0,
+      "modern_CIAAW_value": "39.0983(1)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ca",
+      "element": "Calcium",
+      "relative_atomic_mass_school": 40.0,
+      "molar_mass_school_g_mol": 40.0,
+      "modern_CIAAW_value": "40.078(4)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Cr",
+      "element": "Chromium",
+      "relative_atomic_mass_school": 52.0,
+      "molar_mass_school_g_mol": 52.0,
+      "modern_CIAAW_value": "51.9961(6)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Mn",
+      "element": "Manganese",
+      "relative_atomic_mass_school": 55.0,
+      "molar_mass_school_g_mol": 55.0,
+      "modern_CIAAW_value": "54.938043(2)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Fe",
+      "element": "Iron",
+      "relative_atomic_mass_school": 56.0,
+      "molar_mass_school_g_mol": 56.0,
+      "modern_CIAAW_value": "55.845(2)",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Cu",
+      "element": "Copper",
+      "relative_atomic_mass_school": 63.5,
+      "molar_mass_school_g_mol": 63.5,
+      "modern_CIAAW_value": "about 63.546",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Zn",
+      "element": "Zinc",
+      "relative_atomic_mass_school": 65.0,
+      "molar_mass_school_g_mol": 65.0,
+      "modern_CIAAW_value": "about 65.38",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Br",
+      "element": "Bromine",
+      "relative_atomic_mass_school": 80.0,
+      "molar_mass_school_g_mol": 80.0,
+      "modern_CIAAW_value": "about 79.904",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ag",
+      "element": "Silver",
+      "relative_atomic_mass_school": 108.0,
+      "molar_mass_school_g_mol": 108.0,
+      "modern_CIAAW_value": "about 107.8682",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "I",
+      "element": "Iodine",
+      "relative_atomic_mass_school": 127.0,
+      "molar_mass_school_g_mol": 127.0,
+      "modern_CIAAW_value": "about 126.90447",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ba",
+      "element": "Barium",
+      "relative_atomic_mass_school": 137.0,
+      "molar_mass_school_g_mol": 137.0,
+      "modern_CIAAW_value": "about 137.327",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Hg",
+      "element": "Mercury",
+      "relative_atomic_mass_school": 201.0,
+      "molar_mass_school_g_mol": 201.0,
+      "modern_CIAAW_value": "about 200.592",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Pb",
+      "element": "Lead",
+      "relative_atomic_mass_school": 207.0,
+      "molar_mass_school_g_mol": 207.0,
+      "modern_CIAAW_value": "about 207.2",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Sn",
+      "element": "Tin",
+      "relative_atomic_mass_school": 119.0,
+      "molar_mass_school_g_mol": 119.0,
+      "modern_CIAAW_value": "about 118.710",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Ni",
+      "element": "Nickel",
+      "relative_atomic_mass_school": 59.0,
+      "molar_mass_school_g_mol": 59.0,
+      "modern_CIAAW_value": "about 58.6934",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Co",
+      "element": "Cobalt",
+      "relative_atomic_mass_school": 59.0,
+      "molar_mass_school_g_mol": 59.0,
+      "modern_CIAAW_value": "about 58.933194",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "As",
+      "element": "Arsenic",
+      "relative_atomic_mass_school": 75.0,
+      "molar_mass_school_g_mol": 75.0,
+      "modern_CIAAW_value": "about 74.921595",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Se",
+      "element": "Selenium",
+      "relative_atomic_mass_school": 79.0,
+      "molar_mass_school_g_mol": 79.0,
+      "modern_CIAAW_value": "about 78.971",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Au",
+      "element": "Gold",
+      "relative_atomic_mass_school": 197.0,
+      "molar_mass_school_g_mol": 197.0,
+      "modern_CIAAW_value": "about 196.96657",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "Pt",
+      "element": "Platinum",
+      "relative_atomic_mass_school": 195.0,
+      "molar_mass_school_g_mol": 195.0,
+      "modern_CIAAW_value": "about 195.084",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    },
+    {
+      "symbol": "U",
+      "element": "Uranium",
+      "relative_atomic_mass_school": 238.0,
+      "molar_mass_school_g_mol": 238.0,
+      "modern_CIAAW_value": "about 238.02891",
+      "classification": "element-specific reference data, not a universal physical constant",
+      "source": "ciaaw_atomic_weights_2024"
+    }
+  ],
+  "unit_conversions": [
+    {
+      "id": "joule_to_erg",
+      "quantity": "energy/work",
+      "conversion": "1 J = 10^7 erg",
+      "values": [
+        {
+          "from": "J",
+          "to": "erg",
+          "factor": 10000000.0
+        },
+        {
+          "from": "erg",
+          "to": "J",
+          "factor": 1e-07
+        }
+      ]
+    },
+    {
+      "id": "calorie_to_joule",
+      "quantity": "energy/heat",
+      "conversion": "1 thermochemical calorie (cal_th) = 4.184 J exactly; 1 kcal = 4184 J",
+      "values": [
+        {
+          "from": "cal_th",
+          "to": "J",
+          "factor": 4.184
+        },
+        {
+          "from": "kcal",
+          "to": "J",
+          "factor": 4184
+        }
+      ]
+    },
+    {
+      "id": "electronvolt_to_joule",
+      "quantity": "energy",
+      "conversion": "1 eV = 1.602176634 × 10^-19 J = 1.602176634 × 10^-12 erg",
+      "values": [
+        {
+          "from": "eV",
+          "to": "J",
+          "factor": 1.602176634e-19
+        },
+        {
+          "from": "eV",
+          "to": "erg",
+          "factor": 1.602176634e-12
+        }
+      ]
+    },
+    {
+      "id": "litre_cubic_metre",
+      "quantity": "volume",
+      "conversion": "1 L = 10^-3 m^3; 1 m^3 = 1000 L",
+      "values": [
+        {
+          "from": "L",
+          "to": "m^3",
+          "factor": 0.001
+        },
+        {
+          "from": "m^3",
+          "to": "L",
+          "factor": 1000
+        }
+      ]
+    },
+    {
+      "id": "pressure_units",
+      "quantity": "pressure",
+      "conversion": "1 Pa = 1 N/m^2 = 10 dyn/cm^2; 1 atm = 101325 Pa = 101.325 kPa = 760 torr = 760 mmHg = 1.01325 bar",
+      "values": [
+        {
+          "from": "Pa",
+          "to": "dyn cm^-2",
+          "factor": 10
+        },
+        {
+          "from": "atm",
+          "to": "Pa",
+          "factor": 101325
+        },
+        {
+          "from": "atm",
+          "to": "kPa",
+          "factor": 101.325
+        },
+        {
+          "from": "atm",
+          "to": "torr",
+          "factor": 760
+        },
+        {
+          "from": "atm",
+          "to": "mmHg",
+          "factor": 760
+        },
+        {
+          "from": "atm",
+          "to": "bar",
+          "factor": 1.01325
+        }
+      ]
+    },
+    {
+      "id": "bar_standard_state",
+      "quantity": "pressure",
+      "conversion": "1 bar = 100000 Pa = 100 kPa; 1 atm = 1.01325 bar",
+      "values": [
+        {
+          "from": "bar",
+          "to": "Pa",
+          "factor": 100000
+        },
+        {
+          "from": "bar",
+          "to": "kPa",
+          "factor": 100
+        }
+      ]
+    },
+    {
+      "id": "temperature",
+      "quantity": "temperature",
+      "conversion": "T(K) = t(°C) + 273.15; t(°C) = [t(°F) - 32] × 5/9; t(°F) = t(°C) × 9/5 + 32",
+      "values": [
+        {
+          "formula": "K = °C + 273.15"
+        },
+        {
+          "formula": "°C = (°F - 32) × 5/9"
+        },
+        {
+          "formula": "°F = °C × 9/5 + 32"
+        }
+      ]
+    },
+    {
+      "id": "length_scales",
+      "quantity": "length",
+      "conversion": "1 Å = 10^-10 m; 1 nm = 10^-9 m; 1 pm = 10^-12 m; 1 fm = 10^-15 m",
+      "values": [
+        {
+          "from": "Å",
+          "to": "m",
+          "factor": 1e-10
+        },
+        {
+          "from": "nm",
+          "to": "m",
+          "factor": 1e-09
+        },
+        {
+          "from": "pm",
+          "to": "m",
+          "factor": 1e-12
+        },
+        {
+          "from": "fm",
+          "to": "m",
+          "factor": 1e-15
+        }
+      ]
+    },
+    {
+      "id": "time_scales",
+      "quantity": "time",
+      "conversion": "1 min = 60 s; 1 h = 3600 s; 1 day = 86400 s; 1 Julian year = 365.25 days = 31557600 s",
+      "values": [
+        {
+          "from": "min",
+          "to": "s",
+          "factor": 60
+        },
+        {
+          "from": "h",
+          "to": "s",
+          "factor": 3600
+        },
+        {
+          "from": "day",
+          "to": "s",
+          "factor": 86400
+        },
+        {
+          "from": "Julian year",
+          "to": "s",
+          "factor": 31557600
+        }
+      ]
+    },
+    {
+      "id": "watt_to_erg_s",
+      "quantity": "power",
+      "conversion": "1 W = 1 J/s = 10^7 erg/s",
+      "values": [
+        {
+          "from": "W",
+          "to": "erg s^-1",
+          "factor": 10000000.0
+        }
+      ]
+    },
+    {
+      "id": "electric_charge",
+      "quantity": "electric charge",
+      "conversion": "1 C = 1 A·s; elementary charge magnitude e = 1.602176634 × 10^-19 C",
+      "values": [
+        {
+          "from": "C",
+          "to": "A s",
+          "factor": 1
+        }
+      ]
+    },
+    {
+      "id": "kilowatt_hour",
+      "quantity": "energy",
+      "conversion": "1 kWh = 3.6 × 10^6 J",
+      "values": [
+        {
+          "from": "kWh",
+          "to": "J",
+          "factor": 3600000
+        }
+      ]
+    },
+    {
+      "id": "speed_units",
+      "quantity": "speed",
+      "conversion": "1 m/s = 3.6 km/h; 1 km/h = 1/3.6 m/s",
+      "values": [
+        {
+          "from": "m s^-1",
+          "to": "km h^-1",
+          "factor": 3.6
+        },
+        {
+          "from": "km h^-1",
+          "to": "m s^-1",
+          "factor": 0.2777777777777778
+        }
+      ]
+    },
+    {
+      "id": "density_units",
+      "quantity": "density",
+      "conversion": "1 g/cm^3 = 1000 kg/m^3",
+      "values": [
+        {
+          "from": "g cm^-3",
+          "to": "kg m^-3",
+          "factor": 1000
+        }
+      ]
+    }
+  ],
+  "condition_dependent_reference_values": [
+    {
+      "id": "heat_capacity_ratio_monatomic_ideal_gas",
+      "name": "Heat-capacity ratio for a monatomic ideal gas",
+      "symbol": "γ = C_p/C_v",
+      "value": 1.6666666666666667,
+      "unit": "dimensionless",
+      "conditions": "Ideal-gas model with only translational degrees of freedom active.",
+      "common_school_form": "5/3 ≈ 1.67",
+      "notes": "Model-based reference, not true for all gases under all conditions.",
+      "chapters": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Physics 2nd: Thermodynamics"
+      ]
+    },
+    {
+      "id": "heat_capacity_ratio_diatomic_ideal_gas",
+      "name": "Heat-capacity ratio for a diatomic ideal gas at ordinary temperature",
+      "symbol": "γ = C_p/C_v",
+      "value": 1.4,
+      "unit": "dimensionless",
+      "conditions": "Ideal diatomic gas with rotational modes active and vibrational modes approximately inactive.",
+      "common_school_form": "7/5 = 1.4",
+      "notes": "A useful model approximation; actual gases and temperatures can differ.",
+      "chapters": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Physics 2nd: Thermodynamics"
+      ]
+    },
+    {
+      "id": "air_density_15c",
+      "name": "Density of dry air near 15 °C and 1 atm",
+      "symbol": "ρ_air",
+      "value": 1.225,
+      "unit": "kg m^-3",
+      "conditions": "Approximately dry air at 15 °C and standard atmospheric pressure.",
+      "common_school_form": "about 1.2 kg/m³",
+      "notes": "Strongly depends on temperature, pressure and humidity.",
+      "chapters": [
+        "Physics 1st: Structural Properties of Matter; Dynamics"
+      ]
+    },
+    {
+      "id": "refractive_index_air_visible",
+      "name": "Refractive index of air in visible light",
+      "symbol": "n_air",
+      "value": 1.0003,
+      "unit": "dimensionless",
+      "conditions": "Approximate ordinary air near standard atmospheric conditions and visible wavelengths.",
+      "common_school_form": "about 1.0003; often rounded to 1",
+      "notes": "Depends on pressure, temperature, humidity and wavelength.",
+      "chapters": [
+        "Physics 2nd: Geometrical Optics; Physical Optics"
+      ]
+    },
+    {
+      "id": "refractive_index_water_visible",
+      "name": "Refractive index of liquid water in visible light",
+      "symbol": "n_water",
+      "value": 1.333,
+      "unit": "dimensionless",
+      "conditions": "Approximate visible-light value near room temperature.",
+      "common_school_form": "4/3 ≈ 1.33",
+      "notes": "Depends on wavelength, temperature and water purity.",
+      "chapters": [
+        "Physics 2nd: Geometrical Optics; Physical Optics"
+      ]
+    },
+    {
+      "id": "refractive_index_common_glass",
+      "name": "Refractive index of ordinary glass (illustrative)",
+      "symbol": "n_glass",
+      "value": 1.5,
+      "unit": "dimensionless",
+      "conditions": "Typical approximate value for some common optical glasses in visible light.",
+      "common_school_form": "about 1.5",
+      "notes": "Not a single glass constant: actual glass composition and wavelength matter. Use the problem's value.",
+      "chapters": [
+        "Physics 2nd: Geometrical Optics; Physical Optics"
+      ]
+    },
+    {
+      "id": "resistivity_copper_20c",
+      "name": "Electrical resistivity of copper near 20 °C",
+      "symbol": "ρ_Cu",
+      "value": 1.68e-08,
+      "unit": "Ω m",
+      "conditions": "Approximate high-purity copper near 20 °C.",
+      "common_school_form": "about 1.7 × 10^-8 Ω·m",
+      "notes": "Varies with purity, temperature and material condition.",
+      "chapters": [
+        "Physics 2nd: Current Electricity"
+      ]
+    },
+    {
+      "id": "resistivity_silver_20c",
+      "name": "Electrical resistivity of silver near 20 °C",
+      "symbol": "ρ_Ag",
+      "value": 1.59e-08,
+      "unit": "Ω m",
+      "conditions": "Approximate silver near 20 °C.",
+      "common_school_form": "about 1.6 × 10^-8 Ω·m",
+      "notes": "Varies with purity and temperature.",
+      "chapters": [
+        "Physics 2nd: Current Electricity"
+      ]
+    },
+    {
+      "id": "resistivity_aluminium_20c",
+      "name": "Electrical resistivity of aluminium near 20 °C",
+      "symbol": "ρ_Al",
+      "value": 2.82e-08,
+      "unit": "Ω m",
+      "conditions": "Approximate aluminium near 20 °C.",
+      "common_school_form": "about 2.8 × 10^-8 Ω·m",
+      "notes": "Varies with alloy, purity and temperature.",
+      "chapters": [
+        "Physics 2nd: Current Electricity"
+      ]
+    },
+    {
+      "id": "resistivity_nichrome_20c",
+      "name": "Electrical resistivity of nichrome (illustrative)",
+      "symbol": "ρ_nichrome",
+      "value": 1.1e-06,
+      "unit": "Ω m",
+      "conditions": "Representative nichrome alloy; composition-dependent.",
+      "common_school_form": "about 1.1 × 10^-6 Ω·m",
+      "notes": "Different nichrome formulations have different resistivity; use supplied values when available.",
+      "chapters": [
+        "Physics 2nd: Current Electricity"
+      ]
+    },
+    {
+      "id": "water_absolute_zero",
+      "name": "Absolute zero temperature",
+      "symbol": "0 K",
+      "value": 0,
+      "unit": "K",
+      "conditions": "Thermodynamic temperature scale origin.",
+      "common_school_form": "0 K = −273.15 °C = −459.67 °F",
+      "notes": "A temperature reference, not a material property. The Celsius/Fahrenheit values are conventional exact-scale conversions.",
+      "chapters": [
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 2nd: Environmental Chemistry"
+      ]
+    },
+    {
+      "id": "standard_room_temperature",
+      "name": "Room-temperature convention often used in chemistry",
+      "symbol": "T_room",
+      "value": 298.15,
+      "unit": "K",
+      "conditions": "25 °C convention often used for pH and standard electrochemistry tables.",
+      "common_school_form": "25 °C = 298 K or 298.15 K",
+      "notes": "Room temperature is not universally fixed; this is a common reference convention.",
+      "chapters": [
+        "Chemistry 1st: Chemical Changes",
+        "Chemistry 2nd: Environmental Chemistry; Electrochemistry"
+      ]
+    }
+  ],
+  "derived_formula_reference": [
+    {
+      "id": "ideal_gas_law",
+      "formula": "PV = nRT = Nk_B T",
+      "description": "Use R for amount in moles; use k_B for number N of particles.",
+      "chapters": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Physics 2nd: Thermodynamics",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ]
+    },
+    {
+      "id": "faraday_relation",
+      "formula": "F = N_A e",
+      "description": "Charge transferred by one mole of elementary charges; use charge number/electron stoichiometry separately.",
+      "chapters": [
+        "Chemistry 2nd: Electrochemistry"
+      ]
+    },
+    {
+      "id": "coulomb_constant_relation",
+      "formula": "k_e = 1/(4π ε₀)",
+      "description": "SI vacuum Coulomb constant; common school value is 9 × 10^9 N m²/C².",
+      "chapters": [
+        "Physics 2nd: Static Electricity"
+      ]
+    },
+    {
+      "id": "electromagnetic_wave_speed",
+      "formula": "c = 1/√(μ₀ ε₀)",
+      "description": "In the current SI, c is exact while μ₀ and ε₀ values are measured/derived consistently.",
+      "chapters": [
+        "Physics 2nd: Electromagnetic Induction and AC; Optics"
+      ]
+    },
+    {
+      "id": "photon_energy",
+      "formula": "E = hν = hc/λ",
+      "description": "For photon energy; convert eV and J consistently.",
+      "chapters": [
+        "Physics 2nd: Physical Optics; Modern Physics"
+      ]
+    },
+    {
+      "id": "mass_energy_equivalence",
+      "formula": "E = mc²; 1 u·c² ≈ 931.494 MeV",
+      "description": "Use particle rest masses or atomic masses according to the problem's convention.",
+      "chapters": [
+        "Physics 2nd: Modern Physics; Atomic Model and Nuclear Physics"
+      ]
+    },
+    {
+      "id": "hydrogen_energy_levels",
+      "formula": "E_n ≈ -13.6 eV/n²",
+      "description": "Ideal Bohr-model hydrogen energy levels; more accurate values include corrections beyond basic HSC level.",
+      "chapters": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ]
+    },
+    {
+      "id": "nuclear_radius_scaling",
+      "formula": "R ≈ r₀ A^(1/3), r₀ ≈ 1.2 fm",
+      "description": "Empirical nuclear radius relation; coefficient varies slightly by textbook/model.",
+      "chapters": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ]
+    },
+    {
+      "id": "radioactive_half_life",
+      "formula": "t_(1/2) = ln(2)/λ ≈ 0.693/λ",
+      "description": "λ is the nuclide-specific decay constant; ln(2) is a mathematical constant.",
+      "chapters": [
+        "Physics 2nd: Atomic Model and Nuclear Physics"
+      ]
+    },
+    {
+      "id": "water_ph_at_25c",
+      "formula": "K_w = [H⁺][OH⁻] ≈ 1.0 × 10^-14; pH + pOH = pK_w ≈ 14.00",
+      "description": "Common dilute-aqueous approximation at 25 °C only.",
+      "chapters": [
+        "Chemistry 1st: Chemical Changes",
+        "Chemistry 2nd: Environmental Chemistry"
+      ]
+    },
+    {
+      "id": "nernst_equation_factor",
+      "formula": "E = E° - (RT/nF) ln Q = E° - (ln(10)RT/nF) log₁₀ Q ≈ E° - (2.303RT/nF) log₁₀ Q",
+      "description": "At 25 °C, 2.303RT/F ≈ 0.05916 V, so the log₁₀ term commonly has coefficient 0.05916/n V.",
+      "chapters": [
+        "Chemistry 2nd: Electrochemistry"
+      ]
+    },
+    {
+      "id": "thermal_voltage",
+      "formula": "V_T = k_B T/e = RT/F",
+      "description": "At 298.15 K, V_T ≈ 0.02569 V.",
+      "chapters": [
+        "Chemistry 2nd: Electrochemistry",
+        "Physics 2nd: Semiconductor and Electronics"
+      ]
+    },
+    {
+      "id": "blackbody_displacement",
+      "formula": "λ_max T = b",
+      "description": "Wien displacement law; b ≈ 2.898 × 10^-3 m·K.",
+      "chapters": [
+        "Physics 2nd: Astronomy"
+      ]
+    },
+    {
+      "id": "stefan_boltzmann_law",
+      "formula": "M = σT⁴",
+      "description": "Ideal blackbody radiant exitance; σ ≈ 5.670 × 10^-8 W m^-2 K^-4.",
+      "chapters": [
+        "Physics 2nd: Astronomy; thermal-radiation applications"
+      ]
+    }
+  ],
+  "chapter_constant_map": [
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 1,
+      "name": "Physical World and Measurement",
+      "constant_ids": [
+        "standard_acceleration_gravity",
+        "speed_of_light_vacuum",
+        "molar_gas_constant",
+        "atomic_mass_constant"
+      ],
+      "notes": "Focus on units, dimensions and conversions rather than memorizing every constant."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 2,
+      "name": "Vectors",
+      "constant_ids": [
+        "pi"
+      ],
+      "notes": "No special universal numerical constant."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 3,
+      "name": "Dynamics",
+      "constant_ids": [
+        "earth_surface_g_approx",
+        "speed_of_sound_air_20c"
+      ],
+      "notes": "g and sound speed are context-dependent reference values."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 4,
+      "name": "Newtonian Mechanics",
+      "constant_ids": [
+        "standard_acceleration_gravity",
+        "earth_surface_g_approx"
+      ],
+      "notes": "Use g supplied in the question."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 5,
+      "name": "Work, Energy and Power",
+      "constant_ids": [
+        "electronvolt",
+        "mathematical_constants"
+      ],
+      "notes": "Joule/erg/eV conversions may help; the electronvolt is a unit-conversion reference."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 6,
+      "name": "Gravitation and Gravity",
+      "constant_ids": [
+        "newtonian_gravitational_constant",
+        "standard_acceleration_gravity",
+        "earth_surface_g_approx",
+        "earth_mass_reference",
+        "earth_mean_radius_reference",
+        "moon_surface_gravity_reference",
+        "earth_escape_speed_reference",
+        "astronomical_unit"
+      ],
+      "notes": "Celestial body data are reference values, not universal constants."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 7,
+      "name": "Structural Properties of Matter",
+      "constant_ids": [
+        "water_density_reference",
+        "water_specific_heat_capacity"
+      ],
+      "notes": "Mechanical properties of materials depend on substance and conditions."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 8,
+      "name": "Periodic Motion",
+      "constant_ids": [
+        "pi",
+        "standard_acceleration_gravity"
+      ],
+      "notes": "Spring constant k is specific to a spring/system."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 9,
+      "name": "Waves",
+      "constant_ids": [
+        "speed_of_light_vacuum",
+        "speed_of_sound_air_20c",
+        "pi"
+      ],
+      "notes": "Wave speed depends on medium except c in vacuum."
+    },
+    {
+      "subject": "Physics",
+      "paper": "1st",
+      "chapter": 10,
+      "name": "Ideal Gas and Kinetic Theory of Gases",
+      "constant_ids": [
+        "molar_gas_constant",
+        "boltzmann_constant",
+        "avogadro_constant",
+        "standard_pressure",
+        "standard_atmosphere",
+        "standard_temperature",
+        "molar_volume_stp_100kpa",
+        "molar_volume_stp_1atm"
+      ],
+      "notes": "State STP conditions and match R units."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 1,
+      "name": "Thermodynamics",
+      "constant_ids": [
+        "molar_gas_constant",
+        "boltzmann_constant",
+        "water_specific_heat_capacity",
+        "latent_heat_fusion_water",
+        "latent_heat_vaporization_water",
+        "stefan_boltzmann_constant"
+      ],
+      "notes": "Water thermal values are approximate and condition-dependent."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 2,
+      "name": "Static Electricity",
+      "constant_ids": [
+        "elementary_charge_magnitude",
+        "vacuum_permittivity",
+        "coulomb_constant"
+      ],
+      "notes": "Use SI constants with SI units."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 3,
+      "name": "Current Electricity",
+      "constant_ids": [
+        "elementary_charge_magnitude"
+      ],
+      "notes": "Resistivity and temperature coefficients depend on material."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 4,
+      "name": "Magnetic Effects of Electric Current and Magnetism",
+      "constant_ids": [
+        "vacuum_permeability",
+        "elementary_charge_magnitude",
+        "electron_charge_to_mass_ratio"
+      ],
+      "notes": "Older school sheets may use μ₀ = 4π×10^-7 H/m."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 5,
+      "name": "Electromagnetic Induction and Alternating Current",
+      "constant_ids": [
+        "vacuum_permeability",
+        "vacuum_permittivity",
+        "speed_of_light_vacuum"
+      ],
+      "notes": "Distinguish exact c from post-2019 SI μ₀/ε₀ values."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 6,
+      "name": "Geometrical Optics",
+      "constant_ids": [
+        "speed_of_light_vacuum",
+        "refractive_index_vacuum"
+      ],
+      "notes": "Refractive indices for non-vacuum materials are material/wavelength dependent."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 7,
+      "name": "Physical Optics",
+      "constant_ids": [
+        "speed_of_light_vacuum",
+        "planck_constant",
+        "pi"
+      ],
+      "notes": "Planck constant only where photon-energy relations are included."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 8,
+      "name": "Introduction to Modern Physics",
+      "constant_ids": [
+        "planck_constant",
+        "speed_of_light_vacuum",
+        "elementary_charge_magnitude",
+        "electronvolt",
+        "electron_rest_mass",
+        "atomic_mass_constant"
+      ],
+      "notes": "Keep joules and electronvolts consistent."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 9,
+      "name": "Atomic Model and Nuclear Physics",
+      "constant_ids": [
+        "electron_rest_mass",
+        "proton_rest_mass",
+        "neutron_rest_mass",
+        "atomic_mass_constant",
+        "rydberg_constant_infinity",
+        "hydrogen_rydberg_constant",
+        "bohr_radius",
+        "rydberg_energy",
+        "electron_rest_energy",
+        "proton_rest_energy",
+        "neutron_rest_energy",
+        "nuclear_radius_coefficient",
+        "nuclear_magneton",
+        "bohr_magneton",
+        "natural_log_2"
+      ],
+      "notes": "Some supplementary constants may exceed the minimum HSC memorization requirements; use the question's stated data."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 10,
+      "name": "Semiconductor and Electronics",
+      "constant_ids": [
+        "elementary_charge_magnitude",
+        "boltzmann_constant",
+        "electron_rest_mass"
+      ],
+      "notes": "Semiconductor band gaps and material parameters vary by material and temperature."
+    },
+    {
+      "subject": "Physics",
+      "paper": "2nd",
+      "chapter": 11,
+      "name": "Astronomy",
+      "constant_ids": [
+        "speed_of_light_vacuum",
+        "newtonian_gravitational_constant",
+        "earth_mass_reference",
+        "earth_mean_radius_reference",
+        "astronomical_unit",
+        "light_year",
+        "parsec",
+        "solar_mass_reference",
+        "solar_radius_reference",
+        "solar_luminosity_reference",
+        "solar_irradiance_reference",
+        "stefan_boltzmann_constant",
+        "wien_displacement_constant"
+      ],
+      "notes": "Use nominal astronomical reference values and state units."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "1st",
+      "chapter": 1,
+      "name": "Safe Use of Laboratory",
+      "constant_ids": [
+        "standard_atmosphere",
+        "standard_pressure",
+        "temperature"
+      ],
+      "notes": "General unit and safety-reference conversions."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "1st",
+      "chapter": 2,
+      "name": "Qualitative Chemistry",
+      "constant_ids": [
+        "elementary_charge_magnitude",
+        "common_hsc_atomic_masses"
+      ],
+      "notes": "Element and ion data are species-specific."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "1st",
+      "chapter": 3,
+      "name": "Periodic Properties of Elements and Chemical Bonds",
+      "constant_ids": [
+        "common_hsc_atomic_masses",
+        "atomic_mass_constant"
+      ],
+      "notes": "Atomic masses are listed separately; atomic radii, electronegativities and ionization energies are periodic-table data, not constants shared by all elements."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "1st",
+      "chapter": 4,
+      "name": "Chemical Changes",
+      "constant_ids": [
+        "molar_gas_constant",
+        "avogadro_constant",
+        "boltzmann_constant",
+        "water_ion_product_25c",
+        "calorie_to_joule"
+      ],
+      "notes": "Kc/Kp/Ka/Kb and thermochemical quantities are reaction/species/temperature-specific."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "1st",
+      "chapter": 5,
+      "name": "Vocational Chemistry",
+      "constant_ids": [
+        "common_hsc_atomic_masses",
+        "calorie_to_joule"
+      ],
+      "notes": "Industrial quantities and material properties are context-specific."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "2nd",
+      "chapter": 1,
+      "name": "Environmental Chemistry",
+      "constant_ids": [
+        "molar_gas_constant",
+        "boltzmann_constant",
+        "avogadro_constant",
+        "standard_pressure",
+        "standard_atmosphere",
+        "standard_temperature",
+        "molar_volume_stp_100kpa",
+        "molar_volume_stp_1atm"
+      ],
+      "notes": "Gas laws require explicit temperature/pressure convention."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "2nd",
+      "chapter": 2,
+      "name": "Organic Chemistry",
+      "constant_ids": [
+        "common_hsc_atomic_masses",
+        "atomic_mass_constant"
+      ],
+      "notes": "Molar masses and physical properties are compound-specific."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "2nd",
+      "chapter": 3,
+      "name": "Quantitative Chemistry",
+      "constant_ids": [
+        "avogadro_constant",
+        "molar_gas_constant",
+        "faraday_constant",
+        "atomic_mass_constant",
+        "standard_atmosphere",
+        "molar_volume_stp_100kpa",
+        "molar_volume_stp_1atm"
+      ],
+      "notes": "Check whether the problem uses 1 atm/22.4 L or 100 kPa/22.71 L."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "2nd",
+      "chapter": 4,
+      "name": "Electrochemistry",
+      "constant_ids": [
+        "faraday_constant",
+        "elementary_charge_magnitude",
+        "standard_hydrogen_electrode_potential",
+        "nernst_rt_over_f_25c",
+        "nernst_2p303rt_over_f_25c"
+      ],
+      "notes": "Standard electrode potentials belong to particular redox couples."
+    },
+    {
+      "subject": "Chemistry",
+      "paper": "2nd",
+      "chapter": 5,
+      "name": "Economic Chemistry",
+      "constant_ids": [
+        "common_hsc_atomic_masses",
+        "calorie_to_joule"
+      ],
+      "notes": "Yield, calorific value and process parameters depend on material/process."
+    }
+  ],
+  "not_fixed_constants_or_condition_dependent_tables": [
+    {
+      "id": "equilibrium_constants",
+      "items": [
+        "Kc",
+        "Kp",
+        "Ka",
+        "Kb",
+        "Ksp",
+        "Kf",
+        "Kh",
+        "Kw outside a stated temperature"
+      ],
+      "why_not_one_fixed_value": "Values depend on the particular reaction/species and temperature; Kw itself depends on temperature. A textbook table or problem must identify the reaction and conditions.",
+      "formula_notes": [
+        "For a reaction aA + bB ⇌ cC + dD, Kc = [C]^c[D]^d/([A]^a[B]^b), with the exact expression following equilibrium conventions.",
+        "For gas equilibria, Kp is related to Kc through Kp = Kc(RT)^(Δn_g) when compatible pressure/concentration conventions are used; in rigorous thermodynamics equilibrium constants are dimensionless activities."
+      ],
+      "chapters": [
+        "Chemistry 1st: Chemical Changes",
+        "Chemistry 2nd: Environmental Chemistry"
+      ]
+    },
+    {
+      "id": "standard_electrode_potentials",
+      "items": [
+        "E° for metals, ions and redox couples except the SHE reference definition"
+      ],
+      "why_not_one_fixed_value": "Every redox couple has its own standard reduction potential under specified standard conditions. Only the standard hydrogen electrode is set to 0 V by convention.",
+      "chapters": [
+        "Chemistry 2nd: Electrochemistry"
+      ]
+    },
+    {
+      "id": "atomic_and_molecular_properties",
+      "items": [
+        "atomic radius",
+        "ionic radius",
+        "covalent radius",
+        "ionization energy",
+        "electron affinity",
+        "electronegativity",
+        "bond energy",
+        "molar heat capacity",
+        "enthalpy of formation",
+        "entropy",
+        "molar mass of a compound"
+      ],
+      "why_not_one_fixed_value": "These are element-, ion-, molecule-, phase-, or condition-specific data. Use the relevant periodic table, data table or question statement.",
+      "chapters": [
+        "Chemistry 1st: Periodic Properties and Chemical Bonds; Chemical Changes",
+        "Chemistry 2nd: Organic Chemistry; Quantitative Chemistry"
+      ]
+    },
+    {
+      "id": "material_electrical_and_optical_properties",
+      "items": [
+        "resistivity",
+        "conductivity",
+        "temperature coefficient of resistance",
+        "relative permeability",
+        "refractive index of water/glass/air",
+        "work function",
+        "semiconductor band gap",
+        "dielectric constant of a material"
+      ],
+      "why_not_one_fixed_value": "Values depend on material identity, temperature, wavelength, purity, doping and/or other conditions. Treat any supplied textbook/table value as a reference, not universal.",
+      "chapters": [
+        "Physics 2nd: Current Electricity; Magnetism; Geometrical Optics; Modern Physics; Semiconductor and Electronics"
+      ]
+    },
+    {
+      "id": "spring_elastic_and_fluid_properties",
+      "items": [
+        "spring constant k",
+        "Young modulus",
+        "bulk modulus",
+        "shear modulus",
+        "surface tension",
+        "viscosity",
+        "coefficient of friction",
+        "density of a substance"
+      ],
+      "why_not_one_fixed_value": "They are system- or material-dependent quantities, not universal constants. For example, a spring constant belongs to a specific spring and configuration.",
+      "chapters": [
+        "Physics 1st: Dynamics; Newtonian Mechanics; Structural Properties of Matter; Periodic Motion"
+      ]
+    },
+    {
+      "id": "gas_standard_conditions",
+      "items": [
+        "NTP",
+        "STP when not explicitly defined",
+        "normal temperature and pressure labels"
+      ],
+      "why_not_one_fixed_value": "Different references use different pressure/temperature conventions. This JSON defines both 273.15 K at 100 kPa and 273.15 K at 1 atm separately; use the conditions stated in the problem.",
+      "chapters": [
+        "Physics 1st: Ideal Gas and Kinetic Theory of Gases",
+        "Chemistry 2nd: Environmental Chemistry; Quantitative Chemistry"
+      ]
+    },
+    {
+      "id": "g_local",
+      "items": [
+        "local g",
+        "escape speed at a specific celestial body",
+        "orbital period and orbital speed",
+        "Earth/Sun/Moon parameters"
+      ],
+      "why_not_one_fixed_value": "These depend on location/body/orbit. Approximate reference values are provided separately for common HSC calculations.",
+      "chapters": [
+        "Physics 1st: Gravitation and Gravity",
+        "Physics 2nd: Astronomy"
+      ]
+    },
+    {
+      "id": "chemical_process_values",
+      "items": [
+        "industrial yield",
+        "calorific value of fuel",
+        "concentration in a real sample",
+        "Henry's law constant",
+        "solubility and solubility product of a particular salt",
+        "corrosion rate"
+      ],
+      "why_not_one_fixed_value": "They depend on substances and operating conditions; do not assign one generic number.",
+      "chapters": [
+        "Chemistry 1st: Vocational Chemistry",
+        "Chemistry 2nd: Environmental Chemistry; Economic Chemistry"
+      ]
+    }
+  ],
+  "chapter_map_aliases": {
+    "pi": {
+      "points_to": "mathematical_constants.pi"
+    },
+    "mathematical_constants": {
+      "points_to": "mathematical_constants array"
+    },
+    "common_hsc_atomic_masses": {
+      "points_to": "common_hsc_atomic_masses array"
+    },
+    "temperature": {
+      "points_to": "unit_conversions.temperature"
+    },
+    "calorie_to_joule": {
+      "points_to": "unit_conversions.calorie_to_joule"
+    }
+  }
+}

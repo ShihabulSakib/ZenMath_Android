@@ -411,10 +411,19 @@ class ExampleUnitTest {
     // =========================================================================
     @Test
     fun testConstantsLoaderValidationAndDrill() {
-        // Default 3 sample entries load cleanly
+        // Real HSC dataset entries load cleanly (61 constants, 4 math, 12 ref, 39 atomic, 14 conversions)
+        val dataset = ConstantsLoader.getDataset(failLoudly = true)
+        assertEquals(61, dataset.constants.size)
+        assertEquals(4, dataset.mathConstants.size)
+        assertEquals(12, dataset.referenceValues.size)
+        assertEquals(39, dataset.atomicMasses.size)
+        assertEquals(14, dataset.unitConversions.size)
+        assertEquals(14, dataset.derivedFormulas.size)
+        assertEquals(8, dataset.notFixedTables.size)
+
         val loaded = ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = true)
-        assertEquals(3, loaded.size)
-        assertTrue(loaded.all { it.isSample })
+        assertEquals(61, loaded.size)
+        assertTrue(loaded.none { it.isSample })
 
         // Duplicate ID fails loudly when failLoudly = true
         val dupList = ConstantsData.entries + ConstantsData.entries.first()
@@ -437,20 +446,15 @@ class ExampleUnitTest {
             unit = StructuredUnit(listOf(UnitFactor("m")))
         )
         val releaseLoaded = ConstantsLoader.validateAndLoad(dupList + badEntry, failLoudly = false)
-        assertEquals(3, releaseLoaded.size)
+        assertEquals(61, releaseLoaded.size)
 
-        // Constants drill question generation & alternate unit acceptance (gas constant R)
+        // Constants drill question generation
         repeat(20) {
             val q = QuestionGenerator.generateConstantQuestion()
             assertTrue(AnswerChecker.check(q.answer, q.answerSpec))
             assertNotNull(q.subjectLabel)
             assertNotNull(q.constantSymbol)
             assertNotNull(q.structuredUnit)
-            if (q.topicTag == "constant-sample_gas_constant_r") {
-                // Both SI (8.314) and L·atm (0.0821) values are accepted
-                assertTrue(AnswerChecker.check("8.314", q.answerSpec))
-                assertTrue(AnswerChecker.check("0.0821", q.answerSpec))
-            }
         }
     }
 

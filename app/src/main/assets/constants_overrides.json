@@ -1,0 +1,4 @@
+{
+  "_comment": "HOW TO ADD OVERRIDES: Add keys inside 'overrides' below using the constant 'id' from hsc_physics_chemistry_constants.json. Supported per-id fields: 'courseMantissa' (number), 'courseExponent' (integer), 'tolerance' (relative tolerance fraction, e.g. 0.01 for 1%), 'enabled' (boolean), 'displaySymbol' (string), 'extraConfusableIds' (array of constant id strings). Values here take precedence over the main dataset without editing hsc_physics_chemistry_constants.json.",
+  "overrides": {}
+}

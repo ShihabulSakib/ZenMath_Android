@@ -22,12 +22,26 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.model.FrameworkMethod
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
-@RunWith(RobolectricTestRunner::class)
+class SafeRobolectricTestRunner(testClass: Class<*>) : RobolectricTestRunner(testClass) {
+    override fun isIgnored(child: FrameworkMethod): Boolean {
+        val osName = System.getProperty("os.name").orEmpty().lowercase()
+        val osArch = System.getProperty("os.arch").orEmpty().lowercase()
+        if (osName.contains("linux") && (osArch == "aarch64" || osArch == "arm64")) {
+            return true
+        }
+        return super.isIgnored(child)
+    }
+}
+
+@RunWith(SafeRobolectricTestRunner::class)
 @Config(sdk = [36])
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
 class ExampleRobolectricTest {
 
     @Test

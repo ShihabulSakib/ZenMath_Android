@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setupTaskDescription()
+        com.example.data.ConstantsData.preload(applicationContext)
 
         // Ensure daily reminder alarms are synchronized on app startup
         val settings = com.example.data.PreferencesManager(this).loadSettings()

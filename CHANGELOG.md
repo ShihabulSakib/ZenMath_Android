@@ -5,6 +5,12 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Imported `hsc_physics_chemistry_constants.json` into `app/src/main/assets/` unchanged, with `constants_overrides.json` support and runtime background loading/caching (`ConstantsLoader`, `SimpleJson`).
+- Removed the 3 placeholder sample entries from `ConstantsData.kt` and added chapter inversion, 3-tier reliability classification, course value extraction, and automatic confusable grouping across all 61 constants, 12 reference values, 4 math constants, 39 atomic masses, 14 unit conversion groups, 14 derived formulas, and 8 non-fixed tables.
+
 ## [1.1.0] - 2026-10-24
 
 ### Added

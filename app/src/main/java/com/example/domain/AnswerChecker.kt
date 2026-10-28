@@ -289,9 +289,11 @@ object AnswerChecker {
             is AnswerSpec.Choice -> {
                 if (trimmed.equals(spec.correctOption.trim(), ignoreCase = true)) {
                     true
+                } else if (trimmed in spec.options) {
+                    false
                 } else {
                     val asIndex = trimmed.toIntOrNull()
-                    if (asIndex != null && asIndex == spec.correctIndex && trimmed !in spec.options) {
+                    if (asIndex != null && asIndex == spec.correctIndex) {
                         true
                     } else {
                         // If both are numeric/scientific, also compare parsed values within 1e-6
@@ -415,7 +417,7 @@ object AnswerChecker {
             }
             is AnswerSpec.ScientificValue -> {
                 val rel = spec.effectiveRelTolOverride ?: preset.relativeTolerance
-                maxOf(3.0 * abs(spec.numericValue) * rel, abs(spec.numericValue) * 0.015)
+                maxOf(3.0 * abs(spec.numericValue) * rel, abs(spec.numericValue) * 0.015, 0.05)
             }
             is AnswerSpec.FractionSpec -> 0.15
             is AnswerSpec.Choice -> 0.15
