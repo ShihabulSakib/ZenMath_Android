@@ -1238,13 +1238,13 @@ private fun ConstantCard(
                             color = colors.textMain
                         )
 
-                        // Primary value + unit
+                        // HSC course value + unit (what the exam expects)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = preciseRich,
+                                text = courseRich,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Black,
                                 fontFamily = RichTextHelper.MathFontFamily,
@@ -1312,8 +1312,8 @@ private fun ConstantCard(
                     // Course value & raw HSC approximation
                     Text(
                         text = androidx.compose.ui.text.buildAnnotatedString {
-                            append("HSC Course value: ")
-                            append(courseRich)
+                            append("Precise value: ")
+                            append(preciseRich)
                             append(" ")
                             append(RichTextHelper.formatUnit(entry.unit))
                             entry.commonHscApproximationRaw?.let { rawApprox ->

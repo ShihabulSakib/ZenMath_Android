@@ -1717,11 +1717,14 @@ object QuestionGenerator {
         val useAlternate = includeAlternateUnits && entry.allAlternateValues.isNotEmpty() && Random.nextInt(100) < 30
         val alt = if (useAlternate) entry.allAlternateValues.random() else null
 
-        val (targetMantissa, targetExponent, targetUnit, targetVal, targetCourseVal) = if (alt != null) {
+        val (_, _, targetUnit, targetVal, targetCourseVal) = if (alt != null) {
             Tuple5(alt.mantissa, alt.exponent, alt.unit, alt.preciseValue, alt.courseValue)
         } else {
             Tuple5(entry.mantissa, entry.exponent, entry.unit, entry.preciseValue, entry.courseValue)
         }
+        // The displayed/expected answer is the HSC course value (same value shown in Revision);
+        // the precise value stays accepted as a second key.
+        val (targetMantissa, targetExponent) = ConstantsLoader.decomposeToMantissaAndExponent(targetCourseVal)
 
         val ansStr = if (targetExponent == 0) {
             formatCleanDouble(targetMantissa)
@@ -1931,10 +1934,11 @@ object QuestionGenerator {
         val refList = dataset.referenceValues
         val entry = selectWeightedConstant(refList, missedCounts)
 
-        val ansStr = if (entry.exponent == 0) {
-            formatCleanDouble(entry.mantissa)
+        val (refMantissa, refExponent) = ConstantsLoader.decomposeToMantissaAndExponent(entry.courseValue)
+        val ansStr = if (refExponent == 0) {
+            formatCleanDouble(refMantissa)
         } else {
-            "${formatCleanDouble(entry.mantissa)}×10^${entry.exponent}"
+            "${formatCleanDouble(refMantissa)}×10^$refExponent"
         }
         val unitPlain = entry.unit.toPlainString()
         val shortSym = entry.symbol.shortSymbol
@@ -1951,8 +1955,8 @@ object QuestionGenerator {
             numericAnswer = entry.preciseValue,
             topicTag = "reference-${entry.id}",
             answerSpec = AnswerSpec.ScientificValue(
-                mantissa = entry.mantissa,
-                exponent = entry.exponent,
+                mantissa = refMantissa,
+                exponent = refExponent,
                 mantissaRelativeTol = relTol,
                 requireNormalized = false,
                 alsoAcceptDoubles = accepted
