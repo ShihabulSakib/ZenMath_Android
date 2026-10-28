@@ -54,12 +54,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.AtomicMassEntry
+import com.example.data.ChapterRef
 import com.example.data.ConstantEntry
 import com.example.data.ConstantsData
+import com.example.data.ConstantsDataset
 import com.example.data.ConstantsLoader
 import com.example.data.CourseValuesData
+import com.example.data.DerivedFormulaEntry
+import com.example.data.HscPaper
+import com.example.data.MathConstantEntry
 import com.example.data.MemoryTableCategory
+import com.example.data.NotFixedTableEntry
 import com.example.data.PhSpeciesData
+import com.example.data.ReliabilityClass
+import com.example.data.UnitConversionEntry
 import com.example.ui.components.RichTextHelper
 import com.example.ui.theme.ZenTheme
 import java.util.Locale
@@ -826,81 +835,68 @@ private fun PhRevisionTab() {
     }
 }
 
+private enum class ConstantsSubTab(val label: String) {
+    CONSTANTS("Constants (61)"),
+    REFERENCE_VALUES("Ref Values (12)"),
+    MATH_CONSTANTS("Math (4)"),
+    ATOMIC_MASSES("Atomic Masses (39)"),
+    UNIT_CONVERSIONS("Conversions (14)"),
+    DERIVED_FORMULAS("Formulas (14)"),
+    ABOUT_AND_SOURCES("About & Sources")
+}
+
 @Composable
 private fun ConstantsRevisionTab() {
     val colors = ZenTheme.colors
-    val allEntries = remember { ConstantsLoader.validateAndLoad(ConstantsData.entries, failLoudly = false) }
-    val subjects = remember(allEntries) { listOf("All") + ConstantsLoader.subjects(allEntries) }
-    var selectedSubject by remember { mutableStateOf("All") }
+    val dataset = remember { ConstantsLoader.getDataset(failLoudly = false) }
+    val allEntriesAndRefs = remember(dataset) { dataset.constants + dataset.referenceValues }
+    var activeSubTab by remember { mutableStateOf(ConstantsSubTab.CONSTANTS) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedPaper by remember { mutableStateOf<HscPaper?>(null) }
+    var selectedChapterKey by remember { mutableStateOf<String?>(null) }
+    var selectedReliability by remember {
+        mutableStateOf(ReliabilityClass.entries.toSet())
+    }
     var expandedId by remember { mutableStateOf<String?>(null) }
 
-    val filteredEntries = remember(allEntries, selectedSubject, searchQuery) {
-        allEntries.filter { entry ->
-            val matchesSubject = selectedSubject == "All" || entry.subject.displayName == selectedSubject || entry.subject.id == selectedSubject
-            val q = searchQuery.trim().lowercase()
-            val matchesSearch = q.isEmpty() ||
-                entry.name.lowercase().contains(q) ||
-                entry.symbol.toPlainString().lowercase().contains(q) ||
-                entry.subject.displayName.lowercase().contains(q)
-            matchesSubject && matchesSearch
+    val availableChapters = remember(dataset, selectedPaper) {
+        if (selectedPaper == null || selectedPaper == HscPaper.GENERAL_PHYSICS) {
+            emptyList()
+        } else {
+            dataset.syllabusChapters.filter { it.paper == selectedPaper }.sortedBy { it.chapterNumber }
         }
     }
-
-    val grouped = remember(filteredEntries) { filteredEntries.groupBy { it.subject.displayName } }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .testTag("constants_revision_tab")
     ) {
-        // Search box
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Search constant name, symbol, or subject...", fontSize = 13.sp) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = colors.textSecondary
-                )
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = colors.primary,
-                unfocusedBorderColor = colors.cardBorder,
-                focusedTextColor = colors.textMain,
-                unfocusedTextColor = colors.textMain
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
-                .testTag("constants_search_box")
-        )
-
-        // Subject filter chips
+        // Sub-navigation chips for the 7 sections
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
+                .padding(bottom = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            subjects.forEach { subj ->
-                val isSelected = selectedSubject == subj
+            ConstantsSubTab.entries.forEach { subTab ->
+                val isSelected = activeSubTab == subTab
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .background(if (isSelected) colors.primary else colors.card)
                         .border(1.dp, if (isSelected) colors.primary else colors.cardBorder, RoundedCornerShape(10.dp))
-                        .clickable { selectedSubject = subj }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .clickable {
+                            activeSubTab = subTab
+                            expandedId = null
+                        }
+                        .padding(horizontal = 12.dp, vertical = 7.dp)
+                        .testTag("constants_subtab_${subTab.name.lowercase()}"),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = subj,
+                        text = subTab.label,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isSelected) colors.onPrimary else colors.textSecondary
@@ -909,36 +905,238 @@ private fun ConstantsRevisionTab() {
             }
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            grouped.forEach { (subjectName, entriesInSubject) ->
-                item {
-                    Text(
-                        text = subjectName.uppercase(),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.5.sp,
-                        color = colors.textSecondary.copy(alpha = 0.7f),
-                        modifier = Modifier.padding(top = 4.dp)
+        // Search box (shown on searchable tabs)
+        if (activeSubTab != ConstantsSubTab.ABOUT_AND_SOURCES) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search name, symbol, chapter (English/বাংলা), or unit...", fontSize = 13.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = colors.textSecondary
                     )
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.primary,
+                    unfocusedBorderColor = colors.cardBorder,
+                    focusedTextColor = colors.textMain,
+                    unfocusedTextColor = colors.textMain
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .testTag("constants_search_box")
+            )
+        }
+
+        when (activeSubTab) {
+            ConstantsSubTab.CONSTANTS, ConstantsSubTab.REFERENCE_VALUES -> {
+                val baseList = if (activeSubTab == ConstantsSubTab.CONSTANTS) {
+                    dataset.constants
+                } else {
+                    dataset.referenceValues
                 }
 
-                items(entriesInSubject, key = { it.id }) { entry ->
-                    ConstantCard(
-                        entry = entry,
-                        allEntries = allEntries,
-                        isExpanded = expandedId == entry.id,
-                        onToggleExpand = {
-                            expandedId = if (expandedId == entry.id) null else entry.id
+                // Paper filter chips: All, Physics 1st, Physics 2nd, Chemistry 1st, Chemistry 2nd, General physics
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(bottom = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val allSelected = selectedPaper == null
+                    FilterChipBox(
+                        label = "All Papers",
+                        isSelected = allSelected,
+                        onClick = {
+                            selectedPaper = null
+                            selectedChapterKey = null
                         }
                     )
+                    HscPaper.entries.forEach { paper ->
+                        FilterChipBox(
+                            label = paper.displayName,
+                            isSelected = selectedPaper == paper,
+                            onClick = {
+                                selectedPaper = paper
+                                selectedChapterKey = null
+                            }
+                        )
+                    }
+                }
+
+                // Chapter filter chips (with English and Bangla chapter names) when a specific paper is selected
+                if (availableChapters.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(bottom = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FilterChipBox(
+                            label = "All Chapters",
+                            isSelected = selectedChapterKey == null,
+                            onClick = { selectedChapterKey = null }
+                        )
+                        availableChapters.forEach { ch ->
+                            val chLabel = if (ch.nameBn.isNotBlank()) {
+                                "Ch ${ch.chapterNumber}: ${ch.nameEn} (${ch.nameBn})"
+                            } else {
+                                "Ch ${ch.chapterNumber}: ${ch.nameEn}"
+                            }
+                            FilterChipBox(
+                                label = chLabel,
+                                isSelected = selectedChapterKey == ch.key,
+                                onClick = {
+                                    selectedChapterKey = if (selectedChapterKey == ch.key) null else ch.key
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Reliability class filters (only on Constants tab since Ref Values are all Reference & Approx)
+                if (activeSubTab == ConstantsSubTab.CONSTANTS) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        ReliabilityClass.entries.forEach { rel ->
+                            val isOn = rel in selectedReliability
+                            FilterChipBox(
+                                label = rel.shortLabel,
+                                isSelected = isOn,
+                                onClick = {
+                                    selectedReliability = if (isOn && selectedReliability.size > 1) {
+                                        selectedReliability - rel
+                                    } else {
+                                        selectedReliability + rel
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                val filteredEntries = remember(
+                    baseList,
+                    selectedPaper,
+                    selectedChapterKey,
+                    selectedReliability,
+                    searchQuery,
+                    activeSubTab
+                ) {
+                    baseList.filter { entry ->
+                        val matchesPaper = selectedPaper == null || entry.papers.contains(selectedPaper)
+                        val matchesChapter = selectedChapterKey == null ||
+                            entry.chapters.any { it.key == selectedChapterKey }
+                        val matchesRel = activeSubTab == ConstantsSubTab.REFERENCE_VALUES ||
+                            entry.reliabilityClass in selectedReliability
+                        val q = searchQuery.trim().lowercase()
+                        val matchesSearch = q.isEmpty() ||
+                            entry.name.lowercase().contains(q) ||
+                            entry.symbol.shortSymbol.lowercase().contains(q) ||
+                            entry.symbol.fullSymbol.lowercase().contains(q) ||
+                            entry.category.lowercase().contains(q) ||
+                            entry.chapters.any {
+                                it.nameEn.lowercase().contains(q) ||
+                                    it.nameBn.lowercase().contains(q) ||
+                                    it.paper.displayName.lowercase().contains(q)
+                            }
+                        matchesPaper && matchesChapter && matchesRel && matchesSearch
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    item {
+                        Text(
+                            text = "${filteredEntries.size} ${if (activeSubTab == ConstantsSubTab.CONSTANTS) "CONSTANTS" else "CONDITION-DEPENDENT REFERENCE VALUES"}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.4.sp,
+                            color = colors.textSecondary.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    items(filteredEntries, key = { it.id }) { entry ->
+                        ConstantCard(
+                            entry = entry,
+                            allEntries = allEntriesAndRefs,
+                            isExpanded = expandedId == entry.id,
+                            onToggleExpand = {
+                                expandedId = if (expandedId == entry.id) null else entry.id
+                            }
+                        )
+                    }
+
+                    item {
+                        DatasetAttributionFooter(dataset)
+                    }
+                    item { Spacer(modifier = Modifier.height(84.dp)) }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(84.dp)) }
+            ConstantsSubTab.MATH_CONSTANTS -> {
+                MathConstantsSubTab(dataset = dataset, searchQuery = searchQuery)
+            }
+
+            ConstantsSubTab.ATOMIC_MASSES -> {
+                AtomicMassesSubTab(dataset = dataset, searchQuery = searchQuery)
+            }
+
+            ConstantsSubTab.UNIT_CONVERSIONS -> {
+                UnitConversionsSubTab(dataset = dataset, searchQuery = searchQuery)
+            }
+
+            ConstantsSubTab.DERIVED_FORMULAS -> {
+                DerivedFormulasSubTab(dataset = dataset, searchQuery = searchQuery)
+            }
+
+            ConstantsSubTab.ABOUT_AND_SOURCES -> {
+                AboutAndSourcesSubTab(dataset = dataset)
+            }
         }
+    }
+}
+
+@Composable
+private fun FilterChipBox(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = ZenTheme.colors
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(if (isSelected) colors.primary.copy(alpha = 0.18f) else colors.card)
+            .border(
+                1.dp,
+                if (isSelected) colors.primary else colors.cardBorder,
+                RoundedCornerShape(9.dp)
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) colors.primary else colors.textSecondary
+        )
     }
 }
 
@@ -951,11 +1149,9 @@ private fun ConstantCard(
 ) {
     val colors = ZenTheme.colors
     val cardShape = RoundedCornerShape(18.dp)
-    val valStr = if (entry.exponent == 0) {
-        String.format(Locale.US, "%.4f", entry.mantissa).trimEnd('0').trimEnd('.')
-    } else {
-        "${String.format(Locale.US, "%.4f", entry.mantissa).trimEnd('0').trimEnd('.')}×10^${entry.exponent}"
-    }
+    val preciseRich = RichTextHelper.formatScientificNumber(entry.mantissa, entry.exponent)
+    val courseRich = RichTextHelper.formatScientificNumber(entry.courseMantissa, entry.courseExponent)
+    val firstChapter = entry.chapters.firstOrNull()
 
     Box(
         modifier = Modifier
@@ -977,55 +1173,40 @@ private fun ConstantCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Large symbol badge
+                    // Short symbol badge for list rows (Section 3)
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(48.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(colors.primary.copy(alpha = 0.12f)),
+                            .background(colors.primary.copy(alpha = 0.12f))
+                            .padding(horizontal = 4.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = RichTextHelper.formatSymbol(entry.symbol),
-                            fontSize = 20.sp,
+                            text = RichTextHelper.formatSymbol(entry.symbol, shortForm = true),
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = RichTextHelper.MathFontFamily,
+                            textAlign = TextAlign.Center,
                             color = colors.primary
                         )
                     }
 
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = entry.name,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textMain
+                        )
+
+                        // Primary value + unit
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = entry.name,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textMain
-                            )
-                            if (entry.isSample) {
-                                Text(
-                                    text = "SAMPLE",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color(0xFFF59E0B),
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFFF59E0B).copy(alpha = 0.15f))
-                                        .padding(horizontal = 5.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(top = 2.dp)
-                        ) {
-                            Text(
-                                text = RichTextHelper.formatMathText(valStr),
+                                text = preciseRich,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Black,
                                 fontFamily = RichTextHelper.MathFontFamily,
@@ -1037,6 +1218,25 @@ private fun ConstantCard(
                                 fontFamily = RichTextHelper.MathFontFamily,
                                 color = colors.textSecondary
                             )
+                        }
+
+                        // Chapter & reliability chips
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (firstChapter != null) {
+                                val chapChip = if (firstChapter.nameBn.isNotBlank()) {
+                                    "${firstChapter.paper.displayName} • ${firstChapter.nameEn} (${firstChapter.nameBn})"
+                                } else {
+                                    firstChapter.englishChipLabel
+                                }
+                                Text(
+                                    text = chapChip,
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary.copy(alpha = 0.85f)
+                                )
+                            }
                         }
                     }
                 }
@@ -1058,23 +1258,83 @@ private fun ConstantCard(
                         .padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    entry.notes?.let { note ->
+                    // Full symbol when different from short symbol (Section 3)
+                    if (entry.symbol.fullSymbol != entry.symbol.shortSymbol) {
                         Text(
-                            text = note,
+                            text = androidx.compose.ui.text.buildAnnotatedString {
+                                append("Full symbol: ")
+                                append(RichTextHelper.formatSymbol(entry.symbol, shortForm = false))
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textMain
+                        )
+                    }
+
+                    // Course value & raw HSC approximation
+                    Text(
+                        text = androidx.compose.ui.text.buildAnnotatedString {
+                            append("HSC Course value: ")
+                            append(courseRich)
+                            append(" ")
+                            append(RichTextHelper.formatUnit(entry.unit))
+                            entry.commonHscApproximationRaw?.let { rawApprox ->
+                                append("  (")
+                                append(RichTextHelper.formatMathText(rawApprox))
+                                append(")")
+                            }
+                        },
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.primary
+                    )
+
+                    // Reliability class badge
+                    Text(
+                        text = "Classification: ${entry.reliabilityClass.displayName} (${entry.constantType})",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary
+                    )
+
+                    // Definition / meaning
+                    entry.definitionOrMeaning?.let { def ->
+                        Text(
+                            text = RichTextHelper.formatMathText("Meaning: $def"),
+                            fontSize = 12.sp,
+                            color = colors.textMain
+                        )
+                    }
+
+                    // Formula uses
+                    if (entry.formulaUses.isNotEmpty()) {
+                        Text(
+                            text = RichTextHelper.formatMathText("Formulas: ${entry.formulaUses.joinToString("  •  ")}"),
+                            fontSize = 12.sp,
+                            fontFamily = RichTextHelper.MathFontFamily,
+                            color = colors.textMain
+                        )
+                    }
+
+                    // Mapped chapters with English and Bangla names
+                    if (entry.chapters.isNotEmpty()) {
+                        val chaptersDesc = entry.chapters.joinToString("; ") { it.bilingualLabel }
+                        Text(
+                            text = "Chapters: $chaptersDesc",
                             fontSize = 12.sp,
                             color = colors.textSecondary
                         )
                     }
 
-                    if (entry.alternateValues.isNotEmpty()) {
-                        entry.alternateValues.forEach { alt ->
-                            val altStr = if (alt.exponent == 0) {
-                                String.format(Locale.US, "%.4f", alt.mantissa).trimEnd('0').trimEnd('.')
-                            } else {
-                                "${String.format(Locale.US, "%.4f", alt.mantissa).trimEnd('0').trimEnd('.')}×10^${alt.exponent}"
-                            }
+                    // Alternate unit variants
+                    if (entry.allAlternateValues.isNotEmpty()) {
+                        entry.allAlternateValues.forEach { alt ->
                             Text(
-                                text = RichTextHelper.formatMathText("Alternate (${alt.label ?: "alt"}): $altStr ${alt.unit.toPlainString()}"),
+                                text = androidx.compose.ui.text.buildAnnotatedString {
+                                    append("Alternate (${alt.system}): ")
+                                    append(RichTextHelper.formatScientificNumber(alt.mantissa, alt.exponent))
+                                    append(" ")
+                                    append(RichTextHelper.formatUnit(alt.unit))
+                                },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.primary
@@ -1082,22 +1342,580 @@ private fun ConstantCard(
                         }
                     }
 
-                    if (entry.confusableWith.isNotEmpty()) {
-                        val confusables = entry.confusableWith.mapNotNull { cid ->
+                    // Notes
+                    entry.notesList.forEach { note ->
+                        Text(
+                            text = RichTextHelper.formatMathText("• $note"),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+
+                    // Confusables ("Do not confuse with")
+                    if (entry.confusableIds.isNotEmpty()) {
+                        val confusables = entry.confusableIds.mapNotNull { cid ->
                             allEntries.find { it.id == cid }
                         }
                         if (confusables.isNotEmpty()) {
-                            val desc = confusables.joinToString("; ") { c ->
-                                "${c.name} (${c.symbol.toPlainString()}, ${c.subject.displayName})"
-                            }
                             Text(
-                                text = "Do not confuse with: $desc",
+                                text = androidx.compose.ui.text.buildAnnotatedString {
+                                    append("Do not confuse with: ")
+                                    confusables.forEachIndexed { idx, c ->
+                                        if (idx > 0) append("; ")
+                                        append(c.name)
+                                        append(" (")
+                                        append(RichTextHelper.formatSymbol(c.symbol, shortForm = true))
+                                        append(", ")
+                                        append(RichTextHelper.formatUnit(c.unit))
+                                        append(")")
+                                    }
+                                },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFFF59E0B)
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MathConstantsSubTab(
+    dataset: ConstantsDataset,
+    searchQuery: String
+) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(18.dp)
+    val filtered = remember(dataset.mathConstants, searchQuery) {
+        val q = searchQuery.trim().lowercase()
+        if (q.isEmpty()) dataset.mathConstants
+        else dataset.mathConstants.filter {
+            it.name.lowercase().contains(q) ||
+                it.symbol.shortSymbol.lowercase().contains(q) ||
+                it.commonApproximations.any { a -> a.lowercase().contains(q) }
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(filtered, key = { it.id }) { mc ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = RichTextHelper.formatSymbol(mc.symbol, shortForm = true),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = RichTextHelper.MathFontFamily,
+                                    color = colors.primary
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = mc.name,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textMain
+                                )
+                                Text(
+                                    text = "no unit",
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
+                        Text(
+                            text = String.format(Locale.US, "%.6f", mc.value).trimEnd('0').trimEnd('.'),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace,
+                            color = colors.primary
+                        )
+                    }
+
+                    if (mc.commonApproximations.isNotEmpty()) {
+                        Text(
+                            text = "HSC approximations: ${mc.commonApproximations.joinToString(", ")}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.primary
+                        )
+                    }
+                    if (mc.relevance.isNotEmpty()) {
+                        Text(
+                            text = RichTextHelper.formatMathText("Uses: ${mc.relevance.joinToString(" • ")}"),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+                    if (mc.chapters.isNotEmpty()) {
+                        Text(
+                            text = "Chapters: ${mc.chapters.joinToString("; ") { it.bilingualLabel }}",
+                            fontSize = 11.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+            }
+        }
+        item { DatasetAttributionFooter(dataset) }
+        item { Spacer(modifier = Modifier.height(84.dp)) }
+    }
+}
+
+@Composable
+private fun AtomicMassesSubTab(
+    dataset: ConstantsDataset,
+    searchQuery: String
+) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(18.dp)
+    val filtered = remember(dataset.atomicMasses, searchQuery) {
+        val q = searchQuery.trim().lowercase()
+        if (q.isEmpty()) dataset.atomicMasses
+        else dataset.atomicMasses.filter {
+            it.element.lowercase().contains(q) ||
+                it.symbol.lowercase().contains(q) ||
+                it.relativeAtomicMassSchool.toString().contains(q)
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "ELEMENT (SYMBOL)",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = colors.textSecondary.copy(alpha = 0.65f)
+                        )
+                        Text(
+                            text = "HSC MASS (g/mol) • MODERN CIAAW",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = colors.textSecondary.copy(alpha = 0.65f)
+                        )
+                    }
+
+                    filtered.forEachIndexed { idx, item ->
+                        val schoolStr = RichTextHelper.formatCleanDouble(item.relativeAtomicMassSchool, 3)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(if (idx % 2 == 1) colors.surface.copy(alpha = 0.35f) else Color.Transparent)
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(9.dp))
+                                            .background(colors.primary.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = item.symbol,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = colors.primary
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = item.element,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.textMain
+                                        )
+                                        if (!item.notes.isNullOrBlank()) {
+                                            Text(
+                                                text = item.notes,
+                                                fontSize = 11.sp,
+                                                color = colors.textSecondary
+                                            )
+                                        }
+                                    }
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "$schoolStr g·mol⁻¹",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Black,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = colors.primary
+                                    )
+                                    Text(
+                                        text = "CIAAW: ${item.modernCiaawValue}",
+                                        fontSize = 11.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item { DatasetAttributionFooter(dataset) }
+        item { Spacer(modifier = Modifier.height(84.dp)) }
+    }
+}
+
+@Composable
+private fun UnitConversionsSubTab(
+    dataset: ConstantsDataset,
+    searchQuery: String
+) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(18.dp)
+    val filtered = remember(dataset.unitConversions, searchQuery) {
+        val q = searchQuery.trim().lowercase()
+        if (q.isEmpty()) dataset.unitConversions
+        else dataset.unitConversions.filter {
+            it.quantity.lowercase().contains(q) ||
+                it.conversionSummary.lowercase().contains(q) ||
+                it.id.lowercase().contains(q)
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(filtered, key = { it.id }) { conv ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = conv.quantity.uppercase(),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp,
+                            color = colors.primary
+                        )
+                        if (conv.isFormulaOnly) {
+                            Text(
+                                text = "FORMULA ONLY",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = RichTextHelper.formatMathText(conv.conversionSummary),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textMain
+                    )
+
+                    conv.values.forEach { item ->
+                        if (item.isNumericFactor && item.fromUnit != null && item.toUnit != null && item.factor != null) {
+                            val (m, e) = ConstantsLoader.decomposeToMantissaAndExponent(item.factor)
+                            Text(
+                                text = androidx.compose.ui.text.buildAnnotatedString {
+                                    append("• 1 ")
+                                    append(RichTextHelper.formatUnit(item.fromUnit))
+                                    append(" = ")
+                                    append(RichTextHelper.formatScientificNumber(m, e))
+                                    append(" ")
+                                    append(RichTextHelper.formatUnit(item.toUnit))
+                                },
+                                fontSize = 13.sp,
+                                fontFamily = RichTextHelper.MathFontFamily,
+                                color = colors.textSecondary
+                            )
+                        } else if (!item.formula.isNullOrBlank()) {
+                            Text(
+                                text = RichTextHelper.formatMathText("• ${item.formula}"),
+                                fontSize = 13.sp,
+                                fontFamily = RichTextHelper.MathFontFamily,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        item { DatasetAttributionFooter(dataset) }
+        item { Spacer(modifier = Modifier.height(84.dp)) }
+    }
+}
+
+@Composable
+private fun DerivedFormulasSubTab(
+    dataset: ConstantsDataset,
+    searchQuery: String
+) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(18.dp)
+    val filtered = remember(dataset.derivedFormulas, searchQuery) {
+        val q = searchQuery.trim().lowercase()
+        if (q.isEmpty()) dataset.derivedFormulas
+        else dataset.derivedFormulas.filter {
+            it.formula.lowercase().contains(q) ||
+                it.description.lowercase().contains(q) ||
+                it.chapters.any { ch -> ch.lowercase().contains(q) }
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(filtered, key = { it.id }) { df ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = RichTextHelper.formatMathText(df.formula),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = RichTextHelper.MathFontFamily,
+                        color = colors.primary
+                    )
+                    Text(
+                        text = RichTextHelper.formatMathText(df.description),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textMain
+                    )
+                    if (df.chapters.isNotEmpty()) {
+                        Text(
+                            text = "Chapters: ${df.chapters.joinToString(" • ")}",
+                            fontSize = 11.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+            }
+        }
+        item { DatasetAttributionFooter(dataset) }
+        item { Spacer(modifier = Modifier.height(84.dp)) }
+    }
+}
+
+@Composable
+private fun AboutAndSourcesSubTab(dataset: ConstantsDataset) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(18.dp)
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("constants_about_subtab"),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // 1. Symbol Notes
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "SYMBOL COLLISIONS & DISAMBIGUATION NOTES",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.4.sp,
+                        color = colors.primary
+                    )
+                    dataset.metadata.symbolNotes.forEach { note ->
+                        Text(
+                            text = RichTextHelper.formatMathText("• $note"),
+                            fontSize = 12.sp,
+                            color = colors.textMain
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Why certain quantities are NOT fixed constants (8 entries)
+        item {
+            Text(
+                text = "WHY CERTAIN QUANTITIES ARE NOT FIXED CONSTANTS (${dataset.notFixedTables.size})",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.4.sp,
+                color = colors.textSecondary.copy(alpha = 0.75f)
+            )
+        }
+
+        items(dataset.notFixedTables, key = { it.id }) { nf ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.cardBorder, cardShape)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = RichTextHelper.formatMathText(nf.items.joinToString(", ")),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textMain
+                    )
+                    Text(
+                        text = RichTextHelper.formatMathText(nf.whyNotOneFixedValue),
+                        fontSize = 12.sp,
+                        color = colors.primary
+                    )
+                    nf.formulaNotes.forEach { fn ->
+                        Text(
+                            text = RichTextHelper.formatMathText("• $fn"),
+                            fontSize = 12.sp,
+                            fontFamily = RichTextHelper.MathFontFamily,
+                            color = colors.textSecondary
+                        )
+                    }
+                    if (nf.chapters.isNotEmpty()) {
+                        Text(
+                            text = "Chapters: ${nf.chapters.joinToString(" • ")}",
+                            fontSize = 11.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+            }
+        }
+
+        // 3. Sources & Metadata Footer
+        item {
+            DatasetAttributionFooter(dataset, expandedDetails = true)
+        }
+        item { Spacer(modifier = Modifier.height(84.dp)) }
+    }
+}
+
+@Composable
+private fun DatasetAttributionFooter(
+    dataset: ConstantsDataset,
+    expandedDetails: Boolean = false
+) {
+    val colors = ZenTheme.colors
+    val cardShape = RoundedCornerShape(16.dp)
+    val meta = dataset.metadata
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .clip(cardShape)
+            .background(colors.card.copy(alpha = 0.7f))
+            .border(1.dp, colors.cardBorder, cardShape)
+            .padding(14.dp)
+            .testTag("constants_attribution_footer")
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val genDate = meta.generatedDate.take(10).ifEmpty { "2026-10-26" }
+            Text(
+                text = "DATASET ATTRIBUTION • v${meta.version} ($genDate)",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.2.sp,
+                color = colors.textSecondary
+            )
+            val titleText = meta.title.ifEmpty { "HSC Physics & Chemistry Physical Constants" }
+            val targetText = meta.target.ifEmpty { "NCTB Bangladesh HSC Physics & Chemistry" }
+            Text(
+                text = "$titleText — $targetText",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.textMain
+            )
+            if (expandedDetails || dataset.sources.isNotEmpty()) {
+                val srcSummary = dataset.sources.joinToString(" • ") { "${it.title} (${it.organization})" }
+                if (srcSummary.isNotBlank()) {
+                    Text(
+                        text = "Sources: $srcSummary",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary
+                    )
+                }
+            }
+            if (expandedDetails && meta.importantLimitations.isNotEmpty()) {
+                meta.importantLimitations.forEach { lim ->
+                    Text(
+                        text = "• $lim",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary.copy(alpha = 0.85f)
+                    )
                 }
             }
         }

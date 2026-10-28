@@ -193,3 +193,13 @@ We will follow the specification sections 1 → 2 → 3 → 4 → 5 → 6 in ord
 ### Phase 2 Completed — Rich-Text Symbol & Unit Normalization
 - Extended `RichTextHelper.kt` (`formatSymbol`, `formatRawSymbol`, `formatUnit`, `formatRawUnit`, `formatMathText`) to normalize all symbols (short form before `=` or `(` for list rows and drills vs full form for detail views) and all 85+ distinct unit strings across the dataset (`m^3 kg^-1 s^-2` -> `m³·kg⁻¹·s⁻²`, `(mol L^-1)^2` -> `(mol·L⁻¹)²`, `cal_th`, `MeV/c^2`, `°C`, `°F`, `Å`, `Ω m`, and `"dimensionless"`/`"1"` -> `"no unit"`).
 - Added `testSymbolAndUnitNormalizationAcrossEntireDataset` in `ExampleUnitTest.kt` verifying that zero raw `^` or `_` characters remain in any rendered symbol, unit, conversion factor, or formula.
+
+### Phase 3 Completed — Revision Tabs
+- Built comprehensive Constants Revision Tab with 7 specialized sub-tabs:
+  1. **Constants (61)**: Filterable by Paper (`All`, `Physics 1st`, `Physics 2nd`, `Chemistry 1st`, `Chemistry 2nd`, `General physics`), Chapter (bilingual English + Bangla names), and Reliability classes (`Fundamental`, `Conventions`, `Reference & Approx`). Cards show short symbol badge, precise value, course value with common HSC approximation, full symbol, definition, formulas, alternate unit values, notes, and confusable warnings.
+  2. **Condition-Dependent Reference Values (12)**: Shows reference values with condition notes, paper/chapter mapping, and course forms.
+  3. **Mathematical Constants (4)**: `π`, `e`, `ln 2`, `ln 10` with standard approximations (`22/7`, etc.) and curriculum applications.
+  4. **Atomic Masses (39)**: Element symbol, name, school mass, and modern CIAAW value text.
+  5. **Unit Conversions (14)**: Numeric conversion factors and temperature formulas.
+  6. **Derived Formulas (14)**: 14 essential read-only formulas with descriptions and chapter mappings.
+  7. **About Constants & Sources**: Disambiguation notes, the 8 tables explaining why certain physical quantities are not fixed constants, and dataset attribution footer.
