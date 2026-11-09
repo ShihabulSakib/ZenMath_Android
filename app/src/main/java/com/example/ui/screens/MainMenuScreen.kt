@@ -251,7 +251,6 @@ fun MainMenuScreen(
                     Triple(GameMode.CUBES_AND_POWERS, SpecializedIcon.Glyph("x³"), "Cubes"),
                     Triple(GameMode.FRACTION, SpecializedIcon.Glyph("½"), "Fractions"),
                     Triple(GameMode.PERCENTAGE, SpecializedIcon.Glyph("%"), "Percent"),
-                    Triple(GameMode.SQUARE_ROOT, SpecializedIcon.Glyph("√"), "Roots"),
                     Triple(GameMode.APPROXIMATION, SpecializedIcon.Glyph("≈"), "Estimation"),
                     Triple(GameMode.NUMBER_SERIES, SpecializedIcon.Vector(Icons.Default.LinearScale), "Series"),
                     Triple(GameMode.RATIO, SpecializedIcon.Glyph("::"), "Ratio"),
@@ -261,8 +260,6 @@ fun MainMenuScreen(
                     Triple(GameMode.PH_POH, SpecializedIcon.Glyph("pH"), "pH & pOH"),
                     Triple(GameMode.COMPOSITE_LOGS_ROOTS, SpecializedIcon.Glyph("√lg"), "Logs/Roots"),
                     Triple(GameMode.CONSTANTS, SpecializedIcon.Glyph("kₑ"), "Constants"),
-                    Triple(GameMode.REFERENCE_VALUES, SpecializedIcon.Glyph("ref"), "Ref Values"),
-                    Triple(GameMode.MATH_CONSTANTS, SpecializedIcon.Glyph("π"), "Math Const"),
                     Triple(GameMode.ATOMIC_MASSES, SpecializedIcon.Glyph("Mᵣ"), "At. Mass"),
                     Triple(GameMode.UNIT_CONVERSIONS, SpecializedIcon.Glyph("⇄"), "Convert"),
                     Triple(GameMode.SPEED_ROUND, SpecializedIcon.Glyph("⚡"), "Speed Rnd")

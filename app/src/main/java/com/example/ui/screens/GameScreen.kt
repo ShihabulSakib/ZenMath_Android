@@ -100,16 +100,20 @@ fun GameScreen(
                 GameMode.SCIENTIFIC_NOTATION,
                 GameMode.COMPOSITE_LOGS_ROOTS,
                 GameMode.CONSTANTS,
-                GameMode.REFERENCE_VALUES,
                 GameMode.SPEED_ROUND,
-                GameMode.WEAK_SPOTS
+                GameMode.WEAK_SPOTS,
+                GameMode.MISTAKE_REVIEW
             )
-    val showFraction = mode == GameMode.FRACTION || mode == GameMode.MATH_CONSTANTS
+    val showFraction = mode == GameMode.FRACTION ||
+            mode == GameMode.MATH_CONSTANTS ||
+            problem?.topicTag?.startsWith("math-constant-") == true ||
+            (problem?.answerSpec as? com.example.domain.AnswerSpec.FractionSpec)?.isFractionToDecimal == false
     val showDecimal = mode in listOf(
         GameMode.FRACTION,
         GameMode.DIVISION,
         GameMode.MIXED,
         GameMode.PERCENTAGE,
+        GameMode.SQUARE,
         GameMode.APPROXIMATION,
         GameMode.MEMORY_TABLES,
         GameMode.SCIENTIFIC_NOTATION,
@@ -119,10 +123,10 @@ fun GameScreen(
         GameMode.ATOMIC_MASSES,
         GameMode.UNIT_CONVERSIONS,
         GameMode.MATH_CONSTANTS,
-        GameMode.REFERENCE_VALUES,
         GameMode.SPEED_ROUND,
-        GameMode.WEAK_SPOTS
-    )
+        GameMode.WEAK_SPOTS,
+        GameMode.MISTAKE_REVIEW
+    ) || problem?.topicTag == "sqrt-irrational" || problem?.answer?.contains(".") == true
     val showScientific = mode in listOf(
         GameMode.APPROXIMATION,
         GameMode.SCIENTIFIC_NOTATION,
@@ -130,10 +134,10 @@ fun GameScreen(
         GameMode.COMPOSITE_LOGS_ROOTS,
         GameMode.CONSTANTS,
         GameMode.UNIT_CONVERSIONS,
-        GameMode.REFERENCE_VALUES,
         GameMode.SPEED_ROUND,
-        GameMode.WEAK_SPOTS
-    )
+        GameMode.WEAK_SPOTS,
+        GameMode.MISTAKE_REVIEW
+    ) || problem?.answerSpec is com.example.domain.AnswerSpec.ScientificValue
     val isExponentActive = userInput.contains(ScientificInputParser.SCI_MARKER)
 
     // Flash background on feedback

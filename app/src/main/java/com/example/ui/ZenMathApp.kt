@@ -55,6 +55,7 @@ fun ZenMathApp(
     val mixedOps by viewModel.mixedOps.collectAsState()
     val squareRangeType by viewModel.squareRangeType.collectAsState()
     val customSquareRange by viewModel.customSquareRange.collectAsState()
+    val squaresSubtype by viewModel.squaresSubtype.collectAsState()
     val sqrtRangeType by viewModel.sqrtRangeType.collectAsState()
     val customSqrtRange by viewModel.customSqrtRange.collectAsState()
     val fractionDenRange by viewModel.fractionDenRange.collectAsState()
@@ -75,6 +76,8 @@ fun ZenMathApp(
     val constantsSelectedPapers by viewModel.constantsSelectedPapers.collectAsState()
     val constantsSelectedChapters by viewModel.constantsSelectedChapters.collectAsState()
     val constantsSelectedReliability by viewModel.constantsSelectedReliability.collectAsState()
+    val constantsIncludeMath by viewModel.constantsIncludeMath.collectAsState()
+    val constantsMathOnly by viewModel.constantsMathOnly.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -157,6 +160,7 @@ fun ZenMathApp(
                         compositeLogRootSubtype = compositeLogRootSubtype,
                         cubesPowersSubtype = cubesPowersSubtype,
                         cubeRange = cubeRange,
+                        squaresSubtype = squaresSubtype,
                         mcqEnabled = mcqEnabled,
                         speedRoundDurationMin = speedRoundDurationMin,
                         speedRoundTopics = speedRoundTopics,
@@ -180,6 +184,7 @@ fun ZenMathApp(
                         onCompositeLogRootSubtypeChange = { viewModel.setCompositeLogRootSubtype(it) },
                         onCubesPowersSubtypeChange = { viewModel.setCubesPowersSubtype(it) },
                         onCubeRangeChange = { viewModel.setCubeRange(it) },
+                        onSquaresSubtypeChange = { viewModel.setSquaresSubtype(it) },
                         onMcqEnabledChange = { viewModel.setMcqEnabled(it) },
                         onSpeedRoundDurationMinChange = { viewModel.setSpeedRoundDurationMin(it) },
                         onSpeedRoundTopicsChange = { viewModel.setSpeedRoundTopics(it) },
@@ -188,10 +193,14 @@ fun ZenMathApp(
                         constantsSelectedPapers = constantsSelectedPapers,
                         constantsSelectedChapters = constantsSelectedChapters,
                         constantsSelectedReliability = constantsSelectedReliability,
+                        constantsIncludeMath = constantsIncludeMath,
+                        constantsMathOnly = constantsMathOnly,
                         onConstantsIncludeAlternateUnitsChange = { viewModel.setConstantsIncludeAlternateUnits(it) },
                         onConstantsSelectedPapersChange = { viewModel.setConstantsSelectedPapers(it) },
                         onConstantsSelectedChaptersChange = { viewModel.setConstantsSelectedChapters(it) },
                         onConstantsSelectedReliabilityChange = { viewModel.setConstantsSelectedReliability(it) },
+                        onConstantsIncludeMathChange = { viewModel.setConstantsIncludeMath(it) },
+                        onConstantsMathOnlyChange = { viewModel.setConstantsMathOnly(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )

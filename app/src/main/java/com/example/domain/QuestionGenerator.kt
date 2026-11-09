@@ -403,6 +403,80 @@ object QuestionGenerator {
         )
     }
 
+    /**
+     * Unified Squares & Square Roots generator (Part A4), structured like Cubes & Powers:
+     * - [SquaresSubtype.SQUARES]: n² for n in [customRange] (default 1..25)
+     * - [SquaresSubtype.PERFECT_ROOTS]: √(n²) for n in [customRange] (default 1..25)
+     * - [SquaresSubtype.IRRATIONAL_ROOTS]: √n for n in 2..10 using HSC course values (±0.05 tolerance)
+     * - [SquaresSubtype.ALL]: Random mix of all three
+     */
+    fun generateSquaresQuestion(
+        subtype: SquaresSubtype = SquaresSubtype.ALL,
+        customRange: Pair<Int, Int>? = null
+    ): MathProblem {
+        val chosen = if (subtype == SquaresSubtype.ALL) {
+            listOf(
+                SquaresSubtype.SQUARES,
+                SquaresSubtype.PERFECT_ROOTS,
+                SquaresSubtype.IRRATIONAL_ROOTS
+            ).random()
+        } else {
+            subtype
+        }
+
+        val range = customRange ?: Pair(1, 25)
+        val safeMin = range.first.coerceAtLeast(1)
+        val safeMax = range.second.coerceAtLeast(safeMin)
+
+        return when (chosen) {
+            SquaresSubtype.SQUARES -> generateSquareQuestion(Pair(safeMin, safeMax))
+            SquaresSubtype.PERFECT_ROOTS -> {
+                val n = randomInRange(safeMin, safeMax)
+                val square = n * n
+                MathProblem(
+                    num1 = square.toDouble(),
+                    num2 = 0.0,
+                    operation = "√",
+                    questionDisplay = "√$square",
+                    answer = n.toString(),
+                    numericAnswer = n.toDouble(),
+                    topicTag = "square-root",
+                    answerSpec = AnswerSpec.exact(n.toLong()),
+                    solutionSteps = listOf(
+                        "Since $n × $n = $square",
+                        "√$square = $n"
+                    )
+                )
+            }
+            SquaresSubtype.IRRATIONAL_ROOTS -> {
+                val n = randomInRange(2, 10)
+                val entry = CourseValuesData.lookup(MemoryTableCategory.SQUARE_ROOT, n)
+                val courseVal = entry?.courseValue ?: CourseValuesData.SQUARE_ROOTS[n] ?: sqrt(n.toDouble())
+                val trueVal = entry?.trueValue ?: sqrt(n.toDouble())
+                val ansStr = formatCleanDouble(courseVal)
+                MathProblem(
+                    num1 = n.toDouble(),
+                    num2 = 0.0,
+                    operation = "√",
+                    questionDisplay = "√$n",
+                    answer = ansStr,
+                    numericAnswer = courseVal,
+                    topicTag = "sqrt-irrational",
+                    answerSpec = AnswerSpec.AbsoluteTolerance(
+                        expected = courseVal,
+                        tolerance = 0.05,
+                        alsoAcceptExact = listOf(courseVal, trueVal)
+                    ),
+                    solutionSteps = listOf(
+                        "Memorized course value: √$n ≈ $ansStr",
+                        "Exact value: ${String.format(Locale.US, "%.4f", trueVal)} (±0.05 accepted)"
+                    )
+                )
+            }
+            SquaresSubtype.ALL -> generateSquareQuestion(Pair(safeMin, safeMax))
+        }
+    }
+
     fun generateTableQuestion(range: Pair<Int, Int>): MathProblem {
         val n1 = randomInRange(range.first, range.second)
         val n2 = randomInRange(1, 12)
@@ -1596,6 +1670,66 @@ object QuestionGenerator {
         val correctVal = problem.numericAnswer
         val minSpacing = AnswerChecker.minimumMcqSpacing(problem.answerSpec, preset)
 
+        // Special handling for Decimal -> Fraction questions where answer is formatted as "n/d"
+        if (problem.answerSpec is AnswerSpec.FractionSpec && !problem.answerSpec.isFractionToDecimal) {
+            val spec = problem.answerSpec
+            val n = spec.numerator
+            val d = spec.denominator
+            val fracCandidates = listOf(
+                Pair(n + 1, d),
+                Pair((n - 1).coerceAtLeast(1), d),
+                Pair(n, d + 1),
+                Pair(n, (d - 1).coerceAtLeast(2)),
+                Pair(n + 2, d + 1),
+                Pair(n + 1, d + 2),
+                Pair((n + 2), d),
+                Pair(n, d + 2),
+                Pair(1, d + 3),
+                Pair(2, d + 3)
+            )
+            val chosenFracs = mutableListOf(Pair(correctVal, correctStr))
+            for ((cn, cd) in fracCandidates) {
+                if (chosenFracs.size >= 4) break
+                if (cn <= 0 || cd <= 1 || cn == cd) continue
+                val g = gcd(cn, cd)
+                val rn = cn / g
+                val rd = cd / g
+                if (rd <= 1) continue
+                val candStr = "$rn/$rd"
+                val candVal = rn.toDouble() / rd.toDouble()
+                if (candStr != correctStr &&
+                    chosenFracs.none { it.second == candStr } &&
+                    chosenFracs.all { abs(it.first - candVal) >= 0.02 } &&
+                    !AnswerChecker.check(candStr, spec, preset)
+                ) {
+                    chosenFracs.add(Pair(candVal, candStr))
+                }
+            }
+            var extraDen = d + 1
+            while (chosenFracs.size < 4) {
+                val g = gcd(1, extraDen)
+                val candStr = "${1 / g}/${extraDen / g}"
+                val candVal = 1.0 / extraDen.toDouble()
+                if (candStr != correctStr &&
+                    chosenFracs.none { it.second == candStr } &&
+                    !AnswerChecker.check(candStr, spec, preset)
+                ) {
+                    chosenFracs.add(Pair(candVal, candStr))
+                }
+                extraDen++
+            }
+            val shuffled = chosenFracs.map { it.second }.shuffled()
+            val correctIdx = shuffled.indexOf(correctStr).coerceAtLeast(0)
+            return problem.copy(
+                mcqOptions = shuffled,
+                answerSpec = AnswerSpec.Choice(
+                    options = shuffled,
+                    correctIndex = correctIdx,
+                    correctValue = correctStr
+                )
+            )
+        }
+
         val isSciDisplay = correctStr.contains("×10^")
         val candidates = mutableListOf<Pair<Double, String>>()
 
@@ -1617,6 +1751,46 @@ object QuestionGenerator {
                 val dVal = dm * 10.0.pow(de.toDouble())
                 val dStr = "${formatCleanDouble(dm)}×10^$de"
                 candidates.add(Pair(dVal, dStr))
+            }
+        } else if (problem.topicTag == "square") {
+            val baseN = problem.num1.roundToInt().coerceAtLeast(1)
+            val neighborSquares = listOf(
+                (baseN + 1) * (baseN + 1),
+                maxOf(1, (baseN - 1) * (baseN - 1)),
+                (baseN * baseN) + 10,
+                maxOf(1, (baseN * baseN) - 10),
+                (baseN + 2) * (baseN + 2),
+                (baseN * baseN) + 20
+            )
+            for (sq in neighborSquares) {
+                candidates.add(Pair(sq.toDouble(), sq.toString()))
+            }
+        } else if (problem.topicTag == "square-root") {
+            val rootN = correctVal.roundToInt().coerceAtLeast(1)
+            val neighborRoots = listOf(
+                rootN + 1,
+                maxOf(1, rootN - 1),
+                rootN + 2,
+                maxOf(1, rootN - 2),
+                rootN + 3,
+                rootN + 4
+            )
+            for (r in neighborRoots) {
+                candidates.add(Pair(r.toDouble(), r.toString()))
+            }
+        } else if (problem.topicTag == "sqrt-irrational") {
+            val step = maxOf(minSpacing * 1.25, 0.2)
+            val rawOffsets = listOf(
+                correctVal + step,
+                (correctVal - step).coerceAtLeast(1.1),
+                correctVal + 2.0 * step,
+                (correctVal - 2.0 * step).coerceAtLeast(1.0),
+                correctVal + 3.0 * step
+            )
+            for (dVal in rawOffsets) {
+                val rounded = (dVal * 100.0).roundToInt() / 100.0
+                val dStr = formatCleanDouble(rounded)
+                candidates.add(Pair(rounded, dStr))
             }
         } else {
             val step = maxOf(minSpacing * 1.35, if (abs(correctVal) >= 10) 2.0 else 0.25)
@@ -1643,9 +1817,6 @@ object QuestionGenerator {
             }
         }
 
-        for ( dVal in candidates ) {
-            // Note: also ensure correctVal in chosen uses the parsed value of correctStr so options[i] comparison matches
-        }
         val parsedCorrectVal = ScientificInputParser.parseToDouble(correctStr) ?: correctVal
         val chosen = mutableListOf(Pair(parsedCorrectVal, correctStr))
         for (cand in candidates) {
@@ -1698,8 +1869,13 @@ object QuestionGenerator {
         chapters: Set<String> = emptySet(),
         reliabilityClasses: Set<com.example.data.ReliabilityClass> = emptySet(),
         includeAlternateUnits: Boolean = false,
-        missedCounts: Map<String, Int> = emptyMap()
+        missedCounts: Map<String, Int> = emptyMap(),
+        includeMathConstants: Boolean = false,
+        mathOnly: Boolean = false
     ): MathProblem {
+        if (mathOnly) {
+            return generateMathConstantQuestion()
+        }
         val dataset = ConstantsLoader.getDataset(failLoudly = false)
         val allConstants = dataset.constants
         val filtered = allConstants.filter { c ->
@@ -1708,6 +1884,14 @@ object QuestionGenerator {
             val matchesRel = reliabilityClasses.isEmpty() || c.reliabilityClass in reliabilityClasses
             matchesPaper && matchesChapter && matchesRel
         }.ifEmpty { allConstants }
+
+        if (includeMathConstants && dataset.mathConstants.isNotEmpty()) {
+            // Draw from Mathematics constants with ~15% probability (or proportional to pool size)
+            val mathChance = maxOf(0.15, dataset.mathConstants.size.toDouble() / (filtered.size + dataset.mathConstants.size).toDouble())
+            if (Random.nextDouble() < mathChance) {
+                return generateMathConstantQuestion()
+            }
+        }
 
         val entry = selectWeightedConstant(filtered, missedCounts)
 
@@ -1731,7 +1915,6 @@ object QuestionGenerator {
         } else {
             "${formatCleanDouble(targetMantissa)}×10^$targetExponent"
         }
-        val unitPlain = targetUnit.toPlainString()
         val relTol = entry.toleranceOverride ?: 0.01
 
         val acceptedValues = mutableListOf(targetVal, targetCourseVal)
@@ -1799,7 +1982,7 @@ object QuestionGenerator {
     }
 
     // =========================================================================
-    // 5.5 Extra Drills (Atomic Masses, Unit Conversions, Math Constants, Ref Values)
+    // 5.5 Extra Drills (Atomic Masses, Unit Conversions, Math Constants)
     // =========================================================================
 
     /**
@@ -1890,6 +2073,7 @@ object QuestionGenerator {
     /**
      * Mathematical Constants Drill (4 constants: π, e, ln 2, ln 10):
      * Name -> value, accepting any listed approximation including fractions like 22/7.
+     * Folded into the unified Constants drill (Part A3) under the "Mathematics" category.
      */
     fun generateMathConstantQuestion(): MathProblem {
         val dataset = ConstantsLoader.getDataset(failLoudly = false)
@@ -1903,7 +2087,7 @@ object QuestionGenerator {
         return MathProblem(
             num1 = mc.value,
             num2 = 0.0,
-            operation = "Math Constants",
+            operation = "Constants",
             questionDisplay = "${mc.name} ($shortSym)",
             answer = ansStr,
             numericAnswer = mc.value,
@@ -1920,58 +2104,6 @@ object QuestionGenerator {
                 "Curriculum uses: ${mc.relevance.joinToString("; ")}"
             ),
             constantSymbol = mc.symbol
-        )
-    }
-
-    /**
-     * Condition-Dependent Reference Values Drill (12 entries):
-     * Runs through the same engine as constants, clearly labelled as Reference Values.
-     */
-    fun generateReferenceValueQuestion(
-        missedCounts: Map<String, Int> = emptyMap()
-    ): MathProblem {
-        val dataset = ConstantsLoader.getDataset(failLoudly = false)
-        val refList = dataset.referenceValues
-        val entry = selectWeightedConstant(refList, missedCounts)
-
-        val (refMantissa, refExponent) = ConstantsLoader.decomposeToMantissaAndExponent(entry.courseValue)
-        val ansStr = if (refExponent == 0) {
-            formatCleanDouble(refMantissa)
-        } else {
-            "${formatCleanDouble(refMantissa)}×10^$refExponent"
-        }
-        val unitPlain = entry.unit.toPlainString()
-        val shortSym = entry.symbol.shortSymbol
-        val relTol = entry.toleranceOverride ?: 0.015
-
-        val accepted = listOf(entry.preciseValue, entry.courseValue).distinct()
-
-        return MathProblem(
-            num1 = entry.mantissa,
-            num2 = entry.exponent.toDouble(),
-            operation = "Ref Values",
-            questionDisplay = "${entry.name} ($shortSym)",
-            answer = ansStr,
-            numericAnswer = entry.preciseValue,
-            topicTag = "reference-${entry.id}",
-            answerSpec = AnswerSpec.ScientificValue(
-                mantissa = refMantissa,
-                exponent = refExponent,
-                mantissaRelativeTol = relTol,
-                requireNormalized = false,
-                alsoAcceptDoubles = accepted
-            ),
-            unitText = unitPlain,
-            subjectLabel = entry.subjectLabel,
-            solutionSteps = listOf(
-                "${entry.name} ($shortSym): Reference value = $ansStr $unitPlain",
-                entry.definitionOrMeaning?.let { "Conditions: $it" } ?: "",
-                entry.notes?.let { "Notes: $it" } ?: ""
-            ).filter { it.isNotBlank() },
-            confusableIds = entry.confusableIds,
-            constantSymbol = entry.symbol,
-            structuredUnit = entry.unit,
-            constantEntry = entry
         )
     }
 

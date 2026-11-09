@@ -830,9 +830,9 @@ class ExampleUnitTest {
         assertEquals("Conversions", convQ.operation)
         assertTrue(AnswerChecker.check(convQ.answer, convQ.answerSpec))
 
-        // 3. Math Constants Drill (accepts fraction 22/7 for pi)
+        // 3. Math Constants Drill (folded into Constants, accepts fraction 22/7 for pi)
         val mathQ = QuestionGenerator.generateMathConstantQuestion()
-        assertEquals("Math Constants", mathQ.operation)
+        assertEquals("Constants", mathQ.operation)
         assertTrue(AnswerChecker.check(mathQ.answer, mathQ.answerSpec))
 
         val piSpec = AnswerSpec.RelativeTolerance(
@@ -845,10 +845,11 @@ class ExampleUnitTest {
         assertTrue("Course approx 3.1416 passes", AnswerChecker.check("3.1416", piSpec))
         assertTrue("Fraction 22/7 passes for pi", AnswerChecker.check("22/7", piSpec))
 
-        // 4. Reference Values Drill
-        val refQ = QuestionGenerator.generateReferenceValueQuestion()
-        assertEquals("Ref Values", refQ.operation)
-        assertTrue(AnswerChecker.check(refQ.answer, refQ.answerSpec))
+        // 4. Constants Drill with Math Constants category (mathOnly and mixed)
+        val mathOnlyConst = QuestionGenerator.generateConstantQuestion(mathOnly = true)
+        assertTrue(mathOnlyConst.topicTag.startsWith("math-constant-"))
+        assertEquals("Mathematics", mathOnlyConst.subjectLabel)
+        assertTrue(AnswerChecker.check(mathOnlyConst.answer, mathOnlyConst.answerSpec))
     }
 
     @Test

@@ -837,7 +837,6 @@ private fun PhRevisionTab() {
 
 private enum class ConstantsSubTab(val label: String) {
     CONSTANTS("Constants (61)"),
-    REFERENCE_VALUES("Ref Values (12)"),
     MATH_CONSTANTS("Math (4)"),
     ATOMIC_MASSES("Atomic Masses (39)"),
     UNIT_CONVERSIONS("Conversions (14)"),
@@ -849,7 +848,7 @@ private enum class ConstantsSubTab(val label: String) {
 private fun ConstantsRevisionTab() {
     val colors = ZenTheme.colors
     val dataset = remember { ConstantsLoader.getDataset(failLoudly = false) }
-    val allEntriesAndRefs = remember(dataset) { dataset.constants + dataset.referenceValues }
+    val allEntriesAndRefs = remember(dataset) { dataset.constants }
     var activeSubTab by remember { mutableStateOf(ConstantsSubTab.CONSTANTS) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedPaper by remember { mutableStateOf<HscPaper?>(null) }
@@ -934,12 +933,8 @@ private fun ConstantsRevisionTab() {
         }
 
         when (activeSubTab) {
-            ConstantsSubTab.CONSTANTS, ConstantsSubTab.REFERENCE_VALUES -> {
-                val baseList = if (activeSubTab == ConstantsSubTab.CONSTANTS) {
-                    dataset.constants
-                } else {
-                    dataset.referenceValues
-                }
+            ConstantsSubTab.CONSTANTS -> {
+                val baseList = dataset.constants
 
                 // Paper filter chips: All, Physics 1st, Physics 2nd, Chemistry 1st, Chemistry 2nd, General physics
                 Row(
@@ -1001,29 +996,27 @@ private fun ConstantsRevisionTab() {
                     }
                 }
 
-                // Reliability class filters (only on Constants tab since Ref Values are all Reference & Approx)
-                if (activeSubTab == ConstantsSubTab.CONSTANTS) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        ReliabilityClass.entries.forEach { rel ->
-                            val isOn = rel in selectedReliability
-                            FilterChipBox(
-                                label = rel.shortLabel,
-                                isSelected = isOn,
-                                onClick = {
-                                    selectedReliability = if (isOn && selectedReliability.size > 1) {
-                                        selectedReliability - rel
-                                    } else {
-                                        selectedReliability + rel
-                                    }
+                // Reliability class filters
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ReliabilityClass.entries.forEach { rel ->
+                        val isOn = rel in selectedReliability
+                        FilterChipBox(
+                            label = rel.shortLabel,
+                            isSelected = isOn,
+                            onClick = {
+                                selectedReliability = if (isOn && selectedReliability.size > 1) {
+                                    selectedReliability - rel
+                                } else {
+                                    selectedReliability + rel
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
 
@@ -1032,15 +1025,13 @@ private fun ConstantsRevisionTab() {
                     selectedPaper,
                     selectedChapterKey,
                     selectedReliability,
-                    searchQuery,
-                    activeSubTab
+                    searchQuery
                 ) {
                     baseList.filter { entry ->
                         val matchesPaper = selectedPaper == null || entry.papers.contains(selectedPaper)
                         val matchesChapter = selectedChapterKey == null ||
                             entry.chapters.any { it.key == selectedChapterKey }
-                        val matchesRel = activeSubTab == ConstantsSubTab.REFERENCE_VALUES ||
-                            entry.reliabilityClass in selectedReliability
+                        val matchesRel = entry.reliabilityClass in selectedReliability
                         val q = searchQuery.trim().lowercase()
                         val matchesSearch = q.isEmpty() ||
                             entry.name.lowercase().contains(q) ||
@@ -1062,7 +1053,7 @@ private fun ConstantsRevisionTab() {
                 ) {
                     item {
                         Text(
-                            text = "${filteredEntries.size} ${if (activeSubTab == ConstantsSubTab.CONSTANTS) "CONSTANTS" else "CONDITION-DEPENDENT REFERENCE VALUES"}",
+                            text = "${filteredEntries.size} CONSTANTS",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.4.sp,

@@ -28,6 +28,7 @@ import com.example.domain.QuestionResult
 import com.example.domain.RecentPerformanceDay
 import com.example.domain.SciNotationSubtype
 import com.example.domain.ScientificInputParser
+import com.example.domain.SquaresSubtype
 import com.example.domain.StatsData
 import com.example.domain.WeakSpotsSummary
 import com.example.domain.drills.TopicTagResolver
@@ -119,6 +120,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _customSquareRange = MutableStateFlow(Pair(1, 25))
     val customSquareRange: StateFlow<Pair<Int, Int>> = _customSquareRange.asStateFlow()
 
+    private val _squaresSubtype = MutableStateFlow(SquaresSubtype.ALL)
+    val squaresSubtype: StateFlow<SquaresSubtype> = _squaresSubtype.asStateFlow()
+
     private val _sqrtRangeType = MutableStateFlow("fixed")
     val sqrtRangeType: StateFlow<String> = _sqrtRangeType.asStateFlow()
 
@@ -191,6 +195,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         com.example.data.ReliabilityClass.entries.toSet()
     )
     val constantsSelectedReliability: StateFlow<Set<com.example.data.ReliabilityClass>> = _constantsSelectedReliability.asStateFlow()
+
+    private val _constantsIncludeMath = MutableStateFlow(true)
+    val constantsIncludeMath: StateFlow<Boolean> = _constantsIncludeMath.asStateFlow()
+
+    private val _constantsMathOnly = MutableStateFlow(false)
+    val constantsMathOnly: StateFlow<Boolean> = _constantsMathOnly.asStateFlow()
 
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
@@ -313,6 +323,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setTableRange(range: Pair<Int, Int>) { _tableRange.value = range }
     fun setSquareRangeType(type: String) { _squareRangeType.value = type }
     fun setCustomSquareRange(range: Pair<Int, Int>) { _customSquareRange.value = range }
+    fun setSquaresSubtype(sub: SquaresSubtype) { _squaresSubtype.value = sub }
     fun setSqrtRangeType(type: String) { _sqrtRangeType.value = type }
     fun setCustomSqrtRange(range: Pair<Int, Int>) { _customSqrtRange.value = range }
     fun setFractionDenRange(range: Pair<Int, Int>) { _fractionDenRange.value = range }
@@ -337,6 +348,8 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setConstantsSelectedPapers(papers: Set<com.example.data.HscPaper>) { _constantsSelectedPapers.value = papers }
     fun setConstantsSelectedChapters(chapters: Set<String>) { _constantsSelectedChapters.value = chapters }
     fun setConstantsSelectedReliability(rels: Set<com.example.data.ReliabilityClass>) { _constantsSelectedReliability.value = rels }
+    fun setConstantsIncludeMath(include: Boolean) { _constantsIncludeMath.value = include }
+    fun setConstantsMathOnly(mathOnly: Boolean) { _constantsMathOnly.value = mathOnly }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
 
     fun revealHint() {
@@ -492,7 +505,11 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             }
             "/" -> {
                 val mode = _selectedMode.value
-                val allowSlash = mode == GameMode.FRACTION || mode == GameMode.MATH_CONSTANTS
+                val prob = _currentProblem.value
+                val allowSlash = mode == GameMode.FRACTION ||
+                    mode == GameMode.MATH_CONSTANTS ||
+                    prob?.topicTag?.startsWith("math-constant-") == true ||
+                    (prob?.answerSpec as? AnswerSpec.FractionSpec)?.isFractionToDecimal == false
                 if (allowSlash && !_userInput.value.contains("/") && !_userInput.value.contains(marker) && _userInput.value.isNotEmpty()) {
                     _userInput.value = _userInput.value + "/"
                 }
@@ -778,7 +795,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             GameMode.FACTOR_FINDING -> QuestionGenerator.generateFactorFindingQuestion(_tableRange.value)
             GameMode.SQUARE -> {
                 val range = if (_squareRangeType.value == "fixed") Pair(1, 25) else _customSquareRange.value
-                QuestionGenerator.generateSquareQuestion(range)
+                QuestionGenerator.generateSquaresQuestion(_squaresSubtype.value, range)
             }
             GameMode.SQUARE_ROOT -> {
                 val range = if (_sqrtRangeType.value == "custom") _customSqrtRange.value else null
@@ -840,19 +857,14 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     chapters = _constantsSelectedChapters.value,
                     reliabilityClasses = _constantsSelectedReliability.value,
                     includeAlternateUnits = _constantsIncludeAlternateUnits.value,
-                    missedCounts = missedMap
+                    missedCounts = missedMap,
+                    includeMathConstants = _constantsIncludeMath.value,
+                    mathOnly = _constantsMathOnly.value
                 )
             }
             GameMode.ATOMIC_MASSES -> QuestionGenerator.generateAtomicMassQuestion()
             GameMode.UNIT_CONVERSIONS -> QuestionGenerator.generateUnitConversionQuestion()
             GameMode.MATH_CONSTANTS -> QuestionGenerator.generateMathConstantQuestion()
-            GameMode.REFERENCE_VALUES -> {
-                val missedMap = _allQuestions.value
-                    .filter { !it.isCorrect && it.topicTag.startsWith("reference-") }
-                    .groupingBy { it.topicTag.removePrefix("reference-") }
-                    .eachCount()
-                QuestionGenerator.generateReferenceValueQuestion(missedMap)
-            }
             else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
         }
 
