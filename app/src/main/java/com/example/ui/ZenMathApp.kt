@@ -23,12 +23,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.domain.MistakeSelector
 import com.example.ui.components.MainTab
 import com.example.ui.components.ZenNavbar
 import com.example.ui.screens.GameScreen
 import com.example.ui.screens.GameSetupScreen
 import com.example.ui.screens.HistoryScreen
 import com.example.ui.screens.MainMenuScreen
+import com.example.ui.screens.MistakeReviewScreen
 import com.example.ui.screens.ResultsScreen
 import com.example.ui.screens.RevisionScreen
 import com.example.ui.screens.SettingsScreen
@@ -100,12 +102,23 @@ fun ZenMathApp(
     val recentPerformance by viewModel.recentPerformance.collectAsState()
     val horizonWaveBuckets by viewModel.horizonWaveBuckets.collectAsState()
     val historyFilter by viewModel.historyFilter.collectAsState()
+    val mistakeReviewScope by viewModel.mistakeReviewScope.collectAsState()
+    val mistakeIncludeResolved by viewModel.mistakeIncludeResolved.collectAsState()
+    val lastCompletedSessionId by viewModel.lastCompletedSessionId.collectAsState()
+    val replayQueueSize by viewModel.replayQueueSize.collectAsState()
 
     // Handle Android system back button
     BackHandler(enabled = currentScreen != ZenScreen.MENU) {
         when (currentScreen) {
             ZenScreen.PLAYING -> viewModel.onQuitGame()
             ZenScreen.RESULTS -> viewModel.navigateTo(ZenScreen.MENU)
+            ZenScreen.MISTAKE_REVIEW -> {
+                if (mistakeReviewScope == MistakeReviewScope.SESSION) {
+                    viewModel.navigateTo(ZenScreen.RESULTS)
+                } else {
+                    viewModel.navigateTo(ZenScreen.STATS)
+                }
+            }
             ZenScreen.SETUP, ZenScreen.SPECIAL_MENU -> viewModel.navigateTo(ZenScreen.MENU)
             ZenScreen.REVISION, ZenScreen.STATS, ZenScreen.HISTORY, ZenScreen.SETTINGS -> {
                 viewModel.selectTab(MainTab.PRACTICE)
@@ -218,9 +231,14 @@ fun ZenMathApp(
                 }
 
                 ZenScreen.PLAYING -> {
+                    val effectiveTotalQ = if (selectedMode == com.example.domain.GameMode.MISTAKE_REVIEW) {
+                        replayQueueSize.coerceAtLeast(1)
+                    } else {
+                        settings.totalQuestions
+                    }
                     GameScreen(
                         currentQuestion = currentQuestionIndex,
-                        totalQuestions = settings.totalQuestions,
+                        totalQuestions = effectiveTotalQ,
                         timeRemaining = timeRemaining,
                         currentQuestionElapsedMs = currentQuestionElapsedMs,
                         problem = currentProblem,
@@ -242,14 +260,49 @@ fun ZenMathApp(
                 }
 
                 ZenScreen.RESULTS -> {
+                    val effectiveTotalQ = if (selectedMode == com.example.domain.GameMode.MISTAKE_REVIEW) {
+                        replayQueueSize.coerceAtLeast(questionResults.size)
+                    } else {
+                        settings.totalQuestions
+                    }
                     ResultsScreen(
                         score = score,
-                        totalQuestions = settings.totalQuestions,
+                        totalQuestions = effectiveTotalQ,
                         results = questionResults,
                         onPlayAgain = { viewModel.onPlayAgain() },
                         onMenu = { viewModel.navigateTo(ZenScreen.MENU) },
                         isSpeedRound = selectedMode == com.example.domain.GameMode.SPEED_ROUND,
-                        speedRoundDurationMin = speedRoundDurationMin
+                        speedRoundDurationMin = speedRoundDurationMin,
+                        onViewMistakes = { viewModel.openSessionMistakeReview() }
+                    )
+                }
+
+                ZenScreen.MISTAKE_REVIEW -> {
+                    val isAllTime = mistakeReviewScope == MistakeReviewScope.ALL_TIME
+                    val groups = if (isAllTime) {
+                        MistakeSelector.fromAllRecords(allQuestions, mistakeIncludeResolved)
+                    } else {
+                        MistakeSelector.fromSessionResults(questionResults, selectedMode)
+                    }
+                    MistakeReviewScreen(
+                        groups = groups,
+                        isAllTimeScope = isAllTime,
+                        includeResolved = mistakeIncludeResolved,
+                        onToggleIncludeResolved = { viewModel.setMistakeIncludeResolved(it) },
+                        onBack = {
+                            if (isAllTime) {
+                                viewModel.navigateTo(ZenScreen.STATS)
+                            } else {
+                                viewModel.navigateTo(ZenScreen.RESULTS)
+                            }
+                        },
+                        onStartPractice = { items, scopeLabel ->
+                            viewModel.startMistakeReviewSession(
+                                items = items,
+                                scopeLabel = scopeLabel,
+                                sourceSessionId = if (isAllTime) null else lastCompletedSessionId
+                            )
+                        }
                     )
                 }
 
@@ -268,7 +321,7 @@ fun ZenMathApp(
                         onExportBackup = { viewModel.exportBackup() },
                         onImportBackup = { json -> viewModel.importBackup(json) },
                         weakSpotsSummary = weakSpotsSummary,
-                        onPracticeWeakSpots = { viewModel.startWeakSpotsPractice() }
+                        onPracticeWeakSpots = { viewModel.openAllTimeMistakeReview() }
                     )
                 }
 

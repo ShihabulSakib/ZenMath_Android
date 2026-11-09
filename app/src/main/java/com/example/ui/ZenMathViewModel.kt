@@ -20,6 +20,7 @@ import com.example.domain.GameMode
 import com.example.domain.GameSettings
 import com.example.domain.MathProblem
 import com.example.domain.MemoryDirection
+import com.example.domain.MistakeItem
 import com.example.domain.MonotonicClock
 import com.example.domain.PhSubType
 import com.example.domain.ProblemCodec
@@ -53,10 +54,16 @@ enum class ZenScreen {
     SPECIAL_MENU,
     PLAYING,
     RESULTS,
+    MISTAKE_REVIEW,
     REVISION,
     STATS,
     HISTORY,
     SETTINGS
+}
+
+enum class MistakeReviewScope {
+    SESSION,
+    ALL_TIME
 }
 
 enum class FeedbackType {
@@ -260,6 +267,23 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _historyFilter = MutableStateFlow("all")
     val historyFilter: StateFlow<String> = _historyFilter.asStateFlow()
 
+    // Mistake Review & Replay State
+    private val _mistakeReviewScope = MutableStateFlow(MistakeReviewScope.SESSION)
+    val mistakeReviewScope: StateFlow<MistakeReviewScope> = _mistakeReviewScope.asStateFlow()
+
+    private val _mistakeIncludeResolved = MutableStateFlow(false)
+    val mistakeIncludeResolved: StateFlow<Boolean> = _mistakeIncludeResolved.asStateFlow()
+
+    private val _lastCompletedSessionId = MutableStateFlow<String?>(null)
+    val lastCompletedSessionId: StateFlow<String?> = _lastCompletedSessionId.asStateFlow()
+
+    private val _replayQueueSize = MutableStateFlow(0)
+    val replayQueueSize: StateFlow<Int> = _replayQueueSize.asStateFlow()
+
+    private var activeMistakeQueue: List<MistakeItem> = emptyList()
+    private var activeMistakeScopeLabel: String? = null
+    private var activeMistakeSourceSessionId: String? = null
+
     // Timers
     private var timerJob: Job? = null
     private var questionStartTimeMs: Long = 0L
@@ -351,6 +375,34 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setConstantsIncludeMath(include: Boolean) { _constantsIncludeMath.value = include }
     fun setConstantsMathOnly(mathOnly: Boolean) { _constantsMathOnly.value = mathOnly }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
+    fun setMistakeIncludeResolved(include: Boolean) { _mistakeIncludeResolved.value = include }
+
+    fun openSessionMistakeReview() {
+        stopTimer()
+        _mistakeReviewScope.value = MistakeReviewScope.SESSION
+        _currentScreen.value = ZenScreen.MISTAKE_REVIEW
+    }
+
+    fun openAllTimeMistakeReview() {
+        stopTimer()
+        _mistakeReviewScope.value = MistakeReviewScope.ALL_TIME
+        _currentScreen.value = ZenScreen.MISTAKE_REVIEW
+    }
+
+    fun startMistakeReviewSession(
+        items: List<MistakeItem>,
+        scopeLabel: String,
+        sourceSessionId: String? = null
+    ) {
+        if (items.isEmpty()) return
+        activeMistakeQueue = items
+        activeMistakeScopeLabel = scopeLabel
+        activeMistakeSourceSessionId = sourceSessionId
+        _replayQueueSize.value = items.size
+        _selectedMode.value = GameMode.MISTAKE_REVIEW
+        _mcqEnabled.value = false
+        startGame()
+    }
 
     fun revealHint() {
         _hintRevealed.value = true
@@ -496,7 +548,8 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                             GameMode.COMPOSITE_LOGS_ROOTS,
                             GameMode.CONSTANTS,
                             GameMode.SPEED_ROUND,
-                            GameMode.WEAK_SPOTS
+                            GameMode.WEAK_SPOTS,
+                            GameMode.MISTAKE_REVIEW
                         )
                     ) {
                         _userInput.value = if (current.startsWith("-")) current.drop(1) else "-$current"
@@ -655,7 +708,11 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun advanceToNext() {
-        val totalQ = settingsFlow.value.totalQuestions
+        val totalQ = if (_selectedMode.value == GameMode.MISTAKE_REVIEW) {
+            activeMistakeQueue.size.coerceAtLeast(1)
+        } else {
+            settingsFlow.value.totalQuestions
+        }
         val currentIndex = _currentQuestionIndex.value
 
         if (currentIndex >= totalQ) {
@@ -676,13 +733,16 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         val durationTotal = results.sumOf { it.timeTakenMs }.toDouble() / 1000.0
 
         val sessionId = UUID.randomUUID().toString()
+        _lastCompletedSessionId.value = sessionId
         val nowMs = System.currentTimeMillis()
         val isoDate = DateBucketUtils.nowUtcIso(nowMs)
         val localDate = DateBucketUtils.formatLocalDate(nowMs)
 
+        val isMistakeReview = _selectedMode.value == GameMode.MISTAKE_REVIEW
         val sessionType = when (_selectedMode.value) {
             GameMode.SPEED_ROUND -> SessionEntity.SESSION_TYPE_SPEED_ROUND
             GameMode.WEAK_SPOTS -> SessionEntity.SESSION_TYPE_WEAK_SPOTS
+            GameMode.MISTAKE_REVIEW -> SessionEntity.SESSION_TYPE_MISTAKE_REVIEW
             else -> SessionEntity.SESSION_TYPE_NORMAL
         }
         val finalDuration = if (_selectedMode.value == GameMode.SPEED_ROUND) {
@@ -698,10 +758,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             totalQuestions = totalQ,
             correct = correctCount,
             avgTimeMs = avgTimeMs,
-            difficulty = _difficulty.value.key,
+            difficulty = if (isMistakeReview) "mixed" else _difficulty.value.key,
             duration = finalDuration,
             localDate = localDate,
-            sessionType = sessionType
+            sessionType = sessionType,
+            sourceSessionId = if (isMistakeReview) activeMistakeSourceSessionId else null,
+            scopeLabel = if (isMistakeReview) activeMistakeScopeLabel.orEmpty() else ""
         )
 
         val questionEntities = results.map { r ->
@@ -715,7 +777,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 timeMs = r.timeTakenMs,
                 isCorrect = r.isCorrect,
                 mode = _selectedMode.value.id,
-                difficulty = _difficulty.value.key,
+                difficulty = if (isMistakeReview) "mixed" else _difficulty.value.key,
                 questionText = r.questionText,
                 topicTag = r.topicTag,
                 hintUsed = r.hintUsed,
@@ -733,8 +795,8 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
         preferencesManager.incrementDailyProgress()
 
-        // Adaptive Difficulty auto-escalation and step-down
-        if (settingsFlow.value.adaptiveDifficulty && totalQ > 0) {
+        // Adaptive Difficulty auto-escalation and step-down (skipped for Mistake Review)
+        if (!isMistakeReview && settingsFlow.value.adaptiveDifficulty && totalQ > 0) {
             val accuracy = correctCount.toDouble() / totalQ.toDouble()
             applyAdaptiveDifficulty(accuracy)
         }
@@ -768,6 +830,17 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     private fun generateNextQuestion(index: Int) {
         val outerMode = _selectedMode.value
+        if (outerMode == GameMode.MISTAKE_REVIEW && activeMistakeQueue.isNotEmpty()) {
+            val item = activeMistakeQueue.getOrElse(index - 1) { activeMistakeQueue.last() }
+            currentEffectiveDrillMode = item.drillMode
+            _currentProblem.value = item.problem.copy(mcqOptions = null)
+            _userInput.value = ""
+            _feedback.value = FeedbackType.NONE
+            _hintRevealed.value = false
+            _waitingForManualNext.value = false
+            isProcessingAnswer = false
+            return
+        }
         val effectiveMode = when (outerMode) {
             GameMode.SPEED_ROUND -> {
                 val pool = _speedRoundTopics.value.ifEmpty { setOf(GameMode.ADDITION) }

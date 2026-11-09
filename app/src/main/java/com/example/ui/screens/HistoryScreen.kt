@@ -70,7 +70,8 @@ private val MODE_FILTERS = listOf(
     "composite-logs-roots",
     "constants",
     "speed-round",
-    "weak-spots"
+    "weak-spots",
+    "mistake-review"
 )
 
 @Composable
@@ -210,13 +211,26 @@ fun HistoryScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = session.mode.replace("-", " ").replaceFirstChar { it.uppercase() },
+                                        text = if (session.sessionType == SessionEntity.SESSION_TYPE_MISTAKE_REVIEW) {
+                                            "Mistake Review"
+                                        } else {
+                                            session.mode.replace("-", " ").replaceFirstChar { it.uppercase() }
+                                        },
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.textMain
                                     )
+                                    session.scopeLabel.takeIf { it.isNotBlank() }?.let { scope ->
+                                        Text(
+                                            text = scope,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.primary,
+                                            modifier = Modifier.padding(top = 1.dp)
+                                        )
+                                    }
                                     Text(
                                         text = formattedDate,
                                         fontSize = 11.sp,

@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Speed
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.QuestionResult
+import com.example.domain.drills.TopicTagResolver
 import com.example.ui.theme.ZenTheme
 
 @Composable
@@ -47,7 +51,8 @@ fun ResultsScreen(
     onMenu: () -> Unit,
     modifier: Modifier = Modifier,
     isSpeedRound: Boolean = false,
-    speedRoundDurationMin: Int = 1
+    speedRoundDurationMin: Int = 1,
+    onViewMistakes: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
 
@@ -62,6 +67,7 @@ fun ResultsScreen(
     } else {
         0f
     }
+    val mistakeCount = results.count { !it.isCorrect }
 
     Column(
         modifier = modifier
@@ -71,11 +77,11 @@ fun ResultsScreen(
             .testTag("results_screen"),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
+        // 1. Fixed Top Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(vertical = 14.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -88,186 +94,231 @@ fun ResultsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.weight(0.5f))
-
-        // Big Score
+        // 2. Scrollable Middle Content
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .testTag("results_scroll"),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "PERFORMANCE",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-                color = colors.textSecondary.copy(alpha = 0.6f)
-            )
-
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = score.toString(),
-                    fontSize = 72.sp,
-                    fontWeight = FontWeight.Black,
-                    fontFamily = FontFamily.Monospace,
-                    color = colors.textMain,
-                    lineHeight = 72.sp
-                )
-                Text(
-                    text = " / $effectiveTotal",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    color = colors.textSecondary.copy(alpha = 0.4f),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Accuracy Pill
-            val pillShape = RoundedCornerShape(12.dp)
-            Box(
-                modifier = Modifier
-                    .clip(pillShape)
-                    .background(colors.primary.copy(alpha = 0.08f))
-                    .border(1.dp, colors.primary.copy(alpha = 0.15f), pillShape)
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            // Big Score
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(bottom = 20.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Stars,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(16.dp)
+                Text(
+                    text = "PERFORMANCE",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp,
+                    color = colors.textSecondary.copy(alpha = 0.6f)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = score.toString(),
+                        fontSize = 68.sp,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = colors.textMain,
+                        lineHeight = 68.sp
                     )
                     Text(
-                        text = "${percentage.toInt()}% ACCURACY",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                        color = colors.primary
+                        text = " / $effectiveTotal",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = colors.textSecondary.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-            }
-        }
 
-        // Two Stat Cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (isSpeedRound) {
-                StatCard(
-                    icon = Icons.Default.Speed,
-                    title = "QUESTIONS / MIN",
-                    value = String.format(java.util.Locale.US, "%.1f", qpm),
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                // Total Time Card
-                StatCard(
-                    icon = Icons.Default.Timer,
-                    title = "TOTAL TIME",
-                    value = "${totalTime}s",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            // Avg Time Card
-            StatCard(
-                icon = Icons.Default.Speed,
-                title = "AVG. TIME",
-                value = String.format(java.util.Locale.US, "%.1fs", avgTime),
-                modifier = Modifier.weight(1f)
-            )
-        }
+                Spacer(modifier = Modifier.height(10.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Per-topic breakdown card
-        if (results.isNotEmpty()) {
-            val byTopic = results.groupBy { it.topicTag }
-            if (isSpeedRound || byTopic.size > 1) {
-                val cardShape = RoundedCornerShape(16.dp)
+                // Accuracy Pill
+                val pillShape = RoundedCornerShape(12.dp)
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(cardShape)
-                        .background(colors.card)
-                        .border(1.dp, colors.cardBorder, cardShape)
-                        .padding(14.dp)
-                        .testTag("topic_breakdown_card")
+                        .clip(pillShape)
+                        .background(colors.primary.copy(alpha = 0.08f))
+                        .border(1.dp, colors.primary.copy(alpha = 0.15f), pillShape)
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "TOPIC BREAKDOWN",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp,
-                            color = colors.textSecondary.copy(alpha = 0.7f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Stars,
+                            contentDescription = null,
+                            tint = colors.primary,
+                            modifier = Modifier.size(16.dp)
                         )
-                        byTopic.entries.take(5).forEach { (tag, list) ->
-                            val c = list.count { it.isCorrect }
-                            val t = list.size
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = tag.replace("-", " ").replaceFirstChar { it.uppercase() },
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.textMain
-                                )
-                                Text(
-                                    text = "$c/$t (${(c * 100) / t}%)",
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.primary
-                                )
+                        Text(
+                            text = "${percentage.toInt()}% ACCURACY",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                            color = colors.primary
+                        )
+                    }
+                }
+            }
+
+            // Two Stat Cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (isSpeedRound) {
+                    StatCard(
+                        icon = Icons.Default.Speed,
+                        title = "QUESTIONS / MIN",
+                        value = String.format(java.util.Locale.US, "%.1f", qpm),
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    StatCard(
+                        icon = Icons.Default.Timer,
+                        title = "TOTAL TIME",
+                        value = "${totalTime}s",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                StatCard(
+                    icon = Icons.Default.Speed,
+                    title = "AVG. TIME",
+                    value = String.format(java.util.Locale.US, "%.1fs", avgTime),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Per-topic breakdown card (shows all topics sorted by lowest accuracy first)
+            if (results.isNotEmpty()) {
+                val byTopic = results.groupBy { it.topicTag }
+                    .entries
+                    .sortedBy { (_, list) ->
+                        val c = list.count { it.isCorrect }
+                        c.toDouble() / list.size.coerceAtLeast(1)
+                    }
+                if (isSpeedRound || byTopic.size > 1) {
+                    val cardShape = RoundedCornerShape(16.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(cardShape)
+                            .background(colors.card)
+                            .border(1.dp, colors.cardBorder, cardShape)
+                            .padding(14.dp)
+                            .testTag("topic_breakdown_card")
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "TOPIC BREAKDOWN (${byTopic.size})",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.2.sp,
+                                color = colors.textSecondary.copy(alpha = 0.7f)
+                            )
+                            byTopic.forEach { (tag, list) ->
+                                val c = list.count { it.isCorrect }
+                                val t = list.size
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = TopicTagResolver.friendlyTopicLabel(tag),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textMain,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(
+                                        text = "$c/$t (${(c * 100) / t}%)",
+                                        fontSize = 12.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (c == t) colors.correct else if (c * 2 < t) colors.incorrect else colors.primary
+                                    )
+                                }
                             }
                         }
                     }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        // Question results mini bar visualization
-        if (results.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape)
-                    .background(colors.cardBorder),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                results.forEach { r ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(6.dp)
-                            .background(if (r.isCorrect) colors.correct else colors.incorrect.copy(alpha = 0.4f))
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
+
+            // Question results mini bar visualization
+            if (results.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(colors.cardBorder),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    results.forEach { r ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(6.dp)
+                                .background(if (r.isCorrect) colors.correct else colors.incorrect.copy(alpha = 0.4f))
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Buttons
+        // 3. Pinned Bottom Action Bar
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 28.dp),
+                .padding(top = 8.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            if (mistakeCount > 0) {
+                OutlinedButton(
+                    onClick = onViewMistakes,
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, colors.incorrect.copy(alpha = 0.6f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = colors.incorrect.copy(alpha = 0.08f),
+                        contentColor = colors.incorrect
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("view_mistakes_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ErrorOutline,
+                        contentDescription = null,
+                        tint = colors.incorrect,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "VIEW MISTAKES ($mistakeCount)",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.3.sp,
+                        color = colors.incorrect
+                    )
+                }
+            }
+
             Button(
                 onClick = onPlayAgain,
                 colors = ButtonDefaults.buttonColors(
@@ -277,7 +328,7 @@ fun ResultsScreen(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(52.dp)
                     .testTag("retry_session_btn")
             ) {
                 Icon(
@@ -303,7 +354,7 @@ fun ResultsScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(52.dp)
                     .testTag("menu_btn")
             ) {
                 Icon(
