@@ -193,9 +193,9 @@ class ExampleRobolectricTest {
         v1Db.close()
         helper.close()
 
-        // 2. Open with Room at version 2 using ZenMathDatabase.MIGRATION_1_2 (no destructive fallback)
+        // 2. Open with Room at version 3 using ZenMathDatabase.MIGRATION_1_2 and MIGRATION_2_3 (no destructive fallback)
         val migratedRoomDb = Room.databaseBuilder(context, ZenMathDatabase::class.java, dbName)
-            .addMigrations(ZenMathDatabase.MIGRATION_1_2)
+            .addMigrations(ZenMathDatabase.MIGRATION_1_2, ZenMathDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
 
@@ -213,6 +213,8 @@ class ExampleRobolectricTest {
             assertEquals("20", q.correctAnswer)
             assertEquals(1400L, q.timeMs)
             assertEquals("addition", q.topicTag)
+            assertEquals("addition", q.drillMode)
+            assertEquals("typed", q.answerFormat)
             assertTrue(q.questionText.contains("12"))
             assertFalse(q.hintUsed)
         }
@@ -222,7 +224,94 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `importBackupJson imports v1 backup without v2 fields and exports v2 backup cleanly`() {
+    fun `Room MIGRATION_2_3 backfills drillMode from mode and topicTag for speed round rows`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbName = "test_zenmath_migration_v2_v3.db"
+        context.deleteDatabase(dbName)
+
+        val v2Callback = object : SupportSQLiteOpenHelper.Callback(2) {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `sessions` (
+                        `id` TEXT NOT NULL,
+                        `date` TEXT NOT NULL,
+                        `mode` TEXT NOT NULL,
+                        `totalQuestions` INTEGER NOT NULL,
+                        `correct` INTEGER NOT NULL,
+                        `avgTimeMs` REAL NOT NULL,
+                        `difficulty` TEXT NOT NULL,
+                        `duration` REAL NOT NULL,
+                        `localDate` TEXT NOT NULL,
+                        `sessionType` TEXT NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `questions` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `sessionId` TEXT NOT NULL,
+                        `num1` REAL NOT NULL,
+                        `num2` REAL NOT NULL,
+                        `operation` TEXT NOT NULL,
+                        `correctAnswer` TEXT NOT NULL,
+                        `userAnswer` TEXT,
+                        `timeMs` INTEGER NOT NULL,
+                        `isCorrect` INTEGER NOT NULL,
+                        `mode` TEXT NOT NULL,
+                        `difficulty` TEXT NOT NULL,
+                        `questionText` TEXT NOT NULL,
+                        `topicTag` TEXT NOT NULL,
+                        `hintUsed` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+        }
+
+        val config = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(dbName)
+            .callback(v2Callback)
+            .build()
+        val helper = FrameworkSQLiteOpenHelperFactory().create(config)
+        val v2Db = helper.writableDatabase
+        v2Db.execSQL(
+            "INSERT INTO `sessions` VALUES ('sr_1', '2026-10-25T10:00:00.000Z', 'speed-round', 2, 1, 1800.0, 'medium', 60.0, '2026-10-25', 'speed_round')"
+        )
+        v2Db.execSQL(
+            "INSERT INTO `questions` (`sessionId`, `num1`, `num2`, `operation`, `correctAnswer`, `userAnswer`, `timeMs`, `isCorrect`, `mode`, `difficulty`, `questionText`, `topicTag`, `hintUsed`) VALUES ('sr_1', 2.0, -4.0, 'pH', '3.7', '4.2', 2200, 0, 'speed-round', 'medium', '[H+] = 2×10^-4 M, pH = ?', 'ph-sci-to-ph', 0)"
+        )
+        v2Db.execSQL(
+            "INSERT INTO `questions` (`sessionId`, `num1`, `num2`, `operation`, `correctAnswer`, `userAnswer`, `timeMs`, `isCorrect`, `mode`, `difficulty`, `questionText`, `topicTag`, `hintUsed`) VALUES ('sr_1', 3.0, 8.0, 'Fraction to Decimal', '0.375', '0.375', 1400, 1, 'fraction', 'medium', '3/8', 'fraction', 0)"
+        )
+        v2Db.close()
+        helper.close()
+
+        val migratedRoomDb = Room.databaseBuilder(context, ZenMathDatabase::class.java, dbName)
+            .addMigrations(ZenMathDatabase.MIGRATION_2_3)
+            .allowMainThreadQueries()
+            .build()
+
+        runBlocking {
+            val questions = migratedRoomDb.dao().getQuestionsForSession("sr_1")
+            assertEquals(2, questions.size)
+            val phQ = questions.first { it.topicTag == "ph-sci-to-ph" }
+            val fracQ = questions.first { it.topicTag == "fraction" }
+            assertEquals("ph-poh", phQ.drillMode)
+            assertEquals("fraction", fracQ.drillMode)
+            assertEquals("typed", phQ.answerFormat)
+        }
+
+        migratedRoomDb.close()
+        context.deleteDatabase(dbName)
+    }
+
+    @Test
+    fun `importBackupJson imports v1 backup without v2 fields and exports v3 backup cleanly`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val roomDb = Room.inMemoryDatabaseBuilder(context, ZenMathDatabase::class.java)
             .allowMainThreadQueries()
@@ -282,12 +371,12 @@ class ExampleRobolectricTest {
             assertEquals(1, weakSpots.worstTopics.size)
             assertEquals("multiplication", weakSpots.worstTopics[0].key)
 
-            // Verify v2 export & re-import round-trip
-            val exportedV2 = repo.exportBackupJson()
-            assertTrue(exportedV2.contains("\"version\": 2"))
+            // Verify v3 export & re-import round-trip
+            val exportedV3 = repo.exportBackupJson()
+            assertTrue(exportedV3.contains("\"version\": 3"))
             repo.clearAllData()
             assertEquals(0, roomDb.dao().getAllSessionsList().size)
-            repo.importBackupJson(exportedV2)
+            repo.importBackupJson(exportedV3)
             assertEquals(1, roomDb.dao().getAllSessionsList().size)
             assertEquals(1, roomDb.dao().getAllQuestionsList().size)
         }

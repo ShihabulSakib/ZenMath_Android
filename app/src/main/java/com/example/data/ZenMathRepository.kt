@@ -7,6 +7,7 @@ import com.example.domain.RecentPerformanceDay
 import com.example.domain.StatsData
 import com.example.domain.WeakSpotEntry
 import com.example.domain.WeakSpotsSummary
+import com.example.domain.drills.TopicTagResolver
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,6 +30,11 @@ class ZenMathRepository(
     suspend fun getAllQuestions(): List<QuestionRecordEntity> = dao.getAllQuestions()
 
     fun getAllQuestionsFlow(): Flow<List<QuestionRecordEntity>> = dao.getAllQuestionsFlow()
+
+    suspend fun getMistakeRecords(): List<QuestionRecordEntity> = dao.getMistakeRecords()
+
+    suspend fun getQuestionsBySessionIds(sessionIds: List<String>): List<QuestionRecordEntity> =
+        if (sessionIds.isEmpty()) emptyList() else dao.getQuestionsBySessionIds(sessionIds)
 
     suspend fun insertSession(session: SessionEntity, questions: List<QuestionRecordEntity>) {
         dao.insertSessionWithQuestions(session, questions)
@@ -168,11 +174,16 @@ class ZenMathRepository(
             val errorRate = if (attempts > 0) (errors.toDouble() / attempts.toDouble()) * 100.0 else 0.0
             val avgTimeMs = if (attempts > 0) records.sumOf { it.timeMs }.toDouble() / attempts.toDouble() else 0.0
             val latest = records.maxByOrNull { it.id } ?: records.first()
-            WeakSpotEntry(
-                key = tag,
-                displayLabel = tag.replace("_", " ").replace("-", " ").replaceFirstChar { it.uppercase() },
+            val resolvedMode = TopicTagResolver.resolveDrillMode(
                 topicTag = tag,
                 modeId = latest.mode,
+                drillModeId = latest.drillMode
+            )
+            WeakSpotEntry(
+                key = tag,
+                displayLabel = TopicTagResolver.friendlyTopicLabel(tag),
+                topicTag = tag,
+                modeId = resolvedMode.id,
                 attempts = attempts,
                 errors = errors,
                 errorRate = errorRate,
@@ -200,11 +211,16 @@ class ZenMathRepository(
             val avgTimeMs = if (attempts > 0) records.sumOf { it.timeMs }.toDouble() / attempts.toDouble() else 0.0
             val latest = records.maxByOrNull { it.id } ?: records.first()
             val tag = latest.topicTag.ifBlank { latest.mode.ifBlank { "general" } }
+            val resolvedMode = TopicTagResolver.resolveDrillMode(
+                topicTag = tag,
+                modeId = latest.mode,
+                drillModeId = latest.drillMode
+            )
             WeakSpotEntry(
                 key = qText,
                 displayLabel = qText,
                 topicTag = tag,
-                modeId = latest.mode,
+                modeId = resolvedMode.id,
                 attempts = attempts,
                 errors = errors,
                 errorRate = errorRate,
@@ -228,7 +244,7 @@ class ZenMathRepository(
 
         val root = JSONObject()
         root.put("type", "zenmath-backup")
-        root.put("version", 2)
+        root.put("version", 3)
         root.put("exportedAt", DateBucketUtils.nowUtcIso())
 
         val sessionsArray = JSONArray()
@@ -245,6 +261,8 @@ class ZenMathRepository(
                 put("avgTimeMs", s.avgTimeMs)
                 put("difficulty", s.difficulty)
                 put("duration", s.duration)
+                put("sourceSessionId", s.sourceSessionId ?: JSONObject.NULL)
+                put("scopeLabel", s.scopeLabel)
             }
             sessionsArray.put(sObj)
         }
@@ -252,6 +270,9 @@ class ZenMathRepository(
 
         val questionsArray = JSONArray()
         for (q in questions) {
+            val resolvedDrillMode = q.drillMode.ifBlank {
+                TopicTagResolver.resolveDrillMode(q.topicTag, q.mode).id
+            }
             val qObj = JSONObject().apply {
                 put("id", q.id)
                 put("sessionId", q.sessionId)
@@ -267,6 +288,9 @@ class ZenMathRepository(
                 put("questionText", q.questionText)
                 put("topicTag", q.topicTag)
                 put("hintUsed", q.hintUsed)
+                put("drillMode", resolvedDrillMode)
+                put("answerFormat", q.answerFormat.ifBlank { "typed" })
+                put("problemJson", q.problemJson)
             }
             questionsArray.put(qObj)
         }
@@ -276,15 +300,14 @@ class ZenMathRepository(
     }
 
     /**
-     * Imports a JSON backup file. Supports both legacy v1 backup files (where `localDate`,
-     * `sessionType`, `questionText`, `topicTag`, `hintUsed` are omitted) and v2 backup files.
+     * Imports a JSON backup file. Supports legacy v1, v2, and v3 backup files.
      */
     suspend fun importBackupJson(jsonStr: String) {
         val root = JSONObject(jsonStr)
         val version = root.optInt("version", 1)
         val type = root.optString("type", "")
         val hasSessionsOrQuestions = root.has("sessions") || root.has("questions")
-        if ((type.isNotEmpty() && type != "zenmath-backup") || !hasSessionsOrQuestions || version !in 1..2) {
+        if ((type.isNotEmpty() && type != "zenmath-backup") || !hasSessionsOrQuestions || version !in 1..3) {
             throw IllegalArgumentException("Invalid backup file format.")
         }
 
@@ -300,6 +323,8 @@ class ZenMathRepository(
             }
             val sessionType = s.optString("sessionType", SessionEntity.SESSION_TYPE_NORMAL)
                 .ifBlank { SessionEntity.SESSION_TYPE_NORMAL }
+            val sourceSessionId = if (s.isNull("sourceSessionId")) null else s.optString("sourceSessionId").ifBlank { null }
+            val scopeLabel = s.optString("scopeLabel", "")
 
             sessionsList.add(
                 SessionEntity(
@@ -312,7 +337,9 @@ class ZenMathRepository(
                     difficulty = s.getString("difficulty"),
                     duration = s.getDouble("duration"),
                     localDate = localDate,
-                    sessionType = sessionType
+                    sessionType = sessionType,
+                    sourceSessionId = sourceSessionId,
+                    scopeLabel = scopeLabel
                 )
             )
         }
@@ -332,6 +359,11 @@ class ZenMathRepository(
             val questionText = q.optString("questionText", "").ifBlank { fallbackQuestionText }
             val topicTag = q.optString("topicTag", "").ifBlank { mode }
             val hintUsed = q.optBoolean("hintUsed", false)
+            val drillMode = q.optString("drillMode", "").ifBlank {
+                TopicTagResolver.resolveDrillMode(topicTag = topicTag, modeId = mode).id
+            }
+            val answerFormat = q.optString("answerFormat", "typed").ifBlank { "typed" }
+            val problemJson = q.optString("problemJson", "")
 
             questionsList.add(
                 QuestionRecordEntity(
@@ -348,7 +380,10 @@ class ZenMathRepository(
                     difficulty = q.optString("difficulty", "medium"),
                     questionText = questionText,
                     topicTag = topicTag,
-                    hintUsed = hintUsed
+                    hintUsed = hintUsed,
+                    drillMode = drillMode,
+                    answerFormat = answerFormat,
+                    problemJson = problemJson
                 )
             )
         }

@@ -14,11 +14,14 @@ data class SessionEntity(
     val difficulty: String,
     val duration: Double,
     val localDate: String = "",
-    val sessionType: String = SESSION_TYPE_NORMAL
+    val sessionType: String = SESSION_TYPE_NORMAL,
+    val sourceSessionId: String? = null,
+    val scopeLabel: String = ""
 ) {
     companion object {
         const val SESSION_TYPE_NORMAL = "normal"
         const val SESSION_TYPE_SPEED_ROUND = "speed_round"
         const val SESSION_TYPE_WEAK_SPOTS = "weak_spots"
+        const val SESSION_TYPE_MISTAKE_REVIEW = "mistake_review"
     }
 }

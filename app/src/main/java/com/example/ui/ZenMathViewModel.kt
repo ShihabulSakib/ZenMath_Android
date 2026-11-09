@@ -22,6 +22,7 @@ import com.example.domain.MathProblem
 import com.example.domain.MemoryDirection
 import com.example.domain.MonotonicClock
 import com.example.domain.PhSubType
+import com.example.domain.ProblemCodec
 import com.example.domain.QuestionGenerator
 import com.example.domain.QuestionResult
 import com.example.domain.RecentPerformanceDay
@@ -29,6 +30,7 @@ import com.example.domain.SciNotationSubtype
 import com.example.domain.ScientificInputParser
 import com.example.domain.StatsData
 import com.example.domain.WeakSpotsSummary
+import com.example.domain.drills.TopicTagResolver
 import com.example.notifications.NotificationScheduler
 import com.example.ui.components.MainTab
 import kotlinx.coroutines.Job
@@ -253,6 +255,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private var questionStartTimeMs: Long = 0L
     private var sessionStartTimeMs: Long = 0L
     private var isProcessingAnswer: Boolean = false
+    private var currentEffectiveDrillMode: GameMode = GameMode.ADDITION
 
     init {
         // Collect sessions and update stats
@@ -602,6 +605,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         }
         val elapsedSec = ((elapsedMs + 500L) / 1000L).toInt().coerceAtLeast(1)
 
+        val resolvedDrillMode = TopicTagResolver.resolveDrillMode(
+            topicTag = problem.topicTag,
+            modeId = currentEffectiveDrillMode.id
+        ).id
+        val answerFormat = if (problem.mcqOptions != null || problem.answerSpec is AnswerSpec.Choice) "mcq" else "typed"
+        val encodedProblem = ProblemCodec.encode(problem)
+
         val result = QuestionResult(
             num1 = problem.num1,
             num2 = problem.num2,
@@ -616,7 +626,10 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             topicTag = problem.topicTag,
             hintUsed = _hintRevealed.value,
             solutionSteps = problem.solutionSteps,
-            unitText = problem.unitText
+            unitText = problem.unitText,
+            drillModeId = resolvedDrillMode,
+            answerFormat = answerFormat,
+            problemJson = encodedProblem
         )
         _questionResults.value = _questionResults.value + result
         if (isCorrect) {
@@ -688,7 +701,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 difficulty = _difficulty.value.key,
                 questionText = r.questionText,
                 topicTag = r.topicTag,
-                hintUsed = r.hintUsed
+                hintUsed = r.hintUsed,
+                drillMode = r.drillModeId.ifBlank {
+                    TopicTagResolver.resolveDrillMode(r.topicTag, _selectedMode.value.id).id
+                },
+                answerFormat = r.answerFormat.ifBlank { "typed" },
+                problemJson = r.problemJson
             )
         }
 
@@ -741,6 +759,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             GameMode.WEAK_SPOTS -> pickWeakSpotMode()
             else -> outerMode
         }
+        currentEffectiveDrillMode = effectiveMode
         val diff = _difficulty.value
         val digitsVal = _digits.value
 
@@ -862,27 +881,12 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                 GameMode.PERCENTAGE
             ).random()
         }
-        val tag = worst.random().key.lowercase()
-        return when {
-            tag.startsWith("memory") -> GameMode.MEMORY_TABLES
-            tag.startsWith("sci") -> GameMode.SCIENTIFIC_NOTATION
-            tag.startsWith("ph") -> GameMode.PH_POH
-            tag.startsWith("composite") -> GameMode.COMPOSITE_LOGS_ROOTS
-            tag.startsWith("cube") || tag.startsWith("powers") -> GameMode.CUBES_AND_POWERS
-            tag.startsWith("constant") -> GameMode.CONSTANTS
-            tag.contains("fraction") -> GameMode.FRACTION
-            tag.contains("percentage") -> GameMode.PERCENTAGE
-            tag.contains("square-root") -> GameMode.SQUARE_ROOT
-            tag.contains("square") -> GameMode.SQUARE
-            tag.contains("approximation") -> GameMode.APPROXIMATION
-            tag.contains("series") -> GameMode.NUMBER_SERIES
-            tag.contains("ratio") -> GameMode.RATIO
-            tag.contains("chain") -> GameMode.CHAIN_CALCULATION
-            tag.contains("sub") -> GameMode.SUBTRACTION
-            tag.contains("mul") -> GameMode.MULTIPLICATION
-            tag.contains("div") -> GameMode.DIVISION
-            else -> GameMode.MIXED
-        }
+        val chosen = worst.random()
+        val resolved = TopicTagResolver.resolveDrillMode(
+            topicTag = chosen.topicTag.ifBlank { chosen.key },
+            modeId = chosen.modeId
+        )
+        return TopicTagResolver.canonicalActiveMode(resolved)
     }
 
     fun onQuitGame() {

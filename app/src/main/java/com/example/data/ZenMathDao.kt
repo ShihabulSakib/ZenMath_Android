@@ -45,6 +45,12 @@ interface ZenMathDao {
     @Query("SELECT * FROM questions ORDER BY id DESC")
     fun getAllQuestionsFlow(): Flow<List<QuestionRecordEntity>>
 
+    @Query("SELECT * FROM questions WHERE isCorrect = 0 OR hintUsed = 1 ORDER BY id DESC")
+    suspend fun getMistakeRecords(): List<QuestionRecordEntity>
+
+    @Query("SELECT * FROM questions WHERE sessionId IN (:sessionIds)")
+    suspend fun getQuestionsBySessionIds(sessionIds: List<String>): List<QuestionRecordEntity>
+
     @Query("DELETE FROM sessions")
     suspend fun clearSessions()
 

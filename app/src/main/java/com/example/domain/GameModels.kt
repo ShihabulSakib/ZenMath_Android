@@ -17,7 +17,9 @@ enum class GameMode(
     val displayName: String,
     val defaultSymbol: String,
     val usesDifficulty: Boolean = true,
-    val supportsMcqOption: Boolean = false
+    val supportsMcqOption: Boolean = false,
+    val isLegacy: Boolean = false,
+    val isHiddenFromHome: Boolean = false
 ) {
     ADDITION("addition", "Addition", "+", usesDifficulty = true),
     SUBTRACTION("subtraction", "Subtraction", "−", usesDifficulty = true),
@@ -26,10 +28,10 @@ enum class GameMode(
     MIXED("mixed", "Mixed Operations", "shuffle", usesDifficulty = true),
     MULTIPLICATION_TABLE("multiplication-table", "Tables", "grid_on", usesDifficulty = false),
     FACTOR_FINDING("factor-finding", "Factors", "exposure", usesDifficulty = false),
-    SQUARE("square", "Squares", "x²", usesDifficulty = false),
+    SQUARE("square", "Squares", "x²", usesDifficulty = false, supportsMcqOption = true),
     FRACTION("fraction", "Fractions", "½", usesDifficulty = false),
     PERCENTAGE("percentage", "Percent", "%", usesDifficulty = true),
-    SQUARE_ROOT("square-root", "Roots", "√", usesDifficulty = true),
+    SQUARE_ROOT("square-root", "Roots", "√", usesDifficulty = true, supportsMcqOption = true, isLegacy = true, isHiddenFromHome = true),
     APPROXIMATION("approximation", "Estimation", "≈", usesDifficulty = true, supportsMcqOption = true),
     NUMBER_SERIES("number-series", "Series", "linear_scale", usesDifficulty = true),
     RATIO("ratio", "Ratio", "::", usesDifficulty = true),
@@ -44,10 +46,11 @@ enum class GameMode(
     CONSTANTS("constants", "Constants", "kₑ", usesDifficulty = false, supportsMcqOption = true),
     ATOMIC_MASSES("atomic-masses", "Atomic Masses", "Mᵣ", usesDifficulty = false, supportsMcqOption = true),
     UNIT_CONVERSIONS("unit-conversions", "Conversions", "⇄", usesDifficulty = false, supportsMcqOption = true),
-    MATH_CONSTANTS("math-constants", "Math Constants", "π", usesDifficulty = false, supportsMcqOption = true),
-    REFERENCE_VALUES("reference-values", "Ref Values", "ref", usesDifficulty = false, supportsMcqOption = true),
+    MATH_CONSTANTS("math-constants", "Math Constants", "π", usesDifficulty = false, supportsMcqOption = true, isLegacy = true, isHiddenFromHome = true),
+    REFERENCE_VALUES("reference-values", "Ref Values", "ref", usesDifficulty = false, supportsMcqOption = true, isLegacy = true, isHiddenFromHome = true),
     SPEED_ROUND("speed-round", "Speed Round", "⚡", usesDifficulty = false, supportsMcqOption = true),
-    WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false);
+    WEAK_SPOTS("weak-spots", "Weak Spots", "🎯", usesDifficulty = false, supportsMcqOption = false, isHiddenFromHome = true),
+    MISTAKE_REVIEW("mistake-review", "Mistake Review", "↺", usesDifficulty = false, supportsMcqOption = false, isHiddenFromHome = true);
 
     val supportsMcq: Boolean get() = supportsMcqOption
 
@@ -104,6 +107,13 @@ enum class CubesPowersSubtype(val key: String, val label: String) {
     }
 }
 
+enum class SquaresSubtype(val key: String, val label: String) {
+    ALL("all", "All Subtypes"),
+    SQUARES("squares", "Squares (n²)"),
+    PERFECT_ROOTS("perfect_roots", "Perfect Square Roots (√n²)"),
+    IRRATIONAL_ROOTS("irrational_roots", "Square Roots (√2 – √10)")
+}
+
 /**
  * Monotonic millisecond clock (Section 1.7).
  * Uses `System.nanoTime() / 1_000_000L` which is guaranteed monotonic across Android and JVM tests.
@@ -126,7 +136,10 @@ data class QuestionResult(
     val topicTag: String = "",
     val hintUsed: Boolean = false,
     val solutionSteps: List<String> = emptyList(),
-    val unitText: String? = null
+    val unitText: String? = null,
+    val drillModeId: String = "",
+    val answerFormat: String = "typed",
+    val problemJson: String = ""
 )
 
 data class ModeStats(

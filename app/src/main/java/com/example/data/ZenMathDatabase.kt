@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.domain.DateBucketUtils
+import com.example.domain.drills.TopicTagResolver
 import java.util.TimeZone
 
 @Database(
     entities = [SessionEntity::class, QuestionRecordEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class ZenMathDatabase : RoomDatabase() {
@@ -139,6 +140,53 @@ abstract class ZenMathDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Real Room migration from schema v2 to v3:
+         * - Adds `sourceSessionId` and `scopeLabel` to `sessions`.
+         * - Adds `drillMode`, `answerFormat`, and `problemJson` to `questions`, backfilling
+         *   `drillMode` from `mode` for concrete drills or via [TopicTagResolver] for compound modes.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `sessions` ADD COLUMN `sourceSessionId` TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE `sessions` ADD COLUMN `scopeLabel` TEXT NOT NULL DEFAULT ''")
+
+                db.execSQL("ALTER TABLE `questions` ADD COLUMN `drillMode` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `questions` ADD COLUMN `answerFormat` TEXT NOT NULL DEFAULT 'typed'")
+                db.execSQL("ALTER TABLE `questions` ADD COLUMN `problemJson` TEXT NOT NULL DEFAULT ''")
+
+                // Direct SQL backfill for non-compound modes
+                db.execSQL(
+                    """
+                    UPDATE `questions`
+                    SET `drillMode` = `mode`
+                    WHERE `mode` NOT IN ('speed-round', 'weak-spots', 'mistake-review', '')
+                    """.trimIndent()
+                )
+
+                // Resolve compound rows via TopicTagResolver
+                val cursor = db.query(
+                    "SELECT `id`, `topicTag`, `mode` FROM `questions` WHERE `drillMode` = ''"
+                )
+                val updates = mutableListOf<Pair<Long, String>>()
+                cursor.use { c ->
+                    while (c.moveToNext()) {
+                        val id = c.getLong(0)
+                        val tag = c.getString(1) ?: ""
+                        val mode = c.getString(2) ?: ""
+                        val resolved = TopicTagResolver.resolveDrillMode(topicTag = tag, modeId = mode).id
+                        updates.add(id to resolved)
+                    }
+                }
+                for ((id, drillMode) in updates) {
+                    db.execSQL(
+                        "UPDATE `questions` SET `drillMode` = ? WHERE `id` = ?",
+                        arrayOf<Any>(drillMode, id)
+                    )
+                }
+            }
+        }
+
         fun getDatabase(context: Context): ZenMathDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -146,7 +194,7 @@ abstract class ZenMathDatabase : RoomDatabase() {
                     ZenMathDatabase::class.java,
                     "zenmath-db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

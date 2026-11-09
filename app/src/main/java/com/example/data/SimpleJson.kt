@@ -109,6 +109,15 @@ class SimpleJsonObject(
         return map[key] as? SimpleJsonArray
     }
 
+    fun put(key: String, value: Any?): SimpleJsonObject {
+        map[key] = value
+        return this
+    }
+
+    fun toJsonString(): String = serializeJsonValue(this)
+
+    override fun toString(): String = toJsonString()
+
     companion object {
         fun parse(jsonStr: String): SimpleJsonObject {
             val parser = SimpleJsonTokenizer(jsonStr)
@@ -126,6 +135,11 @@ class SimpleJsonArray(
 
     fun opt(index: Int): Any? = list.getOrNull(index)
 
+    fun put(value: Any?): SimpleJsonArray {
+        list.add(value)
+        return this
+    }
+
     fun optString(index: Int, fallback: String = ""): String {
         val v = list.getOrNull(index) ?: return fallback
         return when (v) {
@@ -135,8 +149,84 @@ class SimpleJsonArray(
         }
     }
 
+    fun optDouble(index: Int, fallback: Double = Double.NaN): Double {
+        val v = list.getOrNull(index) ?: return fallback
+        return when (v) {
+            is Number -> v.toDouble()
+            is String -> v.toDoubleOrNull() ?: fallback
+            else -> fallback
+        }
+    }
+
+    fun optLong(index: Int, fallback: Long = 0L): Long {
+        val v = list.getOrNull(index) ?: return fallback
+        return when (v) {
+            is Number -> v.toLong()
+            is String -> v.toLongOrNull() ?: fallback
+            else -> fallback
+        }
+    }
+
     fun optJSONObject(index: Int): SimpleJsonObject? {
         return list.getOrNull(index) as? SimpleJsonObject
+    }
+
+    fun toList(): List<Any?> = list.toList()
+
+    fun toJsonString(): String = serializeJsonValue(this)
+
+    override fun toString(): String = toJsonString()
+}
+
+private fun serializeJsonValue(value: Any?): String {
+    return when (value) {
+        null -> "null"
+        is Boolean -> value.toString()
+        is Number -> {
+            val d = value.toDouble()
+            if (d.isNaN() || d.isInfinite()) "0" else value.toString()
+        }
+        is String -> buildString {
+            append('"')
+            for (ch in value) {
+                when (ch) {
+                    '"' -> append("\\\"")
+                    '\\' -> append("\\\\")
+                    '\b' -> append("\\b")
+                    '\u000C' -> append("\\f")
+                    '\n' -> append("\\n")
+                    '\r' -> append("\\r")
+                    '\t' -> append("\\t")
+                    else -> if (ch.code < 0x20) {
+                        append("\\u").append(ch.code.toString(16).padStart(4, '0'))
+                    } else {
+                        append(ch)
+                    }
+                }
+            }
+            append('"')
+        }
+        is SimpleJsonObject -> buildString {
+            append('{')
+            var first = true
+            for (k in value.keySet()) {
+                if (!first) append(',')
+                first = false
+                append(serializeJsonValue(k))
+                append(':')
+                append(serializeJsonValue(value.opt(k)))
+            }
+            append('}')
+        }
+        is SimpleJsonArray -> buildString {
+            append('[')
+            for (i in 0 until value.length()) {
+                if (i > 0) append(',')
+                append(serializeJsonValue(value.opt(i)))
+            }
+            append(']')
+        }
+        else -> serializeJsonValue(value.toString())
     }
 }
 

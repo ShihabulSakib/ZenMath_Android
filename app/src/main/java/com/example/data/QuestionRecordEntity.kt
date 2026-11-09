@@ -18,5 +18,8 @@ data class QuestionRecordEntity(
     val difficulty: String,
     val questionText: String = "",
     val topicTag: String = "",
-    val hintUsed: Boolean = false
+    val hintUsed: Boolean = false,
+    val drillMode: String = "",
+    val answerFormat: String = "typed",
+    val problemJson: String = ""
 )
