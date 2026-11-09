@@ -321,7 +321,9 @@ fun ZenMathApp(
                         onExportBackup = { viewModel.exportBackup() },
                         onImportBackup = { json -> viewModel.importBackup(json) },
                         weakSpotsSummary = weakSpotsSummary,
-                        onPracticeWeakSpots = { viewModel.openAllTimeMistakeReview() }
+                        onPracticeWeakSpots = { viewModel.openAllTimeMistakeReview() },
+                        allQuestions = allQuestions,
+                        settings = settings
                     )
                 }
 

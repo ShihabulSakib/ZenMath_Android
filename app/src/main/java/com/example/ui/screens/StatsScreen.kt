@@ -50,17 +50,25 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
 import com.example.domain.DayBucket
+import com.example.domain.GameSettings
 import com.example.domain.RecentPerformanceDay
 import com.example.domain.StatsData
 import com.example.domain.WeakSpotsSummary
+import com.example.export.ExportFileManager
+import com.example.export.ExportFormat
+import com.example.export.StatsSnapshotBuilder
 import com.example.ui.components.ActivityCalendar
+import com.example.ui.components.ExportDialog
 import com.example.ui.components.HorizonWaveChart
 import com.example.ui.components.RichTextHelper
 import com.example.ui.components.SevenDayQuestionsChart
 import com.example.ui.theme.ZenTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,13 +85,62 @@ fun StatsScreen(
     onImportBackup: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
     weakSpotsSummary: WeakSpotsSummary = WeakSpotsSummary(emptyList(), emptyList()),
-    onPracticeWeakSpots: () -> Unit = {}
+    onPracticeWeakSpots: () -> Unit = {},
+    allQuestions: List<QuestionRecordEntity> = emptyList(),
+    settings: GameSettings = GameSettings()
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var showClearDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var isExportingReport by remember { mutableStateOf(false) }
+    var pendingSaveFormat by remember { mutableStateOf(ExportFormat.MARKDOWN) }
+
+    val saveMarkdownLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/markdown")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                isExportingReport = true
+                try {
+                    val snapshot = withContext(Dispatchers.Default) {
+                        StatsSnapshotBuilder.build(sessions, allQuestions, settings)
+                    }
+                    ExportFileManager.writeToUri(context, uri, snapshot, ExportFormat.MARKDOWN)
+                    showExportDialog = false
+                    Toast.makeText(context, "Markdown report saved!", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isExportingReport = false
+                }
+            }
+        }
+    }
+
+    val savePdfLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                isExportingReport = true
+                try {
+                    val snapshot = withContext(Dispatchers.Default) {
+                        StatsSnapshotBuilder.build(sessions, allQuestions, settings)
+                    }
+                    ExportFileManager.writeToUri(context, uri, snapshot, ExportFormat.PDF)
+                    showExportDialog = false
+                    Toast.makeText(context, "PDF report saved!", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isExportingReport = false
+                }
+            }
+        }
+    }
 
     // Storage Access Framework Launcher for downloading/saving JSON file
     val createDocumentLauncher = rememberLauncherForActivityResult(
@@ -145,12 +202,12 @@ fun StatsScreen(
             .background(colors.surface)
             .testTag("stats_screen")
     ) {
-        // Sticky Header
+        // Sticky Header with Top-Right Export Button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center,
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -159,6 +216,64 @@ fun StatsScreen(
                 fontWeight = FontWeight.Bold,
                 color = colors.textMain,
                 letterSpacing = (-0.5).sp
+            )
+
+            OutlinedButton(
+                onClick = { showExportDialog = true },
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, colors.primary.copy(alpha = 0.45f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = colors.primary.copy(alpha = 0.08f),
+                    contentColor = colors.primary
+                ),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier
+                    .height(36.dp)
+                    .testTag("export_stats_top_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = "Export Statistics",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Export",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        if (showExportDialog) {
+            ExportDialog(
+                isExporting = isExportingReport,
+                onDismiss = { showExportDialog = false },
+                onShare = { format ->
+                    scope.launch {
+                        isExportingReport = true
+                        try {
+                            val snapshot = withContext(Dispatchers.Default) {
+                                StatsSnapshotBuilder.build(sessions, allQuestions, settings)
+                            }
+                            ExportFileManager.shareExport(context, snapshot, format)
+                            showExportDialog = false
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isExportingReport = false
+                        }
+                    }
+                },
+                onSaveToFile = { format ->
+                    pendingSaveFormat = format
+                    val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                    val defaultName = ExportFileManager.defaultFileName(format, todayStr)
+                    when (format) {
+                        ExportFormat.MARKDOWN -> saveMarkdownLauncher.launch(defaultName)
+                        ExportFormat.PDF -> savePdfLauncher.launch(defaultName)
+                    }
+                }
             )
         }
 
