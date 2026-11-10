@@ -1778,6 +1778,24 @@ object QuestionGenerator {
             for (r in neighborRoots) {
                 candidates.add(Pair(r.toDouble(), r.toString()))
             }
+        } else if (problem.topicTag.startsWith("math-constant-fact_")) {
+            val n = problem.num2.roundToInt().coerceIn(1, 10)
+            val factVal = CourseValuesData.FACTORIALS[n] ?: 1L
+            val neighborFacts = buildList {
+                CourseValuesData.FACTORIALS[n - 1]?.let { add(it) }
+                CourseValuesData.FACTORIALS[n + 1]?.let { add(it) }
+                CourseValuesData.FACTORIALS[n - 2]?.let { add(it) }
+                CourseValuesData.FACTORIALS[n + 2]?.let { add(it) }
+                add(factVal * 2L)
+                if (factVal >= 4L) add(factVal / 2L)
+                add(factVal + n.toLong())
+                add(factVal * 10L)
+            }.distinct()
+            for (candFact in neighborFacts) {
+                if (candFact != factVal && candFact > 0L) {
+                    candidates.add(Pair(candFact.toDouble(), candFact.toString()))
+                }
+            }
         } else if (problem.topicTag == "sqrt-irrational") {
             val step = maxOf(minSpacing * 1.25, 0.2)
             val rawOffsets = listOf(
@@ -1871,10 +1889,11 @@ object QuestionGenerator {
         includeAlternateUnits: Boolean = false,
         missedCounts: Map<String, Int> = emptyMap(),
         includeMathConstants: Boolean = false,
-        mathOnly: Boolean = false
+        mathOnly: Boolean = false,
+        mathSubtype: MathConstantSubtype = MathConstantSubtype.ALL
     ): MathProblem {
         if (mathOnly) {
-            return generateMathConstantQuestion()
+            return generateMathConstantQuestion(mathSubtype)
         }
         val dataset = ConstantsLoader.getDataset(failLoudly = false)
         val allConstants = dataset.constants
@@ -1885,11 +1904,16 @@ object QuestionGenerator {
             matchesPaper && matchesChapter && matchesRel
         }.ifEmpty { allConstants }
 
-        if (includeMathConstants && dataset.mathConstants.isNotEmpty()) {
-            // Draw from Mathematics constants with ~15% probability (or proportional to pool size)
-            val mathChance = maxOf(0.15, dataset.mathConstants.size.toDouble() / (filtered.size + dataset.mathConstants.size).toDouble())
+        val mathPoolSize = when (mathSubtype) {
+            MathConstantSubtype.CONSTANTS -> dataset.mathConstants.size
+            MathConstantSubtype.FACTORIALS -> CourseValuesData.FACTORIALS.size
+            MathConstantSubtype.ALL -> dataset.mathConstants.size + CourseValuesData.FACTORIALS.size
+        }
+        if (includeMathConstants && mathPoolSize > 0) {
+            // Draw from Mathematics constants with ~18% probability (or proportional to pool size)
+            val mathChance = maxOf(0.18, mathPoolSize.toDouble() / (filtered.size + mathPoolSize).toDouble())
             if (Random.nextDouble() < mathChance) {
-                return generateMathConstantQuestion()
+                return generateMathConstantQuestion(mathSubtype)
             }
         }
 
@@ -2071,11 +2095,25 @@ object QuestionGenerator {
     }
 
     /**
-     * Mathematical Constants Drill (4 constants: π, e, ln 2, ln 10):
-     * Name -> value, accepting any listed approximation including fractions like 22/7.
+     * Mathematical Constants Drill (4 constants: π, e, ln 2, ln 10 + Factorials 1! to 10!):
+     * Name -> value, accepting any listed approximation including fractions like 22/7 for π,
+     * and exact integer values for factorials 1! to 10!.
      * Folded into the unified Constants drill (Part A3) under the "Mathematics" category.
      */
-    fun generateMathConstantQuestion(): MathProblem {
+    fun generateMathConstantQuestion(
+        subtype: MathConstantSubtype = MathConstantSubtype.ALL
+    ): MathProblem {
+        when (subtype) {
+            MathConstantSubtype.FACTORIALS -> return generateFactorialQuestion()
+            MathConstantSubtype.ALL -> {
+                // Sample across the 4 transcendental/log constants and 10 factorials
+                if (Random.nextBoolean()) {
+                    return generateFactorialQuestion()
+                }
+            }
+            MathConstantSubtype.CONSTANTS -> { /* fall through to 4 constants */ }
+        }
+
         val dataset = ConstantsLoader.getDataset(failLoudly = false)
         val mc = dataset.mathConstants.random()
         val ansStr = formatCleanDouble(mc.value)
@@ -2103,7 +2141,41 @@ object QuestionGenerator {
                 "Approximations accepted: ${mc.commonApproximations.joinToString(", ")}",
                 "Curriculum uses: ${mc.relevance.joinToString("; ")}"
             ),
-            constantSymbol = mc.symbol
+            constantSymbol = mc.symbol,
+            structuredUnit = StructuredUnit.DIMENSIONLESS
+        )
+    }
+
+    /**
+     * Factorial Drill (1! to 10!):
+     * Tests rapid recall of 1! = 1 through 10! = 3,628,800 under the Mathematics Constants drill.
+     */
+    fun generateFactorialQuestion(nOverride: Int? = null): MathProblem {
+        val n = nOverride?.coerceIn(1, 10) ?: CourseValuesData.FACTORIALS.keys.random()
+        val factVal = CourseValuesData.FACTORIALS[n] ?: 1L
+        val ansStr = factVal.toString()
+        val expansion = CourseValuesData.factorialExpansion(n)
+        val sym = StructuredSymbol(
+            base = "$n!",
+            rawFullSymbol = "$n!",
+            shortDisplaySymbol = "$n!"
+        )
+        return MathProblem(
+            num1 = factVal.toDouble(),
+            num2 = n.toDouble(),
+            operation = "Constants",
+            questionDisplay = "Factorial of $n ($n!)",
+            answer = ansStr,
+            numericAnswer = factVal.toDouble(),
+            topicTag = "math-constant-fact_$n",
+            answerSpec = AnswerSpec.Exact(expected = factVal),
+            subjectLabel = "Mathematics",
+            solutionSteps = listOf(
+                "$n! = $ansStr",
+                "Expansion: $expansion = $ansStr"
+            ),
+            constantSymbol = sym,
+            structuredUnit = StructuredUnit.DIMENSIONLESS
         )
     }
 

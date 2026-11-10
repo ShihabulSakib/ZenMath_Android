@@ -20,6 +20,7 @@ import com.example.domain.DateBucketUtils
 import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
 import com.example.domain.GameMode
+import com.example.domain.MathConstantSubtype
 import com.example.domain.MemoryDirection
 import com.example.domain.PhSubType
 import com.example.domain.QuestionGenerator
@@ -919,5 +920,47 @@ class ExampleUnitTest {
             val factorQ = QuestionGenerator.generateFactorFindingQuestion(Pair(1, 20))
             assertTrue("Missing factor n2 should be in 1..10, got ${factorQ.numericAnswer}", factorQ.numericAnswer.toInt() in 1..10)
         }
+    }
+
+    @Test
+    fun testFactorials1To10InCourseValuesAndMathConstantsDrill() {
+        val expectedFactorials = mapOf(
+            1 to 1L,
+            2 to 2L,
+            3 to 6L,
+            4 to 24L,
+            5 to 120L,
+            6 to 720L,
+            7 to 5040L,
+            8 to 40320L,
+            9 to 362880L,
+            10 to 3628800L
+        )
+        assertEquals(expectedFactorials, CourseValuesData.FACTORIALS)
+
+        for (n in 1..10) {
+            val fq = QuestionGenerator.generateFactorialQuestion(n)
+            assertEquals("Constants", fq.operation)
+            assertEquals("Mathematics", fq.subjectLabel)
+            assertEquals("math-constant-fact_$n", fq.topicTag)
+            assertEquals("$n!", fq.constantSymbol?.shortSymbol)
+            assertEquals(expectedFactorials[n].toString(), fq.answer)
+            assertTrue(AnswerChecker.check(fq.answer, fq.answerSpec))
+            assertFalse(AnswerChecker.check((expectedFactorials[n]!! + 1L).toString(), fq.answerSpec))
+
+            // MCQ options generation for factorial question
+            val mcqFq = QuestionGenerator.attachMcqOptions(fq, TolerancePreset.NORMAL)
+            assertNotNull(mcqFq.mcqOptions)
+            assertEquals(4, mcqFq.mcqOptions?.size)
+            assertTrue(mcqFq.mcqOptions!!.contains(fq.answer))
+        }
+
+        // Verify MathConstantSubtype.FACTORIALS inside Constants drill
+        val factOnly = QuestionGenerator.generateConstantQuestion(
+            mathOnly = true,
+            mathSubtype = MathConstantSubtype.FACTORIALS
+        )
+        assertTrue(factOnly.topicTag.startsWith("math-constant-fact_"))
+        assertTrue(AnswerChecker.check(factOnly.answer, factOnly.answerSpec))
     }
 }

@@ -692,6 +692,72 @@ private fun MemoryTablesTab() {
                 }
             }
         }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "FACTORIALS (1! – 10!)",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.5.sp,
+                    color = colors.textSecondary.copy(alpha = 0.7f)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(cardShape)
+                        .background(colors.card)
+                        .border(1.dp, colors.cardBorder, cardShape)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "EXPRESSION",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = colors.textSecondary.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "COURSE VALUE (EXACT)",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                color = colors.textSecondary.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        CourseValuesData.FACTORIALS.entries.forEachIndexed { idx, (n, factVal) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(if (idx % 2 == 1) colors.surface.copy(alpha = 0.35f) else Color.Transparent)
+                                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "$n!",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = RichTextHelper.MathFontFamily,
+                                    color = colors.textMain
+                                )
+                                Text(
+                                    text = factVal.toString(),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = colors.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
         item { Spacer(modifier = Modifier.height(84.dp)) }
     }
 }
@@ -1472,6 +1538,61 @@ private fun MathConstantsSubTab(
                             fontSize = 11.sp,
                             color = colors.textSecondary
                         )
+                    }
+                }
+            }
+        }
+        val filteredFactorials = CourseValuesData.FACTORIALS.entries.filter { (n, factVal) ->
+            val q = searchQuery.trim().lowercase()
+            q.isEmpty() ||
+                "factorial".contains(q) ||
+                "$n!".contains(q) ||
+                factVal.toString().contains(q)
+        }
+        if (filteredFactorials.isNotEmpty()) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "FACTORIALS (1! – 10!)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp,
+                        color = colors.textSecondary.copy(alpha = 0.7f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(cardShape)
+                            .background(colors.card)
+                            .border(1.dp, colors.cardBorder, cardShape)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            filteredFactorials.forEachIndexed { idx, (n, factVal) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (idx % 2 == 1) colors.surface.copy(alpha = 0.35f) else Color.Transparent)
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "$n! (Factorial of $n)",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
+                                        color = colors.textMain
+                                    )
+                                    Text(
+                                        text = factVal.toString(),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Black,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = colors.primary
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

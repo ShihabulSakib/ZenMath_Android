@@ -18,6 +18,7 @@ import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
 import com.example.domain.GameMode
 import com.example.domain.GameSettings
+import com.example.domain.MathConstantSubtype
 import com.example.domain.MathProblem
 import com.example.domain.MemoryDirection
 import com.example.domain.MistakeItem
@@ -209,6 +210,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     private val _constantsMathOnly = MutableStateFlow(false)
     val constantsMathOnly: StateFlow<Boolean> = _constantsMathOnly.asStateFlow()
 
+    private val _constantsMathSubtype = MutableStateFlow(MathConstantSubtype.ALL)
+    val constantsMathSubtype: StateFlow<MathConstantSubtype> = _constantsMathSubtype.asStateFlow()
+
     // Active Gameplay State
     private val _currentQuestionIndex = MutableStateFlow(1)
     val currentQuestionIndex: StateFlow<Int> = _currentQuestionIndex.asStateFlow()
@@ -382,6 +386,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setConstantsSelectedReliability(rels: Set<com.example.data.ReliabilityClass>) { _constantsSelectedReliability.value = rels }
     fun setConstantsIncludeMath(include: Boolean) { _constantsIncludeMath.value = include }
     fun setConstantsMathOnly(mathOnly: Boolean) { _constantsMathOnly.value = mathOnly }
+    fun setConstantsMathSubtype(sub: MathConstantSubtype) { _constantsMathSubtype.value = sub }
     fun setHistoryFilter(filter: String) { _historyFilter.value = filter }
     fun setMistakeIncludeResolved(include: Boolean) { _mistakeIncludeResolved.value = include }
 
@@ -940,12 +945,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
                     includeAlternateUnits = _constantsIncludeAlternateUnits.value,
                     missedCounts = missedMap,
                     includeMathConstants = _constantsIncludeMath.value,
-                    mathOnly = _constantsMathOnly.value
+                    mathOnly = _constantsMathOnly.value,
+                    mathSubtype = _constantsMathSubtype.value
                 )
             }
             GameMode.ATOMIC_MASSES -> QuestionGenerator.generateAtomicMassQuestion()
             GameMode.UNIT_CONVERSIONS -> QuestionGenerator.generateUnitConversionQuestion()
-            GameMode.MATH_CONSTANTS -> QuestionGenerator.generateMathConstantQuestion()
+            GameMode.MATH_CONSTANTS -> QuestionGenerator.generateMathConstantQuestion(_constantsMathSubtype.value)
             else -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
         }
 

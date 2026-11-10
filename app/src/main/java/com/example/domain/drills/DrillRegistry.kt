@@ -438,20 +438,22 @@ object DrillRegistry {
             mode = GameMode.CONSTANTS,
             category = DrillCategory.CONSTANTS,
             title = "Constants (Physics, Chemistry & Math)",
-            summary = "61 HSC Physics & Chemistry constants plus 4 Mathematical constants (π, e, ln 2, ln 10), filterable by paper, chapter, and reliability.",
-            details = "Tests recall of physical, chemical, and mathematical constants from the HSC curriculum dataset. Users can filter by category/paper (Physics 1st Paper, Physics 2nd Paper, Chemistry 1st Paper, Chemistry 2nd Paper, and Mathematics), syllabus chapter (bilingual English/Bangla), reliability class (Fundamental, Conventions, Reference & Approx), and whether to include alternate non-SI unit systems (e.g., R in L·atm·mol⁻¹·K⁻¹ or h in eV·s). Weighted selection prioritizes previously missed constants.",
+            summary = "61 HSC Physics & Chemistry constants plus Mathematical constants (π, e, ln 2, ln 10) and Factorials (1!–10!), filterable by paper, chapter, and reliability.",
+            details = "Tests recall of physical, chemical, and mathematical constants (including factorials 1! to 10!) from the HSC curriculum dataset. Users can filter by category/paper (Physics 1st Paper, Physics 2nd Paper, Chemistry 1st Paper, Chemistry 2nd Paper, and Mathematics with All Math / π, e, ln / Factorials 1!–10!), syllabus chapter (bilingual English/Bangla), reliability class (Fundamental, Conventions, Reference & Approx), and whether to include alternate non-SI unit systems (e.g., R in L·atm·mol⁻¹·K⁻¹ or h in eV·s). Weighted selection prioritizes previously missed constants.",
             questionFormats = listOf(
                 QuestionFormat("Physical/Chemical Constant", "Name (Symbol) [Unit]", "Planck constant (h) [J·s]", "6.63×10^-34", "Accepts HSC course value (6.63×10⁻³⁴) and CODATA precise value (6.626×10⁻³⁴)."),
-                QuestionFormat("Mathematical Constant", "Name (Symbol)", "Euler's number (e)", "2.718", "Accepts decimal or fraction approximations (e.g. 22/7 for π).")
+                QuestionFormat("Mathematical Constant", "Name (Symbol)", "Euler's number (e)", "2.718", "Accepts decimal or fraction approximations (e.g. 22/7 for π)."),
+                QuestionFormat("Factorial (1! – 10!)", "Factorial of n (n!)", "Factorial of 6 (6!)", "720", "Exact integer match for 1! = 1 through 10! = 3628800.")
             ),
             parameters = listOf(
                 DrillParam("Categories", "Physics 1st, Physics 2nd, Chemistry 1st, Chemistry 2nd, Mathematics", "All categories"),
+                DrillParam("Math Constants Drill", "All Math, π/e/ln, or Factorials (1!–10!)", "All Math"),
                 DrillParam("Reliability Class", "Fundamental, Conventions, Reference & Approx", "All 3 classes"),
                 DrillParam("Unit Systems", "Standard SI only vs Include Alternate Unit Systems", "SI only"),
                 DrillParam("Chapters", "Filter by specific HSC syllabus chapters", "All chapters"),
                 DrillParam("Answer Format", "Typed (scientific/fraction keypad) or 2×2 Multiple Choice", "Typed")
             ),
-            answerChecking = "Dual-key ScientificValue / RelativeTolerance checking: accepts both HSC textbook course value and precise scientific value (plus fraction 22/7 for π).",
+            answerChecking = "Dual-key ScientificValue / RelativeTolerance checking for constants (accepting both HSC textbook course value and precise scientific value, plus fraction 22/7 for π) and Exact integer checking for factorials 1!–10!.",
             timingAndScoring = "Per-question countdown timer (default 20s); reveals post-answer solution steps and confusable constant warnings.",
             supportsMcq = true
         ),

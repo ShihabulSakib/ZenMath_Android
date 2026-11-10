@@ -114,6 +114,12 @@ enum class SquaresSubtype(val key: String, val label: String) {
     IRRATIONAL_ROOTS("irrational_roots", "Square Roots (√2 – √10)")
 }
 
+enum class MathConstantSubtype(val key: String, val label: String) {
+    ALL("all", "All Math (π, e, ln & 1!–10!)"),
+    CONSTANTS("constants", "Constants (π, e, ln 2, ln 10)"),
+    FACTORIALS("factorials", "Factorials (1! – 10!)")
+}
+
 /**
  * Monotonic millisecond clock (Section 1.7).
  * Uses `System.nanoTime() / 1_000_000L` which is guaranteed monotonic across Android and JVM tests.

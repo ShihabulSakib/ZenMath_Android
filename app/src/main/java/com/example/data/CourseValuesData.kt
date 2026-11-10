@@ -141,6 +141,25 @@ object CourseValuesData {
     )
 
     /**
+     * Factorials 1! to 10!: 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800
+     */
+    val FACTORIALS: Map<Int, Long> = linkedMapOf(
+        1 to 1L,
+        2 to 2L,
+        3 to 6L,
+        4 to 24L,
+        5 to 120L,
+        6 to 720L,
+        7 to 5040L,
+        8 to 40320L,
+        9 to 362880L,
+        10 to 3628800L
+    )
+
+    fun factorialExpansion(n: Int): String =
+        if (n <= 1) "1" else (1..n).joinToString(" × ")
+
+    /**
      * Taught rounded course values for unit fractions 1/d (d = 2..15).
      * Used when "Course values" mode is enabled in Fractions.
      */

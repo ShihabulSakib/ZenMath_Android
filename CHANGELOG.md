@@ -5,6 +5,14 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-11-10
+
+### Added
+- **Factorials (`1!` to `10!`) in Math Constants & Revision Course Values**:
+  - Added factorials `1! = 1` through `10! = 3628800` to `CourseValuesData.FACTORIALS`.
+  - Added the **Factorials (`1! – 10!`)** reference table inside the **Course Values** revision tab (`MemoryTablesTab` in `RevisionScreen.kt`) as well as under **Constants → Math Constants** (`MathConstantsSubTab`).
+  - Added the **Factorials (`1! – 10!`)** drill (`QuestionGenerator.generateFactorialQuestion` and `MathConstantSubtype`: *All Math*, *π, e, ln*, and *Factorials 1!–10!*) inside the **Mathematics** category of the **Constants** drill (`GameMode.CONSTANTS`), with full 2×2 Multiple Choice and exact-answer checking support.
+
 ## [1.3.1] - 2026-11-10
 
 ### Changed

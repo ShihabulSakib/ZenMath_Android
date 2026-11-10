@@ -80,6 +80,7 @@ fun ZenMathApp(
     val constantsSelectedReliability by viewModel.constantsSelectedReliability.collectAsState()
     val constantsIncludeMath by viewModel.constantsIncludeMath.collectAsState()
     val constantsMathOnly by viewModel.constantsMathOnly.collectAsState()
+    val constantsMathSubtype by viewModel.constantsMathSubtype.collectAsState()
 
     // Active Game state
     val currentQuestionIndex by viewModel.currentQuestionIndex.collectAsState()
@@ -208,12 +209,14 @@ fun ZenMathApp(
                         constantsSelectedReliability = constantsSelectedReliability,
                         constantsIncludeMath = constantsIncludeMath,
                         constantsMathOnly = constantsMathOnly,
+                        constantsMathSubtype = constantsMathSubtype,
                         onConstantsIncludeAlternateUnitsChange = { viewModel.setConstantsIncludeAlternateUnits(it) },
                         onConstantsSelectedPapersChange = { viewModel.setConstantsSelectedPapers(it) },
                         onConstantsSelectedChaptersChange = { viewModel.setConstantsSelectedChapters(it) },
                         onConstantsSelectedReliabilityChange = { viewModel.setConstantsSelectedReliability(it) },
                         onConstantsIncludeMathChange = { viewModel.setConstantsIncludeMath(it) },
                         onConstantsMathOnlyChange = { viewModel.setConstantsMathOnly(it) },
+                        onConstantsMathSubtypeChange = { viewModel.setConstantsMathSubtype(it) },
                         onStart = { viewModel.startGame() },
                         onBack = { viewModel.navigateTo(ZenScreen.MENU) }
                     )

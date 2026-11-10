@@ -60,6 +60,7 @@ import com.example.domain.CompositeLogRootSubtype
 import com.example.domain.CubesPowersSubtype
 import com.example.domain.Difficulty
 import com.example.domain.GameMode
+import com.example.domain.MathConstantSubtype
 import com.example.domain.MemoryDirection
 import com.example.domain.PhSubType
 import com.example.domain.SciNotationSubtype
@@ -125,12 +126,14 @@ fun GameSetupScreen(
     constantsSelectedReliability: Set<ReliabilityClass> = ReliabilityClass.entries.toSet(),
     constantsIncludeMath: Boolean = true,
     constantsMathOnly: Boolean = false,
+    constantsMathSubtype: MathConstantSubtype = MathConstantSubtype.ALL,
     onConstantsIncludeAlternateUnitsChange: (Boolean) -> Unit = {},
     onConstantsSelectedPapersChange: (Set<HscPaper>) -> Unit = {},
     onConstantsSelectedChaptersChange: (Set<String>) -> Unit = {},
     onConstantsSelectedReliabilityChange: (Set<ReliabilityClass>) -> Unit = {},
     onConstantsIncludeMathChange: (Boolean) -> Unit = {},
     onConstantsMathOnlyChange: (Boolean) -> Unit = {},
+    onConstantsMathSubtypeChange: (MathConstantSubtype) -> Unit = {},
     onStart: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -900,7 +903,7 @@ fun GameSetupScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Mathematics category chip (π, e, ln 2, ln 10)
+                        // Mathematics category chip (π, e, ln 2, ln 10, 1!–10!)
                         val mathExplicitlyHighlighted = constantsMathOnly || (constantsSelectedPapers.isNotEmpty() && constantsIncludeMath)
                         val mathCardShape = RoundedCornerShape(12.dp)
                         Box(
@@ -939,11 +942,53 @@ fun GameSetupScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Mathematics (π, e, ln 2, ln 10)",
+                                text = "Mathematics (π, e, ln 2, ln 10, 1!–10!)",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (mathExplicitlyHighlighted) colors.onPrimary else colors.textMain
                             )
+                        }
+
+                        if (constantsMathOnly || constantsIncludeMath) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            SectionHeader(title = "MATH CONSTANTS DRILL")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                MathConstantSubtype.entries.forEach { sub ->
+                                    val isSubSelected = constantsMathSubtype == sub
+                                    val subShape = RoundedCornerShape(12.dp)
+                                    val shortLabel = when (sub) {
+                                        MathConstantSubtype.ALL -> "All Math"
+                                        MathConstantSubtype.CONSTANTS -> "π, e, ln"
+                                        MathConstantSubtype.FACTORIALS -> "Factorials (1!–10!)"
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(subShape)
+                                            .background(if (isSubSelected) colors.primary else colors.card)
+                                            .border(
+                                                1.dp,
+                                                if (isSubSelected) colors.primary else colors.cardBorder,
+                                                subShape
+                                            )
+                                            .clickable { onConstantsMathSubtypeChange(sub) }
+                                            .padding(vertical = 10.dp, horizontal = 6.dp)
+                                            .testTag("constants_math_subtype_${sub.key}"),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = shortLabel,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            color = if (isSubSelected) colors.onPrimary else colors.textMain
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         if (!constantsMathOnly) {
