@@ -5,6 +5,31 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-10
+
+### Added
+- **AI-Agent Markdown & Human PDF Statistics Exports (Part C)**:
+  - Added a top-right **Export** button and `ExportDialog` on the Statistics screen supporting **Markdown (`.md`)** *(for AI agents / LLMs)* and **PDF (`.pdf`)** *(for humans)* via Android Share Sheet (`FileProvider`) and SAF "Save File".
+  - Added `StatsSnapshotBuilder` computing Wilson 95% confidence lower bounds, median/P90 response latencies, MCQ vs Typed accuracy, weekly/daily trends, mistake pattern classifications, and day-of-week × hour-of-day punch-card matrices.
+  - Added `MarkdownReportRenderer` generating self-contained LLM coaching reports with YAML front matter, AI coaching instructions, scoring glossary, the complete `DrillRegistry` handbook, performance tables, and up to 250 item-level mistakes.
+  - Added `PdfReportRenderer`, `PdfLayout`, and `ChartKit` using Android's native `PdfDocument` and `Canvas` to render multi-page A4 reports with KPI summary cards, a 26-week calendar heatmap, a 30-day volume & accuracy chart, a category donut chart, per-drill accuracy & Wilson 95% confidence bars, diagnostic insights, and a full Drill Guide.
+- **Mistake Review Explorer & Tracked Practice Sessions (Part A5, B2, B3)**:
+  - Added `MistakeReviewScreen` and `MistakeSelector` accessible from both the post-session Results screen (*Session Mistakes* scope) and Statistics Weak Spots Review (*All-Time Weak Spots* scope with `Unresolved` / `All Mistakes` filter toggles).
+  - Grouped missed questions by `DrillCategory` → `GameMode` → individual question rows with user wrong answer, expected answer, miss frequency, expandable solution steps, and multi-select checkboxes.
+  - Tracked mistake-practice runs as full Room sessions (`sessionType = "mistake_review"`, `mode = "mistake-review"`, `sourceSessionId`, `scopeLabel`) visible in History, Statistics, and Exports.
+- **Database Schema v3 (`MIGRATION_2_3`) & `ProblemCodec`**:
+  - Added lossless `MathProblem` / `AnswerSpec` JSON serialization (`ProblemCodec`) and Room v2 → v3 migration with SQL backfill of `drillMode` for historical Speed Round and Weak Spots records.
+
+### Changed
+- **Roots Merged into Squares Drill (Part A4)**: Expanded `GameMode.SQUARE` with `SquaresSubtype` (`ALL`, `SQUARES` $n^2$, `PERFECT_ROOTS` $\sqrt{n^2}$, `IRRATIONAL_ROOTS` $\sqrt{2}\text{–}\sqrt{10}$ with $\pm 0.05$ course-value tolerance) and 2×2 Multiple Choice support; removed the separate Roots tile from Home.
+- **Math Constants Folded into Constants Drill (Part A3)**: Added `Mathematics (π, e, ln 2, ln 10)` as a selectable category inside `GameMode.CONSTANTS`, enabled `/` keypad input for `math-constant-*` questions, and removed the separate Math Constants Home tile.
+- **Reference Values Removed (Part A1)**: Removed Reference Values from the Constants revision tab, Home screen, and active question generation while preserving historical session compatibility.
+- **Settings Version Display**: Linked the Settings footer and Export metadata directly to `BuildConfig.VERSION_NAME` (`v1.3.0`).
+
+### Fixed
+- **Post-Session Results Scroll Overflow (Part B1)**: Made the `ResultsScreen` performance and full topic breakdown area vertically scrollable while keeping bottom action buttons (`VIEW MISTAKES (N)`, `RETRY SESSION`, `MENU`) pinned and always reachable.
+- **Speed Round MCQ Fractions Distractors (Part A2)**: Fixed `QuestionGenerator.attachMcqOptions` so Decimal-to-Fraction questions generate 4 distinct reduced-fraction (`n/d`) options instead of integer distractors.
+
 ## [1.2.1] - 2026-10-28
 
 ### Fixed

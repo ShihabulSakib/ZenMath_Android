@@ -52,7 +52,7 @@ object StatsSnapshotBuilder {
         settings: GameSettings,
         nowMs: Long = System.currentTimeMillis(),
         timeZone: TimeZone = TimeZone.getDefault(),
-        appVersion: String = "1.0"
+        appVersion: String = com.example.BuildConfig.VERSION_NAME
     ): StatsSnapshot {
         val generatedIso = DateBucketUtils.nowUtcIso(nowMs)
         val generatedLocalDate = DateBucketUtils.formatLocalDate(nowMs, timeZone)

@@ -992,7 +992,7 @@ fun SettingsScreen(
                     )
 
                     Text(
-                        text = "v1.0.5 • Native Android Edition",
+                        text = "v${com.example.BuildConfig.VERSION_NAME} • Native Android Edition",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.textSecondary.copy(alpha = 0.7f),
