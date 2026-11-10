@@ -1,0 +1,392 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1793173656.1479833,
+    "seen": 1794245450.525426,
+    "ast_hash": "19a925ddc803566f8d5d82e1cf4a263a",
+    "semantic_hash": "19a925ddc803566f8d5d82e1cf4a263a"
+  },
+  "app/schemas/com.example.data.ZenMathDatabase/1.json": {
+    "mtime": 1792814639.9915833,
+    "seen": 1794245450.5254338,
+    "ast_hash": "58c1c9374bbbca298dc2963f80127e14",
+    "semantic_hash": "58c1c9374bbbca298dc2963f80127e14"
+  },
+  "app/schemas/com.example.data.ZenMathDatabase/2.json": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254369,
+    "ast_hash": "ed9eabd044313ff56fd22125a5b4d6cc",
+    "semantic_hash": "ed9eabd044313ff56fd22125a5b4d6cc"
+  },
+  "app/src/androidTest/java/com/example/ExampleInstrumentedTest.kt": {
+    "mtime": 1790604541.8525102,
+    "seen": 1794245450.5254388,
+    "ast_hash": "1d3dd88eeccd1de5b8d3e67c97d8c588",
+    "semantic_hash": "1d3dd88eeccd1de5b8d3e67c97d8c588"
+  },
+  "app/src/main/assets/constants_overrides.json": {
+    "mtime": 1793162343.548665,
+    "seen": 1794245450.5254405,
+    "ast_hash": "f2486aeeea55a89ab04629d25f369a87",
+    "semantic_hash": "f2486aeeea55a89ab04629d25f369a87"
+  },
+  "app/src/main/assets/hsc_physics_chemistry_constants.json": {
+    "mtime": 1793162332.6477513,
+    "seen": 1794245450.5254421,
+    "ast_hash": "9ba88cfc75ab7baafc59b495cc34036f",
+    "semantic_hash": "9ba88cfc75ab7baafc59b495cc34036f"
+  },
+  "app/src/main/java/com/example/MainActivity.kt": {
+    "mtime": 1793162797.0798187,
+    "seen": 1794245450.5254436,
+    "ast_hash": "bb70269284564b3750ebfc8a6ae87258",
+    "semantic_hash": "bb70269284564b3750ebfc8a6ae87258"
+  },
+  "app/src/main/java/com/example/data/ConstantsData.kt": {
+    "mtime": 1793162765.8598826,
+    "seen": 1794245450.5254447,
+    "ast_hash": "41ff39442ac8318a926551bc1be263d0",
+    "semantic_hash": "41ff39442ac8318a926551bc1be263d0"
+  },
+  "app/src/main/java/com/example/data/ConstantsSchema.kt": {
+    "mtime": 1793163409.0631378,
+    "seen": 1794245450.5254467,
+    "ast_hash": "edc8245e5efa29bca7903de2371748b1",
+    "semantic_hash": "edc8245e5efa29bca7903de2371748b1"
+  },
+  "app/src/main/java/com/example/data/CourseValuesData.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.525448,
+    "ast_hash": "fa95df8b5b8d67faae58767ccd3b3195",
+    "semantic_hash": "fa95df8b5b8d67faae58767ccd3b3195"
+  },
+  "app/src/main/java/com/example/data/PhSpeciesData.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254498,
+    "ast_hash": "3ba12749051781562500fa3b4001c806",
+    "semantic_hash": "3ba12749051781562500fa3b4001c806"
+  },
+  "app/src/main/java/com/example/data/PreferencesManager.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254512,
+    "ast_hash": "4ba565d2530946d55a823591f761e21a",
+    "semantic_hash": "4ba565d2530946d55a823591f761e21a"
+  },
+  "app/src/main/java/com/example/data/QuestionRecordEntity.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254526,
+    "ast_hash": "c5bd1efc381e49f71f835a7e357e2350",
+    "semantic_hash": "c5bd1efc381e49f71f835a7e357e2350"
+  },
+  "app/src/main/java/com/example/data/SessionEntity.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.525454,
+    "ast_hash": "fa63e3d820c437904a55cd0dd3a0fb96",
+    "semantic_hash": "fa63e3d820c437904a55cd0dd3a0fb96"
+  },
+  "app/src/main/java/com/example/data/SimpleJson.kt": {
+    "mtime": 1793163166.1591074,
+    "seen": 1794245450.5254555,
+    "ast_hash": "9222cc3dface7762091b06d5afd922d2",
+    "semantic_hash": "9222cc3dface7762091b06d5afd922d2"
+  },
+  "app/src/main/java/com/example/data/ZenMathDao.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.525457,
+    "ast_hash": "b9677288adb0fb53976cf215f979f056",
+    "semantic_hash": "b9677288adb0fb53976cf215f979f056"
+  },
+  "app/src/main/java/com/example/data/ZenMathDatabase.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254583,
+    "ast_hash": "392538c2d78a8dda15e362f7a8dabbe0",
+    "semantic_hash": "392538c2d78a8dda15e362f7a8dabbe0"
+  },
+  "app/src/main/java/com/example/data/ZenMathRepository.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254598,
+    "ast_hash": "861f6bc28625d4cf90e6eedf1c46338b",
+    "semantic_hash": "861f6bc28625d4cf90e6eedf1c46338b"
+  },
+  "app/src/main/java/com/example/domain/AnswerChecker.kt": {
+    "mtime": 1793173053.3552134,
+    "seen": 1794245450.525461,
+    "ast_hash": "3b8427c0b8b9add8b2146bd07fbf150c",
+    "semantic_hash": "3b8427c0b8b9add8b2146bd07fbf150c"
+  },
+  "app/src/main/java/com/example/domain/DateBucketUtils.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254624,
+    "ast_hash": "8a8285a3a4a98552404004cb47c5be95",
+    "semantic_hash": "8a8285a3a4a98552404004cb47c5be95"
+  },
+  "app/src/main/java/com/example/domain/FractionsPool.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254638,
+    "ast_hash": "936407d951d8d5d4408a8e107a9fc923",
+    "semantic_hash": "936407d951d8d5d4408a8e107a9fc923"
+  },
+  "app/src/main/java/com/example/domain/GameModels.kt": {
+    "mtime": 1793176850.2947865,
+    "seen": 1794245450.525465,
+    "ast_hash": "dd9544f0046bfa83513fdae8251ab9a2",
+    "semantic_hash": "dd9544f0046bfa83513fdae8251ab9a2"
+  },
+  "app/src/main/java/com/example/domain/QuestionGenerator.kt": {
+    "mtime": 1793171366.5690858,
+    "seen": 1794245450.5254667,
+    "ast_hash": "71bd1b299c08dc70945d7aeb3d194ca5",
+    "semantic_hash": "71bd1b299c08dc70945d7aeb3d194ca5"
+  },
+  "app/src/main/java/com/example/notifications/NotificationScheduler.kt": {
+    "mtime": 1792814435.0348475,
+    "seen": 1794245450.525468,
+    "ast_hash": "1becff290ffca47187971a27304b5e2a",
+    "semantic_hash": "1becff290ffca47187971a27304b5e2a"
+  },
+  "app/src/main/java/com/example/notifications/ReminderReceiver.kt": {
+    "mtime": 1792814435.0348475,
+    "seen": 1794245450.5254698,
+    "ast_hash": "16d4b396950b358ba0ea3a0753038ff8",
+    "semantic_hash": "16d4b396950b358ba0ea3a0753038ff8"
+  },
+  "app/src/main/java/com/example/ui/ZenMathApp.kt": {
+    "mtime": 1793171982.1099856,
+    "seen": 1794245450.525471,
+    "ast_hash": "b6bad2f3bce5090d07958845906c6eb3",
+    "semantic_hash": "b6bad2f3bce5090d07958845906c6eb3"
+  },
+  "app/src/main/java/com/example/ui/ZenMathViewModel.kt": {
+    "mtime": 1793172678.6480398,
+    "seen": 1794245450.5254722,
+    "ast_hash": "cde442c525587d7984278b9c2178bec4",
+    "semantic_hash": "cde442c525587d7984278b9c2178bec4"
+  },
+  "app/src/main/java/com/example/ui/components/CommonComponents.kt": {
+    "mtime": 1790604541.8538148,
+    "seen": 1794245450.5254738,
+    "ast_hash": "31b3d26f6f0c8589b2f7986859bd430a",
+    "semantic_hash": "31b3d26f6f0c8589b2f7986859bd430a"
+  },
+  "app/src/main/java/com/example/ui/components/Keypad.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254753,
+    "ast_hash": "82aa71b35a07960a752cd5b306f9d3ec",
+    "semantic_hash": "82aa71b35a07960a752cd5b306f9d3ec"
+  },
+  "app/src/main/java/com/example/ui/components/RichTextHelper.kt": {
+    "mtime": 1793164707.457473,
+    "seen": 1794245450.5254767,
+    "ast_hash": "9f47f809433d0913298683812f9ff417",
+    "semantic_hash": "9f47f809433d0913298683812f9ff417"
+  },
+  "app/src/main/java/com/example/ui/components/StatsComponents.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254781,
+    "ast_hash": "2d1925ddddcfa44b13344db8a9f8c092",
+    "semantic_hash": "2d1925ddddcfa44b13344db8a9f8c092"
+  },
+  "app/src/main/java/com/example/ui/components/ZenNavbar.kt": {
+    "mtime": 1790604541.8543184,
+    "seen": 1794245450.5254793,
+    "ast_hash": "56a8069a47310cbcff1a580874857079",
+    "semantic_hash": "56a8069a47310cbcff1a580874857079"
+  },
+  "app/src/main/java/com/example/ui/screens/GameScreen.kt": {
+    "mtime": 1793172743.9918895,
+    "seen": 1794245450.5254812,
+    "ast_hash": "75b2490744ef867041323cc9ab25eab9",
+    "semantic_hash": "75b2490744ef867041323cc9ab25eab9"
+  },
+  "app/src/main/java/com/example/ui/screens/GameSetupScreen.kt": {
+    "mtime": 1793173411.738725,
+    "seen": 1794245450.5254824,
+    "ast_hash": "20a07ea35858e6124ad3c16d2208bdcd",
+    "semantic_hash": "20a07ea35858e6124ad3c16d2208bdcd"
+  },
+  "app/src/main/java/com/example/ui/screens/HistoryScreen.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254838,
+    "ast_hash": "d08af903b45a327236868b3e62f50ad0",
+    "semantic_hash": "d08af903b45a327236868b3e62f50ad0"
+  },
+  "app/src/main/java/com/example/ui/screens/MainMenuScreen.kt": {
+    "mtime": 1793166864.8347328,
+    "seen": 1794245450.525485,
+    "ast_hash": "a3f5856b2b73a74e9ee05666039d901c",
+    "semantic_hash": "a3f5856b2b73a74e9ee05666039d901c"
+  },
+  "app/src/main/java/com/example/ui/screens/ResultsScreen.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254867,
+    "ast_hash": "0cb5a53547955d82950d7125320841b9",
+    "semantic_hash": "0cb5a53547955d82950d7125320841b9"
+  },
+  "app/src/main/java/com/example/ui/screens/RevisionScreen.kt": {
+    "mtime": 1793171975.0020108,
+    "seen": 1794245450.525488,
+    "ast_hash": "d6386335e56604ab11bc3b233746236b",
+    "semantic_hash": "d6386335e56604ab11bc3b233746236b"
+  },
+  "app/src/main/java/com/example/ui/screens/SettingsScreen.kt": {
+    "mtime": 1793173470.079092,
+    "seen": 1794245450.525489,
+    "ast_hash": "b2fc514c726a3bd14f4ad6e37a958699",
+    "semantic_hash": "b2fc514c726a3bd14f4ad6e37a958699"
+  },
+  "app/src/main/java/com/example/ui/screens/SpecialMenuScreen.kt": {
+    "mtime": 1790604541.8548908,
+    "seen": 1794245450.5254908,
+    "ast_hash": "312dfa245472881592c50644297111c6",
+    "semantic_hash": "312dfa245472881592c50644297111c6"
+  },
+  "app/src/main/java/com/example/ui/screens/StatsScreen.kt": {
+    "mtime": 1792814639.9916437,
+    "seen": 1794245450.5254922,
+    "ast_hash": "73cc131aba8f17ff0591ed336465d46a",
+    "semantic_hash": "73cc131aba8f17ff0591ed336465d46a"
+  },
+  "app/src/main/java/com/example/ui/theme/Color.kt": {
+    "mtime": 1790604541.8548908,
+    "seen": 1794245450.5254936,
+    "ast_hash": "b13cf73ec9474095f62eec9061eb09e3",
+    "semantic_hash": "b13cf73ec9474095f62eec9061eb09e3"
+  },
+  "app/src/main/java/com/example/ui/theme/Theme.kt": {
+    "mtime": 1790604541.855933,
+    "seen": 1794245450.525495,
+    "ast_hash": "300a0eaa41e6963c95eef673ec5349b0",
+    "semantic_hash": "300a0eaa41e6963c95eef673ec5349b0"
+  },
+  "app/src/main/java/com/example/ui/theme/Type.kt": {
+    "mtime": 1790604541.855933,
+    "seen": 1794245450.5254982,
+    "ast_hash": "ed0523afc73a7aaf53d4f9eb90a998bd",
+    "semantic_hash": "ed0523afc73a7aaf53d4f9eb90a998bd"
+  },
+  "app/src/test/java/com/example/ExampleRobolectricTest.kt": {
+    "mtime": 1793163745.0148978,
+    "seen": 1794245450.5254996,
+    "ast_hash": "f1f622eb8be3e063d4aee1c1fb7f01bb",
+    "semantic_hash": "f1f622eb8be3e063d4aee1c1fb7f01bb"
+  },
+  "app/src/test/java/com/example/ExampleUnitTest.kt": {
+    "mtime": 1793177013.2146103,
+    "seen": 1794245450.525501,
+    "ast_hash": "9cd6870deefa04ff0bca0bcf0fc895f5",
+    "semantic_hash": "9cd6870deefa04ff0bca0bcf0fc895f5"
+  },
+  "build.gradle.kts": {
+    "mtime": 1792814435.0404184,
+    "seen": 1794245450.5255022,
+    "ast_hash": "75809bf11bc735003b62ad6df6f69f22",
+    "semantic_hash": "75809bf11bc735003b62ad6df6f69f22"
+  },
+  "docs/.agents/hsc_physics_chemistry_constants.json": {
+    "mtime": 1793161236.4343255,
+    "seen": 1794245450.5255036,
+    "ast_hash": "9ba88cfc75ab7baafc59b495cc34036f",
+    "semantic_hash": "9ba88cfc75ab7baafc59b495cc34036f"
+  },
+  "gradlew": {
+    "mtime": 1790604541.8619835,
+    "seen": 1794245450.5255053,
+    "ast_hash": "780b1d3e23a3b82154795f73df943a14",
+    "semantic_hash": "780b1d3e23a3b82154795f73df943a14"
+  },
+  "metadata.json": {
+    "mtime": 1790604541.8619835,
+    "seen": 1794245450.5255065,
+    "ast_hash": "9dcdb3ee9c4e87cc4d5ecf7011f250a6",
+    "semantic_hash": "9dcdb3ee9c4e87cc4d5ecf7011f250a6"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1790604541.8619835,
+    "seen": 1794245450.525508,
+    "ast_hash": "ee99babcbdcc397726dbb2d326273ae2",
+    "semantic_hash": "ee99babcbdcc397726dbb2d326273ae2"
+  },
+  ".github/workflows/release.yml": {
+    "mtime": 1792814435.0348475,
+    "seen": 1794245450.5255094,
+    "ast_hash": "f9f350c324647c740c0f3e043485445b",
+    "semantic_hash": "f9f350c324647c740c0f3e043485445b"
+  },
+  "CHANGELOG.md": {
+    "mtime": 1793176883.9907498,
+    "seen": 1794245450.5255105,
+    "ast_hash": "62189fb45dd52ba6debd7f14d77f4035",
+    "semantic_hash": "62189fb45dd52ba6debd7f14d77f4035"
+  },
+  "DEV_NOTES.md": {
+    "mtime": 1793173693.0441182,
+    "seen": 1794245450.5255122,
+    "ast_hash": "10d3b4287e65d17ee010d669b8b212d0",
+    "semantic_hash": "10d3b4287e65d17ee010d669b8b212d0"
+  },
+  "docs/.agents/ZENMATH_CONSTANTS_IMPORT.md": {
+    "mtime": 1793161233.29978,
+    "seen": 1794245450.5255134,
+    "ast_hash": "282145725dd218a8b41f9b29cfd78243",
+    "semantic_hash": "282145725dd218a8b41f9b29cfd78243"
+  },
+  "docs/.agents/constant_adding_prompt.txt": {
+    "mtime": 1793161602.5111508,
+    "seen": 1794245450.5255148,
+    "ast_hash": "0935a8523d7ac65ed76e2c1e6fe768d4",
+    "semantic_hash": "0935a8523d7ac65ed76e2c1e6fe768d4"
+  },
+  "docs/.agents/new_fix_prompt.md": {
+    "mtime": 1793171226.7560053,
+    "seen": 1794245450.5255167,
+    "ast_hash": "da365aab68b171190be30577d6c89ab7",
+    "semantic_hash": "da365aab68b171190be30577d6c89ab7"
+  },
+  "docs/zen-math-prompt.md": {
+    "mtime": 1794244422.9146025,
+    "seen": 1794245450.5255182,
+    "ast_hash": "c1cc3388581625ce3f086177a4080ea5",
+    "semantic_hash": "c1cc3388581625ce3f086177a4080ea5"
+  },
+  "app/src/main/res/drawable-hdpi/ic_notification.png": {
+    "mtime": 1790604541.856104,
+    "seen": 1794245450.5255194,
+    "ast_hash": "68b2b63384f363fb8059e2691d3f5049",
+    "semantic_hash": "68b2b63384f363fb8059e2691d3f5049"
+  },
+  "app/src/main/res/drawable-hdpi/ic_stat_notify.png": {
+    "mtime": 1792814435.0348475,
+    "seen": 1794245450.5255208,
+    "ast_hash": "b3641c905f25ec7a781df8d20ccb93a1",
+    "semantic_hash": "b3641c905f25ec7a781df8d20ccb93a1"
+  },
+  "app/src/main/res/drawable/app_icon.png": {
+    "mtime": 1792814435.0404184,
+    "seen": 1794245450.5255222,
+    "ast_hash": "ddd77b6501910634664f8d1397557aa8",
+    "semantic_hash": "ddd77b6501910634664f8d1397557aa8"
+  },
+  "app/src/main/res/drawable/ic_task_icon.png": {
+    "mtime": 1790604541.8575172,
+    "seen": 1794245450.5255234,
+    "ast_hash": "6eeb969983103e7b9ae74860ee4a5b1f",
+    "semantic_hash": "6eeb969983103e7b9ae74860ee4a5b1f"
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1792814435.0404184,
+    "seen": 1794245450.525525,
+    "ast_hash": "1e5f0a3635f40caf91ab36f727da7c00",
+    "semantic_hash": "1e5f0a3635f40caf91ab36f727da7c00"
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png": {
+    "mtime": 1792814435.0404184,
+    "seen": 1794245450.5255265,
+    "ast_hash": "031567a0388cb803d0e7b388a4572fc3",
+    "semantic_hash": "031567a0388cb803d0e7b388a4572fc3"
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher_round.png": {
+    "mtime": 1792814435.0404184,
+    "seen": 1794245450.5255277,
+    "ast_hash": "e6466c33285dc633eb9ec3e9f326b2fe",
+    "semantic_hash": "e6466c33285dc633eb9ec3e9f326b2fe"
+  }
+}
