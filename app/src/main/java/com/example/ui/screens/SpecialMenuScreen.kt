@@ -59,7 +59,7 @@ fun SpecialMenuScreen(
     val colors = ZenTheme.colors
     var isCustomMode by remember { mutableStateOf(false) }
     var customStart by remember { mutableStateOf("1") }
-    var customEnd by remember { mutableStateOf("12") }
+    var customEnd by remember { mutableStateOf("10") }
 
     val isTables = mode == GameMode.MULTIPLICATION_TABLE
     val title = if (isTables) "Multiplication Tables" else "Factor Finding"

@@ -236,7 +236,7 @@ private fun TablesTab() {
                                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            for (m in 1..12) {
+                            for (m in 1..10) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()

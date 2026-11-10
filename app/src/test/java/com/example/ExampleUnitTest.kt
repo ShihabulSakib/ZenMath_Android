@@ -909,4 +909,15 @@ class ExampleUnitTest {
         assertEquals(4, mcqProblem.mcqOptions?.size)
         assertTrue(mcqProblem.mcqOptions!!.contains(mcqProblem.answer))
     }
+
+    @Test
+    fun testTableAndFactorFindingMultiplierRangeIs1To10() {
+        repeat(100) {
+            val tableQ = QuestionGenerator.generateTableQuestion(Pair(1, 20))
+            assertTrue("Table multiplier n2 should be in 1..10, got ${tableQ.num2}", tableQ.num2.toInt() in 1..10)
+
+            val factorQ = QuestionGenerator.generateFactorFindingQuestion(Pair(1, 20))
+            assertTrue("Missing factor n2 should be in 1..10, got ${factorQ.numericAnswer}", factorQ.numericAnswer.toInt() in 1..10)
+        }
+    }
 }

@@ -204,7 +204,7 @@ object DrillRegistry {
             category = DrillCategory.NUMBER_FACTS,
             title = "Factor Finding",
             summary = "Given a composite product and one factor, find the missing cofactor.",
-            details = "Presents an equation of the form 'a × ? = product' where 'a' is drawn from the selected range and the missing factor is in 1..12. Reinforces multiplicative inverse fluency and rapid factoring.",
+            details = "Presents an equation of the form 'a × ? = product' where 'a' is drawn from the selected range and the missing factor is in 1..10. Reinforces multiplicative inverse fluency and rapid factoring.",
             questionFormats = listOf(
                 QuestionFormat("Missing Factor", "a × ? = c", "14 × ? = 112", "8", "Solve c ÷ a mentally.")
             ),

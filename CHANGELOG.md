@@ -5,6 +5,17 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-11-10
+
+### Changed
+- **Tables & Factor Finding Multiplier Range (`1..12` → `1..10`)**:
+  - Updated Multiplication Tables revision cards (`RevisionScreen.kt`) to display `n × 1` through `n × 10`.
+  - Updated Multiplication Tables (`generateTableQuestion`) and Factor Finding (`generateFactorFindingQuestion`) drills (`QuestionGenerator.kt` and `DrillRegistry.kt`) so the second multiplier / missing factor is sampled in `1..10`.
+  - Updated Custom Range default end value in `SpecialMenuScreen.kt` from `12` to `10`.
+
+### Fixed
+- **Bottom Hover Navbar Selection Synchronization**: Fixed `ZenMathViewModel.navigateTo` and `onQuitGame` so returning to the Main Menu (`ZenScreen.MENU`) after launching a practice session from Statistics (`MainTab.STATS`, e.g. Weak Spots / Mistake Review) properly synchronizes the active bottom navbar tab back to `MainTab.PRACTICE` (Home).
+
 ## [1.3.0] - 2026-11-10
 
 ### Added

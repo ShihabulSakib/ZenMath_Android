@@ -479,7 +479,7 @@ object QuestionGenerator {
 
     fun generateTableQuestion(range: Pair<Int, Int>): MathProblem {
         val n1 = randomInRange(range.first, range.second)
-        val n2 = randomInRange(1, 12)
+        val n2 = randomInRange(1, 10)
         val product = n1 * n2
         return MathProblem(
             num1 = n1.toDouble(),
@@ -496,7 +496,7 @@ object QuestionGenerator {
 
     fun generateFactorFindingQuestion(range: Pair<Int, Int>): MathProblem {
         val n1 = randomInRange(range.first, range.second)
-        val n2 = randomInRange(1, 12)
+        val n2 = randomInRange(1, 10)
         val product = n1 * n2
         return MathProblem(
             num1 = product.toDouble(),

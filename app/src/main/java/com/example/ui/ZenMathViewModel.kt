@@ -314,6 +314,14 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun navigateTo(screen: ZenScreen) {
         stopTimer()
         _currentScreen.value = screen
+        when (screen) {
+            ZenScreen.MENU -> _selectedTab.value = MainTab.PRACTICE
+            ZenScreen.REVISION -> _selectedTab.value = MainTab.REVISION
+            ZenScreen.HISTORY -> _selectedTab.value = MainTab.HISTORY
+            ZenScreen.STATS -> _selectedTab.value = MainTab.STATS
+            ZenScreen.SETTINGS -> _selectedTab.value = MainTab.SETTINGS
+            else -> {}
+        }
     }
 
     fun selectTab(tab: MainTab) {
@@ -977,6 +985,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun onQuitGame() {
         stopTimer()
         _currentScreen.value = ZenScreen.MENU
+        _selectedTab.value = MainTab.PRACTICE
     }
 
     fun onPlayAgain() {
