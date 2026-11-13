@@ -9,6 +9,7 @@ import com.example.domain.MistakeSelector
 import com.example.domain.ProblemCodec
 import com.example.domain.QuestionResult
 import com.example.domain.drills.DrillCategory
+import com.example.ui.ZenMathViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -246,5 +247,49 @@ class MistakeReviewPhase3And4Test {
 
         val label = MistakeSelector.formatScopeLabel(groups, allKeys, queue.size, isSessionScope = false)
         assertEquals("Weak Spots: Addition (30Q)", label)
+    }
+
+    @Test
+    fun `shouldCountAsFullSession requires mistake review questions to meet or exceed allotted session questions`() {
+        // Normal sessions always count regardless of question count
+        assertTrue(
+            ZenMathViewModel.shouldCountAsFullSession(
+                isMistakeReview = false,
+                totalQuestionsInRun = 3,
+                allottedSessionQuestions = 10
+            )
+        )
+
+        // Mistake review with fewer questions than allotted session length does NOT count as a normal session
+        assertFalse(
+            ZenMathViewModel.shouldCountAsFullSession(
+                isMistakeReview = true,
+                totalQuestionsInRun = 4,
+                allottedSessionQuestions = 5
+            )
+        )
+        assertFalse(
+            ZenMathViewModel.shouldCountAsFullSession(
+                isMistakeReview = true,
+                totalQuestionsInRun = 1,
+                allottedSessionQuestions = 10
+            )
+        )
+
+        // Mistake review with questions >= allotted session length DOES count as a full session
+        assertTrue(
+            ZenMathViewModel.shouldCountAsFullSession(
+                isMistakeReview = true,
+                totalQuestionsInRun = 5,
+                allottedSessionQuestions = 5
+            )
+        )
+        assertTrue(
+            ZenMathViewModel.shouldCountAsFullSession(
+                isMistakeReview = true,
+                totalQuestionsInRun = 12,
+                allottedSessionQuestions = 10
+            )
+        )
     }
 }

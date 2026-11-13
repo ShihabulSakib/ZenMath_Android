@@ -5,6 +5,13 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-11-10
+
+### Changed
+- **Mistake Practice Session Threshold (`questions >= settings.totalQuestions`)**:
+  - Updated `ZenMathViewModel.completeSession` and `ZenMathRepository.insertQuestionsOnly` so that Mistake Review practice runs only count as a full session (incrementing the Daily Goal, Total Sessions in Statistics, and creating a session card in History) when the number of questions practiced is greater than or equal to the allotted session length (`settings.totalQuestions`).
+  - Shorter mistake-practice runs (`totalQuestions < settings.totalQuestions`) still save question attempts to update mistake resolution status in Weak Spots without inflating session counts or Daily Goal progress.
+
 ## [1.3.2] - 2026-11-10
 
 ### Added

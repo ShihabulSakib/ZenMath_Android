@@ -40,6 +40,12 @@ class ZenMathRepository(
         dao.insertSessionWithQuestions(session, questions)
     }
 
+    suspend fun insertQuestionsOnly(questions: List<QuestionRecordEntity>) {
+        if (questions.isNotEmpty()) {
+            dao.insertQuestions(questions)
+        }
+    }
+
     suspend fun clearAllData() {
         dao.clearAll()
         preferencesManager.clearAllPreferences()

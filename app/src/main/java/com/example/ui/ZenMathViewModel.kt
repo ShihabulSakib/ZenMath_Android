@@ -802,11 +802,25 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
             )
         }
 
+        val countsAsFullSession = shouldCountAsFullSession(
+            isMistakeReview = isMistakeReview,
+            totalQuestionsInRun = totalQ,
+            allottedSessionQuestions = settingsFlow.value.totalQuestions
+        )
+
         viewModelScope.launch {
-            repository.insertSession(sessionEntity, questionEntities)
+            if (countsAsFullSession) {
+                repository.insertSession(sessionEntity, questionEntities)
+            } else {
+                // Still record question attempts so resolved mistakes update in Weak Spots / Mistake Review,
+                // without adding a session card in History or incrementing Total Sessions.
+                repository.insertQuestionsOnly(questionEntities)
+            }
         }
 
-        preferencesManager.incrementDailyProgress()
+        if (countsAsFullSession) {
+            preferencesManager.incrementDailyProgress()
+        }
 
         // Adaptive Difficulty auto-escalation and step-down (skipped for Mistake Review)
         if (!isMistakeReview && settingsFlow.value.adaptiveDifficulty && totalQ > 0) {
@@ -1030,5 +1044,21 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     suspend fun importBackup(jsonStr: String) {
         repository.importBackupJson(jsonStr)
+    }
+
+    companion object {
+        /**
+         * Mistake Review sessions only count as a full session (in History, Total Sessions,
+         * and Daily Goal progress) when the number of questions practiced is at least the
+         * allotted session question count (`settings.totalQuestions`).
+         */
+        fun shouldCountAsFullSession(
+            isMistakeReview: Boolean,
+            totalQuestionsInRun: Int,
+            allottedSessionQuestions: Int
+        ): Boolean {
+            if (!isMistakeReview) return true
+            return totalQuestionsInRun >= allottedSessionQuestions.coerceAtLeast(1)
+        }
     }
 }

@@ -539,7 +539,7 @@ object DrillRegistry {
                 DrillParam("Session Cap", "Up to 30 unique questions per practice run, single pass", "Max 30 questions")
             ),
             answerChecking = "Restores original AnswerSpec from ProblemCodec (or numeric tolerance fallback for legacy records).",
-            timingAndScoring = "Tracked as a full session with sessionType = 'mistake_review' and scopeLabel; updates daily goal without altering adaptive difficulty.",
+            timingAndScoring = "Counts as a full session (in History, Total Sessions, and Daily Goal) only when the number of questions practiced is >= the allotted session length (settings.totalQuestions); shorter runs still update mistake resolution status without inflating session counts.",
             supportsMcq = false,
             isCompound = true
         ),
