@@ -5,6 +5,22 @@ All notable changes to ZenMath will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2026-11-21
+
+### Added
+- **Decimal Multiplication Selector (`MultiplicationNumberType`)**:
+  - Added 3-way selector (*Integers Only*, *Decimals Only*, *Mixed (Int & Dec)*) in Multiplication and Mixed Operations setup (`GameSetupScreen.kt`, `ZenMathViewModel.kt`, `ZenMathApp.kt`).
+  - Added `generateDecimalMultiplicationQuestion` covering Decimal × Integer, Decimal × Decimal, and Decimal × Power-of-10 / Small Decimals, and enabled the `.` decimal key in `GameScreen.kt`.
+- **5 New `10^x` Arithmetic Subtypes in Scientific Notation**:
+  - Expanded `SciNotationSubtype` and `generateScientificNotationQuestion` with *Pure 10ˣ Laws* (`PURE_POWERS_TEN`), *Add & Subtract* (`ADD_SUB_SCI`), *Reciprocals* (`RECIPROCAL_SCI`), *Multi-Term 10ˣ Fractions* (`MULTI_TERM_FRACTION`), and *Decimal ×/÷ 10ˣ Shifting* (`NUMBER_SHIFT_TEN`).
+
+### Changed
+- **Math-Practice UI/UX Polish & Broken-UI Fixes**:
+  - Added graph-paper card styling (`Modifier.mathGrid`), press-scale tactile feedback (`Modifier.pressScale`), tabular numeral typography (`Type.kt`), and an underlined answer slot with a blinking caret in `GameScreen.kt`.
+  - Added an animated circular accuracy ring inside a graph-paper hero card on `ResultsScreen.kt` and compact tab labels on `ZenNavbar.kt`.
+  - Fixed multi-line label clipping on setup subtype buttons (`heightIn(min = 48.dp)`), hid inactive operation cards in `MIXED` mode setup, capped keypad height on short screens, and fixed stale `(× 1-12)` labels in `SpecialMenuScreen.kt`.
+  - Fixed `"cubes-and-powers"` filter key, added `"atomic-masses"` and `"unit-conversions"` filters in `HistoryScreen.kt`, and formatted math superscripts/subscripts in `MistakeReviewScreen.kt` and `HistoryScreen.kt`.
+
 ## [1.3.3] - 2026-11-10
 
 ### Changed
