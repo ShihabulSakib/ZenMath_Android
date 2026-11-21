@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.GameMode
+import com.example.ui.components.mathGrid
+import com.example.ui.components.pressScale
 import com.example.ui.theme.ZenTheme
 
 @Composable
@@ -126,15 +128,18 @@ fun SpecialMenuScreen(
                 items(standardRanges.size) { i ->
                     val (range, label, sub) = standardRanges[i]
                     val cardShape = RoundedCornerShape(18.dp)
+                    val presetInteraction = remember { MutableInteractionSource() }
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .pressScale(presetInteraction)
                             .clip(cardShape)
                             .background(colors.card)
+                            .mathGrid(colors.cardBorder, cell = 18.dp, strokeAlpha = 0.25f)
                             .border(1.dp, colors.cardBorder, cardShape)
                             .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
+                                interactionSource = presetInteraction,
                                 indication = ripple(color = colors.primary.copy(alpha = 0.2f)),
                                 onClick = { onSelectRange(range) }
                             )
@@ -288,12 +293,12 @@ fun SpecialMenuScreen(
                             }
 
                             val s = customStart.toIntOrNull() ?: 1
-                            val e = customEnd.toIntOrNull() ?: 12
+                            val e = customEnd.toIntOrNull() ?: 10
                             val minVal = minOf(s, e)
                             val maxVal = maxOf(s, e)
 
                             Text(
-                                text = "Tables $minVal to $maxVal (× 1-12)",
+                                text = "Tables $minVal to $maxVal (× 1-10)",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textSecondary,
@@ -307,7 +312,7 @@ fun SpecialMenuScreen(
                     Button(
                         onClick = {
                             val s = customStart.toIntOrNull() ?: 1
-                            val e = customEnd.toIntOrNull() ?: 12
+                            val e = customEnd.toIntOrNull() ?: 10
                             onSelectRange(Pair(minOf(s, e), maxOf(s, e)))
                         },
                         colors = ButtonDefaults.buttonColors(

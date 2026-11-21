@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.animation.AnimatedVisibility
 import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
+import com.example.domain.GameMode
 import com.example.ui.components.RichTextHelper
 import com.example.ui.theme.ZenTheme
 import java.text.SimpleDateFormat
@@ -56,10 +57,9 @@ private val MODE_FILTERS = listOf(
     "multiplication-table",
     "factor-finding",
     "square",
-    "cubes-powers",
+    "cubes-and-powers",
     "fraction",
     "percentage",
-    "square-root",
     "approximation",
     "number-series",
     "ratio",
@@ -69,6 +69,8 @@ private val MODE_FILTERS = listOf(
     "ph-poh",
     "composite-logs-roots",
     "constants",
+    "atomic-masses",
+    "unit-conversions",
     "speed-round",
     "weak-spots",
     "mistake-review"
@@ -122,7 +124,12 @@ fun HistoryScreen(
         ) {
             items(MODE_FILTERS) { filterKey ->
                 val isSelected = filterKey == selectedFilter
-                val filterLabel = if (filterKey == "all") "All" else filterKey.replace("-", " ").replaceFirstChar { it.uppercase() }
+                val filterLabel = if (filterKey == "all") {
+                    "All"
+                } else {
+                    GameMode.entries.find { it.id == filterKey }?.displayName
+                        ?: filterKey.replace("-", " ").replaceFirstChar { it.uppercase() }
+                }
                 val shape = RoundedCornerShape(16.dp)
 
                 Box(
@@ -216,7 +223,8 @@ fun HistoryScreen(
                                         text = if (session.sessionType == SessionEntity.SESSION_TYPE_MISTAKE_REVIEW) {
                                             "Mistake Review"
                                         } else {
-                                            session.mode.replace("-", " ").replaceFirstChar { it.uppercase() }
+                                            GameMode.entries.find { it.id == session.mode }?.displayName
+                                                ?: session.mode.replace("-", " ").replaceFirstChar { it.uppercase() }
                                         },
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
@@ -315,7 +323,9 @@ fun HistoryScreen(
                                                 modifier = Modifier.weight(1f)
                                             )
                                             Text(
-                                                text = if (q.isCorrect) "✓ ${q.correctAnswer}" else "✗ ${q.userAnswer ?: "—"} (${q.correctAnswer})",
+                                                text = RichTextHelper.formatMathText(
+                                                    if (q.isCorrect) "✓ ${q.correctAnswer}" else "✗ ${q.userAnswer ?: "—"} (${q.correctAnswer})"
+                                                ),
                                                 fontSize = 11.sp,
                                                 fontFamily = RichTextHelper.MathFontFamily,
                                                 fontWeight = FontWeight.Bold,

@@ -25,10 +25,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Functions
 import androidx.compose.material.icons.filled.Grid3x3
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
@@ -79,7 +79,7 @@ enum class RevisionTab(val label: String, val icon: androidx.compose.ui.graphics
     FRACTIONS("Fractions", Icons.Default.Percent),
     MEMORY("Course Values", Icons.Default.Functions),
     PH("pH & Logs", Icons.Default.Science),
-    CONSTANTS("Constants", Icons.Default.MenuBook)
+    CONSTANTS("Constants", Icons.AutoMirrored.Filled.MenuBook)
 }
 
 @Composable

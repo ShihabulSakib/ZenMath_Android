@@ -39,6 +39,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DarkMode
@@ -48,7 +49,6 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -432,7 +432,7 @@ fun SettingsScreen(
                                         .background(colors.primary.copy(alpha = 0.1f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.TrendingUp, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
                                 }
                                 Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
                                     Text("Adaptive Difficulty", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.textMain)

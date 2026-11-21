@@ -69,8 +69,13 @@ fun Keypad(
         val totalWidth = maxWidth
         val horizontalPadding = 12.dp
         val gap = 8.dp
-        // 4 keys across: divide available width evenly so each key is ideally square
-        val keySize = ((totalWidth - horizontalPadding * 2 - gap * 3) / 4).coerceAtLeast(48.dp)
+        // 4 keys across: divide available width evenly so each key is ideally square,
+        // but cap by screen height so the keypad never crowds out the question on short/landscape screens.
+        val screenH = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
+        val maxByHeight = (screenH * 0.40f - 20.dp - gap * 3) / 4
+        val keySize = ((totalWidth - horizontalPadding * 2 - gap * 3) / 4)
+            .coerceAtMost(maxByHeight)
+            .coerceAtLeast(44.dp)
         val enterHeight = keySize * 2 + gap
 
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -262,16 +267,18 @@ private fun KeyButton(
 
     val actualWidth = width ?: size
     val actualHeight = height ?: size
+    val interaction = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .width(actualWidth)
             .height(actualHeight)
+            .pressScale(interaction)
             .clip(shape)
             .background(bgColor.copy(alpha = if (disabled) 0.4f else enabledAlpha))
             .border(if (isHighlighted) 1.5.dp else 1.dp, borderColor, shape)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interaction,
                 indication = ripple(color = contentColor.copy(alpha = 0.2f)),
                 enabled = !disabled && enabledAlpha > 0.3f,
                 onClick = {

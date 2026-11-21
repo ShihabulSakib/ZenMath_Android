@@ -56,7 +56,10 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.domain.GameMode
 import com.example.domain.GameSettings
+import com.example.ui.components.RichTextHelper
 import com.example.ui.components.ZenProgressBar
+import com.example.ui.components.mathGrid
+import com.example.ui.components.pressScale
 import com.example.ui.theme.ZenTheme
 
 sealed class SpecializedIcon {
@@ -429,15 +432,18 @@ private fun OperationCard(
 ) {
     val colors = ZenTheme.colors
     val cardShape = RoundedCornerShape(20.dp)
+    val opInteraction = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .aspectRatio(1f)
+            .pressScale(opInteraction)
             .clip(cardShape)
             .background(colors.card)
+            .mathGrid(colors.cardBorder, cell = 16.dp, strokeAlpha = 0.25f)
             .border(1.dp, colors.cardBorder, cardShape)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = opInteraction,
                 indication = ripple(color = colors.primary.copy(alpha = 0.2f)),
                 onClick = onClick
             )
@@ -476,15 +482,17 @@ private fun SpecializedCard(
 ) {
     val colors = ZenTheme.colors
     val cardShape = RoundedCornerShape(16.dp)
+    val spInteraction = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .aspectRatio(1f)
+            .pressScale(spInteraction)
             .clip(cardShape)
             .background(colors.card)
             .border(1.dp, colors.cardBorder, cardShape)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = spInteraction,
                 indication = ripple(color = colors.primary.copy(alpha = 0.2f)),
                 onClick = onClick
             )
@@ -515,11 +523,11 @@ private fun SpecializedCard(
                 }
                 is SpecializedIcon.Glyph -> {
                     Text(
-                        text = icon.text,
+                        text = RichTextHelper.formatMathText(icon.text),
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Normal,
-                        fontFamily = FontFamily.Monospace,
-                        color = colors.primary.copy(alpha = 0.85f)
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = RichTextHelper.MathFontFamily,
+                        color = colors.primary.copy(alpha = 0.88f)
                     )
                 }
             }
@@ -529,6 +537,10 @@ private fun SpecializedCard(
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp,
+                maxLines = 2,
+                lineHeight = 11.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 color = colors.textSecondary.copy(alpha = 0.8f)
             )
         }

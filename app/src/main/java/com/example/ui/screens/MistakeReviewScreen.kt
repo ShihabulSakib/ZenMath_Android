@@ -51,6 +51,7 @@ import com.example.domain.MistakeCategoryGroup
 import com.example.domain.MistakeItem
 import com.example.domain.MistakeSelector
 import com.example.domain.drills.TopicTagResolver
+import com.example.ui.components.RichTextHelper
 import com.example.ui.theme.ZenTheme
 
 @Composable
@@ -548,10 +549,10 @@ private fun MistakeQuestionRow(
                 Spacer(modifier = Modifier.width(6.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = item.questionText,
+                        text = RichTextHelper.formatMathText(item.questionText),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = RichTextHelper.MathFontFamily,
                         color = colors.textMain
                     )
                     Text(
@@ -565,16 +566,18 @@ private fun MistakeQuestionRow(
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "✗ ${item.latestWrongUserAnswer?.takeIf { it.isNotBlank() } ?: "—"}",
+                    text = RichTextHelper.formatMathText(
+                        "✗ ${item.latestWrongUserAnswer?.takeIf { it.isNotBlank() } ?: "—"}"
+                    ),
                     fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = RichTextHelper.MathFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = colors.incorrect
                 )
                 Text(
-                    text = "✓ ${item.correctAnswer}$unitSuffix",
+                    text = RichTextHelper.formatMathText("✓ ${item.correctAnswer}$unitSuffix"),
                     fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = RichTextHelper.MathFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = colors.correct
                 )
@@ -609,9 +612,9 @@ private fun MistakeQuestionRow(
                     )
                     item.solutionSteps.forEachIndexed { idx, step ->
                         Text(
-                            text = "${idx + 1}. $step",
+                            text = RichTextHelper.formatMathText("${idx + 1}. $step"),
                             fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = RichTextHelper.MathFontFamily,
                             color = colors.textMain
                         )
                     }

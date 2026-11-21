@@ -18,12 +18,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,12 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ZenTheme
 
 enum class MainTab(val id: String, val label: String, val icon: ImageVector) {
     PRACTICE("menu", "Practice", Icons.Default.School),
-    REVISION("revision", "Revision", Icons.Default.MenuBook),
+    REVISION("revision", "Revision", Icons.AutoMirrored.Filled.MenuBook),
     HISTORY("history", "History", Icons.Default.History),
     STATS("stats", "Stats", Icons.Default.Analytics),
     SETTINGS("settings", "Settings", Icons.Default.Tune)
@@ -88,7 +91,8 @@ fun ZenNavbar(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(if (isSelected) colors.primary.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple(color = colors.primary.copy(alpha = 0.2f)),
@@ -104,19 +108,15 @@ fun ZenNavbar(
                                 Icon(
                                     imageVector = tab.icon,
                                     contentDescription = tab.label,
-                                    modifier = Modifier.size(24.dp),
+                                    modifier = Modifier.size(21.dp),
                                     tint = if (isSelected) colors.primary else colors.textSecondary.copy(alpha = 0.6f)
                                 )
-
-                                if (isSelected) {
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(top = 4.dp)
-                                            .size(4.dp)
-                                            .clip(CircleShape)
-                                            .background(colors.primary)
-                                    )
-                                }
+                                Text(
+                                    text = tab.label,
+                                    fontSize = 9.sp,
+                                    fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
+                                    color = if (isSelected) colors.primary else colors.textSecondary.copy(alpha = 0.6f)
+                                )
                             }
                         }
                     }

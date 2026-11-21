@@ -42,6 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.animation.core.animateFloat
+import com.example.ui.components.mathGrid
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -325,7 +328,12 @@ fun GameScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(colors.card.copy(alpha = 0.55f))
+                    .mathGrid(colors.cardBorder)
+                    .border(1.dp, colors.cardBorder, RoundedCornerShape(24.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -371,6 +379,7 @@ fun GameScreen(
                     val textSize = when {
                         problem?.constantSymbol != null -> 22.sp
                         mode in listOf(GameMode.RATIO, GameMode.CHAIN_CALCULATION, GameMode.NUMBER_SERIES, GameMode.PH_POH) -> 26.sp
+                        questionText.length > 24 -> 24.sp
                         questionText.length > 10 -> 32.sp
                         else -> 52.sp
                     }
@@ -420,13 +429,35 @@ fun GameScreen(
                                         modifier = Modifier.testTag("user_input_display")
                                     )
                                 } else {
-                                    Text(
-                                        text = "_",
-                                        fontSize = 38.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = colors.primary.copy(alpha = 0.6f)
+                                    // Empty answer slot with blinking caret (notebook-style)
+                                    val blink = rememberInfiniteTransition(label = "caret")
+                                    val caretAlpha by blink.animateFloat(
+                                        initialValue = 0.15f,
+                                        targetValue = 0.9f,
+                                        animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse),
+                                        label = "caret_alpha"
                                     )
+                                    Box(
+                                        modifier = Modifier
+                                            .width(96.dp)
+                                            .height(48.dp)
+                                            .drawBehind {
+                                                drawLine(
+                                                    colors.primary.copy(alpha = 0.5f),
+                                                    androidx.compose.ui.geometry.Offset(0f, size.height),
+                                                    androidx.compose.ui.geometry.Offset(size.width, size.height),
+                                                    4f
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(3.dp)
+                                                .height(30.dp)
+                                                .background(colors.primary.copy(alpha = caretAlpha))
+                                        )
+                                    }
                                 }
                             }
                             FeedbackType.CORRECT -> {

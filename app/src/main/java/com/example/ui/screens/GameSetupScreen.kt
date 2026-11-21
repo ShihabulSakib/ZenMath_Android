@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -66,6 +67,7 @@ import com.example.domain.MultiplicationNumberType
 import com.example.domain.PhSubType
 import com.example.domain.SciNotationSubtype
 import com.example.domain.SquaresSubtype
+import com.example.ui.components.RichTextHelper
 import com.example.ui.components.ZenSlider
 import com.example.ui.components.ZenToggle
 import com.example.ui.theme.ZenTheme
@@ -348,7 +350,7 @@ fun GameSetupScreen(
                 }
 
                 // Multiplication or Mixed: 3-way Number Type Selector (Integers Only / Decimals Only / Mixed)
-                if (mode == GameMode.MULTIPLICATION || mode == GameMode.MIXED) {
+                if (mode == GameMode.MULTIPLICATION || (mode == GameMode.MIXED && mixedOps.getOrElse(2) { true })) {
                     item {
                         SectionHeader(title = "MULTIPLICATION NUMBER TYPE")
                         Row(
@@ -360,7 +362,7 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
@@ -383,7 +385,7 @@ fun GameSetupScreen(
                 }
 
                 // Subtraction or Mixed: Negative Results toggle
-                if (mode == GameMode.SUBTRACTION || mode == GameMode.MIXED) {
+                if (mode == GameMode.SUBTRACTION || (mode == GameMode.MIXED && mixedOps.getOrElse(1) { true })) {
                     item {
                         SectionHeader(title = "SUBTRACTION OPTIONS")
                         ToggleCardRow(
@@ -397,7 +399,7 @@ fun GameSetupScreen(
                 }
 
                 // Division or Mixed: Allow Remainders toggle
-                if (mode == GameMode.DIVISION || mode == GameMode.MIXED) {
+                if (mode == GameMode.DIVISION || (mode == GameMode.MIXED && mixedOps.getOrElse(3) { true })) {
                     item {
                         SectionHeader(title = "DIVISION OPTIONS")
                         ToggleCardRow(
@@ -494,7 +496,7 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
@@ -504,9 +506,10 @@ fun GameSetupScreen(
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = sub.label,
+                                        text = RichTextHelper.formatMathText(sub.label),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = if (selected) colors.onPrimary else colors.textMain
                                     )
                                 }
@@ -732,18 +735,19 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
                                         .clickable { onSciNotationSubtypeChange(sub) }
-                                        .padding(horizontal = 16.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = sub.label,
+                                        text = RichTextHelper.formatMathText(sub.label),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = if (selected) colors.onPrimary else colors.textMain
                                     )
                                 }
@@ -762,18 +766,19 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
                                         .clickable { onPhSubTypeChange(sub) }
-                                        .padding(horizontal = 16.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = sub.label,
+                                        text = RichTextHelper.formatMathText(sub.label),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = if (selected) colors.onPrimary else colors.textMain
                                     )
                                 }
@@ -792,18 +797,19 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
                                         .clickable { onCompositeLogRootSubtypeChange(sub) }
-                                        .padding(horizontal = 16.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = sub.label,
+                                        text = RichTextHelper.formatMathText(sub.label),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = if (selected) colors.onPrimary else colors.textMain
                                     )
                                 }
@@ -822,18 +828,19 @@ fun GameSetupScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(if (selected) colors.primary else colors.card)
                                         .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
                                         .clickable { onCubesPowersSubtypeChange(sub) }
-                                        .padding(horizontal = 16.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
-                                        text = sub.label,
+                                        text = RichTextHelper.formatMathText(sub.label),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = RichTextHelper.MathFontFamily,
                                         color = if (selected) colors.onPrimary else colors.textMain
                                     )
                                 }
@@ -1344,7 +1351,7 @@ fun GameSetupScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(80.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 

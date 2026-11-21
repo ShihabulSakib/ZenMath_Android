@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,9 +33,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.QuestionResult
 import com.example.domain.drills.TopicTagResolver
+import com.example.ui.components.mathGrid
 import com.example.ui.theme.ZenTheme
 
 @Composable
@@ -105,68 +112,112 @@ fun ResultsScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Big Score
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 20.dp)
+            // Big Score on Math Graph-Paper Card with Accuracy Ring
+            val heroShape = RoundedCornerShape(24.dp)
+            val animatedPct by animateFloatAsState(
+                targetValue = (percentage / 100f).coerceIn(0f, 1f),
+                animationSpec = tween(durationMillis = 700),
+                label = "score_ring"
+            )
+            val ringColor = when {
+                percentage >= 80f -> colors.correct
+                percentage >= 50f -> colors.primary
+                else -> colors.incorrect
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .clip(heroShape)
+                    .background(colors.card)
+                    .mathGrid(colors.cardBorder, cell = 20.dp, strokeAlpha = 0.3f)
+                    .border(1.dp, colors.cardBorder, heroShape)
+                    .padding(vertical = 20.dp, horizontal = 16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "PERFORMANCE",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp,
-                    color = colors.textSecondary.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(verticalAlignment = Alignment.Bottom) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = score.toString(),
-                        fontSize = 68.sp,
+                        text = "PERFORMANCE",
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
-                        color = colors.textMain,
-                        lineHeight = 68.sp
+                        letterSpacing = 2.sp,
+                        color = colors.textSecondary.copy(alpha = 0.6f)
                     )
-                    Text(
-                        text = " / $effectiveTotal",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        color = colors.textSecondary.copy(alpha = 0.4f),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Accuracy Pill
-                val pillShape = RoundedCornerShape(12.dp)
-                Box(
-                    modifier = Modifier
-                        .clip(pillShape)
-                        .background(colors.primary.copy(alpha = 0.08f))
-                        .border(1.dp, colors.primary.copy(alpha = 0.15f), pillShape)
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    Box(
+                        modifier = Modifier.size(144.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Stars,
-                            contentDescription = null,
-                            tint = colors.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "${percentage.toInt()}% ACCURACY",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                            color = colors.primary
-                        )
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val strokeW = 10.dp.toPx()
+                            drawArc(
+                                color = colors.cardBorder,
+                                startAngle = -90f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                            )
+                            drawArc(
+                                color = ringColor,
+                                startAngle = -90f,
+                                sweepAngle = 360f * animatedPct,
+                                useCenter = false,
+                                style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                            )
+                        }
+
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = score.toString(),
+                                fontSize = 44.sp,
+                                fontWeight = FontWeight.Black,
+                                fontFamily = FontFamily.Monospace,
+                                color = colors.textMain,
+                                lineHeight = 44.sp
+                            )
+                            Text(
+                                text = " / $effectiveTotal",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                color = colors.textSecondary.copy(alpha = 0.55f),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Accuracy Pill
+                    val pillShape = RoundedCornerShape(12.dp)
+                    Box(
+                        modifier = Modifier
+                            .clip(pillShape)
+                            .background(ringColor.copy(alpha = 0.10f))
+                            .border(1.dp, ringColor.copy(alpha = 0.25f), pillShape)
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Stars,
+                                contentDescription = null,
+                                tint = ringColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "${percentage.toInt()}% ACCURACY",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                                color = ringColor
+                            )
+                        }
                     }
                 }
             }

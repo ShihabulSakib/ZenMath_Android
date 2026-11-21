@@ -24,11 +24,44 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ZenTheme
+
+/**
+ * Subtle graph-paper grid background (math-notebook vibe). Uses existing theme border color only.
+ */
+fun Modifier.mathGrid(
+    lineColor: Color,
+    cell: androidx.compose.ui.unit.Dp = 22.dp,
+    strokeAlpha: Float = 0.35f
+): Modifier = this.drawBehind {
+    val step = cell.toPx()
+    val c = lineColor.copy(alpha = lineColor.alpha * strokeAlpha)
+    var x = 0f
+    while (x <= size.width) {
+        drawLine(c, androidx.compose.ui.geometry.Offset(x, 0f), androidx.compose.ui.geometry.Offset(x, size.height), 1f)
+        x += step
+    }
+    var y = 0f
+    while (y <= size.height) {
+        drawLine(c, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y), 1f)
+        y += step
+    }
+}
+
+/** Press-scale feedback for tappable surfaces. */
+@Composable
+fun Modifier.pressScale(interactionSource: MutableInteractionSource, pressedScale: Float = 0.94f): Modifier {
+    val pressed by interactionSource.collectIsPressedAsState()
+    val s by animateFloatAsState(if (pressed) pressedScale else 1f, label = "press_scale")
+    return this.graphicsLayer { scaleX = s; scaleY = s }
+}
 
 @Composable
 fun ZenProgressBar(

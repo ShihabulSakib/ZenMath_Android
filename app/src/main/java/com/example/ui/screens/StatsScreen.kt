@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.QuestionRecordEntity
 import com.example.data.SessionEntity
 import com.example.domain.DayBucket
+import com.example.domain.GameMode
 import com.example.domain.GameSettings
 import com.example.domain.RecentPerformanceDay
 import com.example.domain.StatsData
@@ -489,7 +490,8 @@ fun StatsScreen(
                                 ) {
                                     Column {
                                         Text(
-                                            text = modeKey.replace("-", " ").replaceFirstChar { it.uppercase() },
+                                            text = GameMode.entries.find { it.id == modeKey }?.displayName
+                                                ?: modeKey.replace("-", " ").replaceFirstChar { it.uppercase() },
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = colors.textMain
@@ -546,7 +548,8 @@ fun StatsScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = bestMode.key.replace("-", " ").replaceFirstChar { it.uppercase() },
+                                text = GameMode.entries.find { it.id == bestMode.key }?.displayName
+                                    ?: bestMode.key.replace("-", " ").replaceFirstChar { it.uppercase() },
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textMain
