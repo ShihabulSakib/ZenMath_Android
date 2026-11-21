@@ -69,12 +69,23 @@ enum class DrillDirection(val key: String, val label: String) {
 
 typealias MemoryDirection = DrillDirection
 
+enum class MultiplicationNumberType(val key: String, val label: String) {
+    INTEGERS_ONLY("integers", "Integers Only"),
+    DECIMALS_ONLY("decimals", "Decimals Only"),
+    MIXED("mixed", "Mixed (Int & Dec)")
+}
+
 enum class SciNotationSubtype(val key: String, val label: String) {
     ALL("all", "All Subtypes"),
     NORMALIZE("normalize", "Normalize Decimal"),
     DECIMAL_SHIFT("shift", "Shift Direction Rule"),
     MULTIPLY_DIVIDE("mul_div", "Multiply & Divide"),
-    ROOT_POWER_TEN("root_ten", "Roots of 10ⁿ")
+    ROOT_POWER_TEN("root_ten", "Roots of 10ⁿ"),
+    PURE_POWERS_TEN("pure_pow_10", "Pure 10ˣ Laws (×, ÷, Power)"),
+    ADD_SUB_SCI("add_sub_sci", "Add & Subtract (a×10ᵐ ± b×10ⁿ)"),
+    RECIPROCAL_SCI("reciprocal_sci", "Reciprocals (1 ÷ a×10ⁿ)"),
+    MULTI_TERM_FRACTION("multi_term_sci", "Multi-Term 10ˣ Fractions"),
+    NUMBER_SHIFT_TEN("num_shift_10", "Decimal ×/÷ 10ˣ Shifting")
 }
 
 enum class PhDrillSubtype(val key: String, val label: String) {

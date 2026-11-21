@@ -103,8 +103,19 @@ object QuestionGenerator {
         digits: Int,
         diff: Difficulty,
         allowRemainder: Boolean,
-        allowNegativeResults: Boolean
+        allowNegativeResults: Boolean,
+        multiplicationNumberType: MultiplicationNumberType = MultiplicationNumberType.INTEGERS_ONLY
     ): MathProblem {
+        if (operation == "*") {
+            val useDecimals = when (multiplicationNumberType) {
+                MultiplicationNumberType.INTEGERS_ONLY -> false
+                MultiplicationNumberType.DECIMALS_ONLY -> true
+                MultiplicationNumberType.MIXED -> Random.nextBoolean()
+            }
+            if (useDecimals) {
+                return generateDecimalMultiplicationQuestion(digits, diff)
+            }
+        }
         var num1 = generateNumber(digits, diff, operation, false)
         var num2 = generateNumber(digits, diff, operation, true)
         val answer: Double
@@ -218,6 +229,150 @@ object QuestionGenerator {
             numericAnswer = answer,
             topicTag = topicTag,
             answerSpec = spec,
+            solutionSteps = steps
+        )
+    }
+
+    /**
+     * Generates Decimal Multiplication questions covering the 3 core categories:
+     * 1. Decimal × Integer (e.g. 3.4 × 7 = 23.8)
+     * 2. Decimal × Decimal (e.g. 1.5 × 0.4 = 0.6, 2.4 × 1.2 = 2.88)
+     * 3. Decimal × Power-of-10 / Small Decimals (e.g. 0.05 × 80 = 4, 1.25 × 0.2 = 0.25)
+     */
+    fun generateDecimalMultiplicationQuestion(
+        digits: Int = 1,
+        diff: Difficulty = Difficulty.MEDIUM,
+        categoryOverride: Int? = null
+    ): MathProblem {
+        val cat = categoryOverride ?: when (diff) {
+            Difficulty.EASY -> listOf(0, 0, 2).random() // Bias toward Decimal×Int and clean Small Decimal×Tens
+            Difficulty.MEDIUM -> listOf(0, 1, 2).random()
+            Difficulty.HARD -> listOf(1, 1, 2).random()
+        }
+
+        val scaleDigits = digits.coerceIn(1, 3)
+
+        val num1: Double
+        val num2: Double
+        val n1Str: String
+        val n2Str: String
+        val ansVal: Double
+        val ansStr: String
+        val steps: List<String>
+
+        when (cat) {
+            0 -> {
+                // Category 0: Decimal × Integer (e.g. 3.4 × 7 = 23.8, or 1.25 × 6 = 7.5)
+                val decPlaces = if (diff == Difficulty.HARD || scaleDigits >= 3) listOf(1, 2).random() else 1
+                val scale1 = if (decPlaces == 2) 100 else 10
+                val int1 = if (decPlaces == 2) {
+                    // Pick a 2-decimal number that isn't a multiple of 10
+                    var v = randomInRange(12, 95 * scaleDigits)
+                    if (v % 10 == 0) v += 5
+                    v
+                } else {
+                    var v = randomInRange(11, (35 * scaleDigits).coerceAtLeast(19))
+                    if (v % 10 == 0) v += 3
+                    v
+                }
+                val int2 = when (diff) {
+                    Difficulty.EASY -> randomInRange(2, 9)
+                    Difficulty.MEDIUM -> randomInRange(2, 12 * scaleDigits)
+                    Difficulty.HARD -> randomInRange(4, 18 * scaleDigits)
+                }
+                val rawProd = int1.toLong() * int2.toLong()
+                val d1 = int1.toDouble() / scale1.toDouble()
+                val d2 = int2.toDouble()
+                val swap = Random.nextBoolean()
+                num1 = if (swap) d2 else d1
+                num2 = if (swap) d1 else d2
+                n1Str = formatCleanDouble(num1)
+                n2Str = formatCleanDouble(num2)
+                ansVal = rawProd.toDouble() / scale1.toDouble()
+                ansStr = formatCleanDouble(ansVal)
+                steps = listOf(
+                    "Ignore decimal point and multiply integers: $int1 × $int2 = $rawProd",
+                    "Restore $decPlaces decimal ${if (decPlaces == 1) "place" else "places"} (÷ $scale1): $rawProd ÷ $scale1 = $ansStr"
+                )
+            }
+            1 -> {
+                // Category 1: Decimal × Decimal (e.g. 1.5 × 0.4 = 0.6, 2.4 × 1.2 = 2.88)
+                val int1 = when (diff) {
+                    Difficulty.EASY -> randomInRange(2, 15).let { if (it == 10) 12 else it }
+                    Difficulty.MEDIUM -> randomInRange(3, 25).let { if (it % 10 == 0) it + 2 else it }
+                    Difficulty.HARD -> randomInRange(11, 35).let { if (it % 10 == 0) it + 4 else it }
+                }
+                val int2 = when (diff) {
+                    Difficulty.EASY -> randomInRange(2, 9)
+                    Difficulty.MEDIUM -> randomInRange(2, 15).let { if (it == 10) 12 else it }
+                    Difficulty.HARD -> randomInRange(6, 24).let { if (it % 10 == 0) it + 3 else it }
+                }
+                val rawProd = int1.toLong() * int2.toLong()
+                num1 = int1.toDouble() / 10.0
+                num2 = int2.toDouble() / 10.0
+                n1Str = formatCleanDouble(num1)
+                n2Str = formatCleanDouble(num2)
+                ansVal = rawProd.toDouble() / 100.0
+                ansStr = formatCleanDouble(ansVal)
+                steps = listOf(
+                    "Multiply as whole numbers: $int1 × $int2 = $rawProd",
+                    "Count total decimal places (1 + 1 = 2 places, ÷ 100): $rawProd ÷ 100 = $ansStr"
+                )
+            }
+            else -> {
+                // Category 2: Decimal × Power-of-10 / Small Decimals (e.g. 0.05 × 80 = 4, 1.25 × 0.2 = 0.25)
+                if (Random.nextBoolean()) {
+                    // Small 2-decimal × multiple of 10 or 100 (e.g. 0.05 × 80 = 4, 0.15 × 60 = 9)
+                    val int1 = listOf(2, 3, 4, 5, 6, 7, 8, 9, 12, 15, 25, 35, 45).random()
+                    val multBase = randomInRange(2, 9)
+                    val tensMult = if (diff == Difficulty.HARD && Random.nextBoolean()) 100 else 10
+                    val int2 = multBase * tensMult
+                    val rawProd = int1.toLong() * int2.toLong()
+                    num1 = int1.toDouble() / 100.0
+                    num2 = int2.toDouble()
+                    n1Str = formatCleanDouble(num1)
+                    n2Str = formatCleanDouble(num2)
+                    ansVal = rawProd.toDouble() / 100.0
+                    ansStr = formatCleanDouble(ansVal)
+                    steps = listOf(
+                        "Shift decimal by multiplying $n1Str × $tensMult = ${formatCleanDouble(num1 * tensMult)}",
+                        "Then multiply by $multBase: ${formatCleanDouble(num1 * tensMult)} × $multBase = $ansStr"
+                    )
+                } else {
+                    // Quarter/eighth benchmark decimal × tenths (e.g. 1.25 × 0.2 = 0.25, 0.25 × 0.8 = 0.2, 2.5 × 0.04 = 0.1)
+                    val benchmarks = listOf(25, 75, 125, 150, 250)
+                    val int1 = benchmarks.random()
+                    val int2 = listOf(2, 4, 6, 8).random()
+                    val scale2 = if (diff == Difficulty.HARD) 100 else 10
+                    val rawProd = int1.toLong() * int2.toLong()
+                    val totalScale = 100 * scale2
+                    num1 = int1.toDouble() / 100.0
+                    num2 = int2.toDouble() / scale2.toDouble()
+                    n1Str = formatCleanDouble(num1)
+                    n2Str = formatCleanDouble(num2)
+                    ansVal = rawProd.toDouble() / totalScale.toDouble()
+                    ansStr = formatCleanDouble(ansVal)
+                    steps = listOf(
+                        "Multiply integer parts: $int1 × $int2 = $rawProd",
+                        "Divide by $totalScale (${if (scale2 == 100) "4" else "3"} decimal places): $ansStr"
+                    )
+                }
+            }
+        }
+
+        return MathProblem(
+            num1 = num1,
+            num2 = num2,
+            operation = "×",
+            questionDisplay = "$n1Str × $n2Str",
+            answer = ansStr,
+            numericAnswer = ansVal,
+            topicTag = "multiplication-decimal",
+            answerSpec = AnswerSpec.AbsoluteTolerance(
+                expected = ansVal,
+                tolerance = 1e-4,
+                exactCourseValues = listOf(ansVal)
+            ),
             solutionSteps = steps
         )
     }
@@ -991,7 +1146,12 @@ object QuestionGenerator {
                 SciNotationSubtype.NORMALIZE,
                 SciNotationSubtype.DECIMAL_SHIFT,
                 SciNotationSubtype.MULTIPLY_DIVIDE,
-                SciNotationSubtype.ROOT_POWER_TEN
+                SciNotationSubtype.ROOT_POWER_TEN,
+                SciNotationSubtype.PURE_POWERS_TEN,
+                SciNotationSubtype.ADD_SUB_SCI,
+                SciNotationSubtype.RECIPROCAL_SCI,
+                SciNotationSubtype.MULTI_TERM_FRACTION,
+                SciNotationSubtype.NUMBER_SHIFT_TEN
             ).random()
         } else {
             subtype
@@ -1216,6 +1376,343 @@ object QuestionGenerator {
                         )
                     )
                 }
+            }
+
+            SciNotationSubtype.PURE_POWERS_TEN -> {
+                // Pure 10^x exponent laws: 10^a × 10^b = 10^?, 10^a ÷ 10^b = 10^?, (10^a)^b = 10^?, or 3-term 10^a × 10^b ÷ 10^c = 10^?
+                when (Random.nextInt(4)) {
+                    0 -> {
+                        val a = randomInRange(-9, 9).let { if (it == 0) 3 else it }
+                        val b = randomInRange(-9, 9).let { if (it == 0) -4 else it }
+                        val ansExp = a + b
+                        MathProblem(
+                            num1 = a.toDouble(),
+                            num2 = b.toDouble(),
+                            operation = "Sci Notation",
+                            questionDisplay = "10^$a × 10^$b = 10^?",
+                            answer = ansExp.toString(),
+                            numericAnswer = ansExp.toDouble(),
+                            topicTag = "sci-pure-pow10",
+                            answerSpec = AnswerSpec.Exact(ansExp.toLong()),
+                            solutionSteps = listOf(
+                                "Product rule for powers of 10: 10^a × 10^b = 10^(a + b)",
+                                "Exponent = $a + ($b) = $ansExp"
+                            )
+                        )
+                    }
+                    1 -> {
+                        val a = randomInRange(-9, 9).let { if (it == 0) 4 else it }
+                        val b = randomInRange(-9, 9).let { if (it == 0) -3 else it }
+                        val ansExp = a - b
+                        MathProblem(
+                            num1 = a.toDouble(),
+                            num2 = b.toDouble(),
+                            operation = "Sci Notation",
+                            questionDisplay = "10^$a ÷ 10^$b = 10^?",
+                            answer = ansExp.toString(),
+                            numericAnswer = ansExp.toDouble(),
+                            topicTag = "sci-pure-pow10",
+                            answerSpec = AnswerSpec.Exact(ansExp.toLong()),
+                            solutionSteps = listOf(
+                                "Quotient rule for powers of 10: 10^a ÷ 10^b = 10^(a − b)",
+                                "Exponent = $a − ($b) = $ansExp"
+                            )
+                        )
+                    }
+                    2 -> {
+                        val a = listOf(-6, -5, -4, -3, -2, 2, 3, 4, 5, 6).random()
+                        val b = listOf(-4, -3, -2, 2, 3, 4).random()
+                        val ansExp = a * b
+                        MathProblem(
+                            num1 = a.toDouble(),
+                            num2 = b.toDouble(),
+                            operation = "Sci Notation",
+                            questionDisplay = "(10^$a)^$b = 10^?",
+                            answer = ansExp.toString(),
+                            numericAnswer = ansExp.toDouble(),
+                            topicTag = "sci-pure-pow10",
+                            answerSpec = AnswerSpec.Exact(ansExp.toLong()),
+                            solutionSteps = listOf(
+                                "Power of a power rule: (10^a)^b = 10^(a × b)",
+                                "Exponent = $a × ($b) = $ansExp"
+                            )
+                        )
+                    }
+                    else -> {
+                        val a = randomInRange(-7, 8).let { if (it == 0) 5 else it }
+                        val b = randomInRange(-7, 8).let { if (it == 0) -2 else it }
+                        val c = randomInRange(-7, 8).let { if (it == 0) -4 else it }
+                        val ansExp = a + b - c
+                        MathProblem(
+                            num1 = (a + b).toDouble(),
+                            num2 = c.toDouble(),
+                            operation = "Sci Notation",
+                            questionDisplay = "(10^$a × 10^$b) ÷ 10^$c = 10^?",
+                            answer = ansExp.toString(),
+                            numericAnswer = ansExp.toDouble(),
+                            topicTag = "sci-pure-pow10",
+                            answerSpec = AnswerSpec.Exact(ansExp.toLong()),
+                            solutionSteps = listOf(
+                                "Combine exponents (add for ×, subtract for ÷): $a + ($b) − ($c)",
+                                "Exponent = ${a + b} − ($c) = $ansExp"
+                            )
+                        )
+                    }
+                }
+            }
+
+            SciNotationSubtype.ADD_SUB_SCI -> {
+                // Addition and subtraction of scientific notation: (a×10^m) ± (b×10^n) with same or adjacent exponents
+                val isAdd = Random.nextBoolean()
+                val sameExp = Random.nextBoolean()
+                val baseExp = listOf(-5, -4, -3, -2, 2, 3, 4, 5, 6).random()
+
+                if (sameExp) {
+                    val aTenths = randomInRange(15, 75)
+                    val bTenths = if (isAdd) {
+                        randomInRange(12, 65)
+                    } else {
+                        randomInRange(5, (aTenths - 5).coerceAtLeast(6))
+                    }
+                    val a = aTenths / 10.0
+                    val b = bTenths / 10.0
+                    val rawMantTenths = if (isAdd) aTenths + bTenths else aTenths - bTenths
+                    val rawMant = rawMantTenths / 10.0
+                    val (normM, expShift) = when {
+                        rawMant >= 10.0 -> Pair(rawMant / 10.0, 1)
+                        rawMant < 1.0 -> Pair(rawMant * 10.0, -1)
+                        else -> Pair(rawMant, 0)
+                    }
+                    val finalExp = baseExp + expShift
+                    val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                    val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+                    val opSym = if (isAdd) "+" else "−"
+                    val aStr = formatCleanDouble(a)
+                    val bStr = formatCleanDouble(b)
+
+                    MathProblem(
+                        num1 = a,
+                        num2 = b,
+                        operation = "Sci Notation",
+                        questionDisplay = "($aStr×10^$baseExp) $opSym ($bStr×10^$baseExp)",
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-add-sub",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = normM,
+                            exponent = finalExp,
+                            mantissaRelativeTol = 0.015
+                        ),
+                        solutionSteps = listOf(
+                            "Same power of 10 (10^$baseExp): factor out ($aStr $opSym $bStr) × 10^$baseExp = ${formatCleanDouble(rawMant)}×10^$baseExp",
+                            if (expShift != 0) "Normalize ${formatCleanDouble(rawMant)}×10^$baseExp → $ansStr" else "Result: $ansStr"
+                        )
+                    )
+                } else {
+                    // Adjacent exponents: e1 = baseExp, e2 = baseExp - 1 (so 10^e1 is 10x larger than 10^e2)
+                    val e1 = baseExp
+                    val e2 = baseExp - 1
+                    val aTenths = randomInRange(20, 85) // 2.0 .. 8.5 (in 10^e1)
+                    val bInt = randomInRange(2, 9)      // 2 .. 9 (in 10^e2, which is 0.2 .. 0.9 in 10^e1)
+                    val a = aTenths / 10.0
+                    val b = bInt.toDouble()
+                    val bInE1 = bInt / 10.0
+                    val rawMantTenths = if (isAdd) aTenths + bInt else aTenths - bInt
+                    val rawMant = rawMantTenths / 10.0
+                    val (normM, expShift) = if (rawMant >= 10.0) {
+                        Pair(rawMant / 10.0, 1)
+                    } else {
+                        Pair(rawMant, 0)
+                    }
+                    val finalExp = e1 + expShift
+                    val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                    val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+                    val opSym = if (isAdd) "+" else "−"
+                    val aStr = formatCleanDouble(a)
+                    val bStr = formatCleanDouble(b)
+
+                    MathProblem(
+                        num1 = a,
+                        num2 = b,
+                        operation = "Sci Notation",
+                        questionDisplay = "($aStr×10^$e1) $opSym ($bStr×10^$e2)",
+                        answer = ansStr,
+                        numericAnswer = finalVal,
+                        topicTag = "sci-add-sub",
+                        answerSpec = AnswerSpec.ScientificValue(
+                            mantissa = normM,
+                            exponent = finalExp,
+                            mantissaRelativeTol = 0.015
+                        ),
+                        solutionSteps = listOf(
+                            "Align to 10^$e1: $bStr×10^$e2 = ${formatCleanDouble(bInE1)}×10^$e1",
+                            "Combine mantissas: ($aStr $opSym ${formatCleanDouble(bInE1)}) × 10^$e1 = ${formatCleanDouble(rawMant)}×10^$e1",
+                            if (expShift != 0) "Normalize → $ansStr" else "Result: $ansStr"
+                        )
+                    )
+                }
+            }
+
+            SciNotationSubtype.RECIPROCAL_SCI -> {
+                // Reciprocals & negative powers: 1 ÷ (a × 10^n) where a in {1, 2, 4, 5, 8, 2.5, 1.25}
+                data class RecipPair(val a: Double, val invTimes10: Double, val shift: Int)
+                val recipPool = listOf(
+                    RecipPair(2.0, 5.0, -1),
+                    RecipPair(4.0, 2.5, -1),
+                    RecipPair(5.0, 2.0, -1),
+                    RecipPair(8.0, 1.25, -1),
+                    RecipPair(2.5, 4.0, -1),
+                    RecipPair(1.25, 8.0, -1),
+                    RecipPair(1.0, 1.0, 0)
+                )
+                val chosenRecip = recipPool.random()
+                val n = listOf(-8, -7, -6, -5, -4, -3, -2, 2, 3, 4, 5, 6, 7).random()
+                val normM = chosenRecip.invTimes10
+                val finalExp = -n + chosenRecip.shift
+                val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+                val aStr = formatCleanDouble(chosenRecip.a)
+                val prompt = if (chosenRecip.a == 1.0) "1 ÷ (10^$n)" else "1 ÷ ($aStr×10^$n)"
+                val rawInv = 1.0 / chosenRecip.a
+
+                MathProblem(
+                    num1 = chosenRecip.a,
+                    num2 = n.toDouble(),
+                    operation = "Sci Notation",
+                    questionDisplay = prompt,
+                    answer = ansStr,
+                    numericAnswer = finalVal,
+                    topicTag = "sci-reciprocal",
+                    answerSpec = AnswerSpec.ScientificValue(
+                        mantissa = normM,
+                        exponent = finalExp,
+                        mantissaRelativeTol = 0.015
+                    ),
+                    solutionSteps = if (chosenRecip.a == 1.0) {
+                        listOf(
+                            "Flip sign of exponent: 1 ÷ 10^$n = 10^${-n}",
+                            "Result: $ansStr"
+                        )
+                    } else {
+                        listOf(
+                            "Reciprocal of mantissa: 1 ÷ $aStr = ${formatCleanDouble(rawInv)}, and 1 ÷ 10^$n = 10^${-n}",
+                            "Normalize ${formatCleanDouble(rawInv)}×10^${-n} → $ansStr"
+                        )
+                    }
+                )
+            }
+
+            SciNotationSubtype.MULTI_TERM_FRACTION -> {
+                // Multi-term exam-style expression: ((a×10^m) × (b×10^n)) ÷ (c×10^p)
+                val c = listOf(2, 3, 4, 5, 6, 8).random()
+                val q = randomInRange(2, 9)
+                // Choose a and b such that a * b = c * q (so (a*b)/c = q is clean, or divide by 2 for .5)
+                val targetProd = c * q
+                // Find a nice factorization of targetProd into a * b where a, b in 2..9 if possible
+                val factorPairs = mutableListOf<Pair<Int, Int>>()
+                for (f in 2..9) {
+                    if (targetProd % f == 0) {
+                        val other = targetProd / f
+                        if (other in 2..12) {
+                            factorPairs.add(Pair(f, other))
+                        }
+                    }
+                }
+                val (aRaw, bRaw) = if (factorPairs.isNotEmpty()) {
+                    factorPairs.random()
+                } else {
+                    Pair(c, q)
+                }
+                val aMant = if (aRaw >= 10) aRaw / 10.0 else aRaw.toDouble()
+                val bMant = if (bRaw >= 10) bRaw / 10.0 else bRaw.toDouble()
+                val rawMantQuot = (aMant * bMant) / c.toDouble()
+                val (normM, expAdjust) = when {
+                    rawMantQuot >= 10.0 -> Pair(rawMantQuot / 10.0, 1)
+                    rawMantQuot < 1.0 -> Pair(rawMantQuot * 10.0, -1)
+                    else -> Pair(rawMantQuot, 0)
+                }
+                val m = randomInRange(-5, 6).let { if (it == 0) 3 else it }
+                val n = randomInRange(-5, 6).let { if (it == 0) -2 else it }
+                val p = randomInRange(-5, 5).let { if (it == 0) -4 else it }
+                val combinedExp = m + n - p
+                val finalExp = combinedExp + expAdjust
+                val finalVal = normM * 10.0.pow(finalExp.toDouble())
+                val ansStr = "${formatCleanDouble(normM)}×10^$finalExp"
+                val aStr = formatCleanDouble(aMant)
+                val bStr = formatCleanDouble(bMant)
+
+                MathProblem(
+                    num1 = rawMantQuot,
+                    num2 = finalExp.toDouble(),
+                    operation = "Sci Notation",
+                    questionDisplay = "(($aStr×10^$m) × ($bStr×10^$n)) ÷ ($c×10^$p)",
+                    answer = ansStr,
+                    numericAnswer = finalVal,
+                    topicTag = "sci-multi-term",
+                    answerSpec = AnswerSpec.ScientificValue(
+                        mantissa = normM,
+                        exponent = finalExp,
+                        mantissaRelativeTol = 0.015
+                    ),
+                    solutionSteps = listOf(
+                        "Combine mantissas: ($aStr × $bStr) ÷ $c = ${formatCleanDouble(aMant * bMant)} ÷ $c = ${formatCleanDouble(rawMantQuot)}",
+                        "Combine exponents: $m + ($n) − ($p) = $combinedExp",
+                        if (expAdjust != 0) "Normalize ${formatCleanDouble(rawMantQuot)}×10^$combinedExp → $ansStr" else "Result: $ansStr"
+                    )
+                )
+            }
+
+            SciNotationSubtype.NUMBER_SHIFT_TEN -> {
+                // Number ×/÷ 10^x shifting into a standard decimal or integer (e.g., 0.045 × 10^4 = 450, 320 ÷ 10^3 = 0.32)
+                val isMultiply = Random.nextBoolean()
+                // Pick an integer seed with 2 digits (not ending in 0) like 12..98
+                val seed = randomInRange(12, 98).let { if (it % 10 == 0) it + 5 else it }
+                val seedScaleExp = listOf(-3, -2, -1, 0, 1, 2).random() // start number = seed * 10^seedScaleExp
+                val startVal = seed * 10.0.pow(seedScaleExp.toDouble())
+                // Choose power of 10 shift so the resulting value is between 0.001 and 99000
+                val targetTotalExp = listOf(-3, -2, -1, 0, 1, 2, 3).filter { it != seedScaleExp }.random()
+                val rawDiff = targetTotalExp - seedScaleExp
+                val exp = if (isMultiply) rawDiff else -rawDiff
+                val resultVal = seed * 10.0.pow(targetTotalExp.toDouble())
+
+                val startStr = if (seedScaleExp >= 0) {
+                    startVal.roundToLong().toString()
+                } else {
+                    String.format(Locale.US, "%.${abs(seedScaleExp)}f", startVal).trimEnd('0').trimEnd('.')
+                }
+                val ansStr = if (targetTotalExp >= 0) {
+                    resultVal.roundToLong().toString()
+                } else {
+                    String.format(Locale.US, "%.${abs(targetTotalExp)}f", resultVal).trimEnd('0').trimEnd('.')
+                }
+                val opSym = if (isMultiply) "×" else "÷"
+                val effectiveShift = if (isMultiply) exp else -exp
+                val dirDesc = if (effectiveShift > 0) "right by $effectiveShift places" else "left by ${abs(effectiveShift)} places"
+
+                val spec = if (targetTotalExp >= 0) {
+                    AnswerSpec.Exact(resultVal.roundToLong())
+                } else {
+                    AnswerSpec.AbsoluteTolerance(
+                        expected = resultVal,
+                        tolerance = 1e-5,
+                        exactCourseValues = listOf(resultVal)
+                    )
+                }
+
+                MathProblem(
+                    num1 = startVal,
+                    num2 = exp.toDouble(),
+                    operation = "Sci Notation",
+                    questionDisplay = "$startStr $opSym 10^$exp = ?",
+                    answer = ansStr,
+                    numericAnswer = resultVal,
+                    topicTag = "sci-num-shift",
+                    answerSpec = spec,
+                    solutionSteps = listOf(
+                        "${if (isMultiply) "Multiplying" else "Dividing"} by 10^$exp shifts the decimal point $dirDesc",
+                        "$startStr $opSym 10^$exp = $ansStr"
+                    )
+                )
             }
 
             SciNotationSubtype.ALL -> generateScientificNotationQuestion(SciNotationSubtype.NORMALIZE)
@@ -1809,6 +2306,23 @@ object QuestionGenerator {
                 val rounded = (dVal * 100.0).roundToInt() / 100.0
                 val dStr = formatCleanDouble(rounded)
                 candidates.add(Pair(rounded, dStr))
+            }
+        } else if (problem.topicTag == "multiplication-decimal" || problem.topicTag == "sci-num-shift") {
+            val scaleOptions = listOf(
+                correctVal * 10.0,
+                correctVal / 10.0,
+                correctVal * 100.0,
+                correctVal / 100.0,
+                correctVal + maxOf(minSpacing * 2.0, if (correctVal >= 1.0) 0.5 else 0.05),
+                (correctVal - maxOf(minSpacing * 2.0, if (correctVal >= 1.0) 0.5 else 0.05)).coerceAtLeast(0.01),
+                correctVal + maxOf(minSpacing * 4.0, 1.2)
+            )
+            for (dVal in scaleOptions) {
+                if (dVal > 0.0) {
+                    val dStr = formatCleanDouble(dVal)
+                    val parsedVal = ScientificInputParser.parseToDouble(dStr) ?: dVal
+                    candidates.add(Pair(parsedVal, dStr))
+                }
             }
         } else {
             val step = maxOf(minSpacing * 1.35, if (abs(correctVal) >= 10) 2.0 else 0.25)

@@ -8,7 +8,9 @@ import com.example.domain.Difficulty
 import com.example.domain.FractionsPool
 import com.example.domain.GameMode
 import com.example.domain.MathProblem
+import com.example.domain.MultiplicationNumberType
 import com.example.domain.QuestionGenerator
+import com.example.domain.SciNotationSubtype
 import com.example.domain.SquaresSubtype
 import com.example.domain.TolerancePreset
 import com.example.domain.drills.TopicTagResolver
@@ -176,5 +178,91 @@ class DrillsPhase1And2Test {
                 }
             }
         }
+    }
+
+    @Test
+    fun `Decimal multiplication supports INTEGERS_ONLY DECIMALS_ONLY and MIXED across all 3 categories`() {
+        // 1. INTEGERS_ONLY always produces topicTag = "multiplication" with Exact integer answers
+        repeat(25) {
+            val q = QuestionGenerator.generateStandardQuestion(
+                operation = "*",
+                digits = 2,
+                diff = Difficulty.MEDIUM,
+                allowRemainder = false,
+                allowNegativeResults = false,
+                multiplicationNumberType = MultiplicationNumberType.INTEGERS_ONLY
+            )
+            assertEquals("multiplication", q.topicTag)
+            assertTrue(q.answerSpec is AnswerSpec.Exact)
+            assertTrue(AnswerChecker.check(q.answer, q.answerSpec))
+        }
+
+        // 2. DECIMALS_ONLY always produces topicTag = "multiplication-decimal" across all 3 categories
+        for (cat in listOf(0, 1, 2)) {
+            for (diff in Difficulty.entries) {
+                repeat(15) {
+                    val q = QuestionGenerator.generateDecimalMultiplicationQuestion(
+                        digits = 2,
+                        diff = diff,
+                        categoryOverride = cat
+                    )
+                    assertEquals("multiplication-decimal", q.topicTag)
+                    assertEquals(GameMode.MULTIPLICATION, TopicTagResolver.inferModeFromTag(q.topicTag))
+                    assertTrue("Expected question display to contain '.', got ${q.questionDisplay}", q.questionDisplay.contains("."))
+                    assertTrue("Correct answer '${q.answer}' must pass", AnswerChecker.check(q.answer, q.answerSpec))
+                    assertFalse("Wrong answer must fail", AnswerChecker.check((q.numericAnswer + 1.0).toString(), q.answerSpec))
+                }
+            }
+        }
+
+        // 3. MIXED produces both "multiplication" and "multiplication-decimal"
+        val seenTags = mutableSetOf<String>()
+        repeat(50) {
+            val q = QuestionGenerator.generateStandardQuestion(
+                operation = "*",
+                digits = 2,
+                diff = Difficulty.MEDIUM,
+                allowRemainder = false,
+                allowNegativeResults = false,
+                multiplicationNumberType = MultiplicationNumberType.MIXED
+            )
+            seenTags.add(q.topicTag)
+            assertTrue(AnswerChecker.check(q.answer, q.answerSpec))
+        }
+        assertEquals(setOf("multiplication", "multiplication-decimal"), seenTags)
+    }
+
+    @Test
+    fun `Scientific Notation supports all 9 subtypes including pure 10^x laws add_sub reciprocals multi-term and decimal shift`() {
+        val concreteSubtypes = SciNotationSubtype.entries.filter { it != SciNotationSubtype.ALL }
+        assertEquals(9, concreteSubtypes.size)
+
+        for (sub in concreteSubtypes) {
+            repeat(20) {
+                val q = QuestionGenerator.generateScientificNotationQuestion(sub)
+                assertEquals(
+                    "Expected topicTag '${q.topicTag}' to resolve to SCIENTIFIC_NOTATION",
+                    GameMode.SCIENTIFIC_NOTATION,
+                    TopicTagResolver.inferModeFromTag(q.topicTag)
+                )
+                assertTrue("Correct answer '${q.answer}' must pass for $sub (${q.questionDisplay})", AnswerChecker.check(q.answer, q.answerSpec))
+                assertTrue("Solution steps must be non-empty for $sub", q.solutionSteps.isNotEmpty())
+
+                // Verify MCQ generation works cleanly for every subtype
+                val mcq = QuestionGenerator.attachMcqOptions(q, TolerancePreset.NORMAL)
+                assertNotNull(mcq.mcqOptions)
+                assertEquals(4, mcq.mcqOptions!!.distinct().size)
+                assertTrue(AnswerChecker.check(q.answer, mcq.answerSpec))
+            }
+        }
+
+        // ALL subtype samples across the full pool
+        val seenTags = mutableSetOf<String>()
+        repeat(200) {
+            val q = QuestionGenerator.generateScientificNotationQuestion(SciNotationSubtype.ALL)
+            seenTags.add(q.topicTag)
+            assertTrue(AnswerChecker.check(q.answer, q.answerSpec))
+        }
+        assertTrue("Expected at least 6 distinct sci-* tags from ALL, got $seenTags", seenTags.size >= 6)
     }
 }

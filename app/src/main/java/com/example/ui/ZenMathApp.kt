@@ -55,6 +55,7 @@ fun ZenMathApp(
     val allowRemainder by viewModel.allowRemainder.collectAsState()
     val allowNegativeResults by viewModel.allowNegativeResults.collectAsState()
     val mixedOps by viewModel.mixedOps.collectAsState()
+    val multiplicationNumberType by viewModel.multiplicationNumberType.collectAsState()
     val squareRangeType by viewModel.squareRangeType.collectAsState()
     val customSquareRange by viewModel.customSquareRange.collectAsState()
     val squaresSubtype by viewModel.squaresSubtype.collectAsState()
@@ -160,6 +161,7 @@ fun ZenMathApp(
                         allowRemainder = allowRemainder,
                         allowNegativeResults = allowNegativeResults,
                         mixedOps = mixedOps,
+                        multiplicationNumberType = multiplicationNumberType,
                         squareRangeType = squareRangeType,
                         customSquareRange = customSquareRange,
                         sqrtRangeType = sqrtRangeType,
@@ -184,6 +186,7 @@ fun ZenMathApp(
                         onAllowRemainderChange = { viewModel.setAllowRemainder(it) },
                         onAllowNegativeResultsChange = { viewModel.setAllowNegativeResults(it) },
                         onMixedOpsChange = { viewModel.setMixedOps(it) },
+                        onMultiplicationNumberTypeChange = { viewModel.setMultiplicationNumberType(it) },
                         onSquareRangeTypeChange = { viewModel.setSquareRangeType(it) },
                         onCustomSquareRangeChange = { viewModel.setCustomSquareRange(it) },
                         onSqrtRangeTypeChange = { viewModel.setSqrtRangeType(it) },

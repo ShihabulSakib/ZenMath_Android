@@ -110,6 +110,7 @@ fun GameScreen(
             (problem?.answerSpec as? com.example.domain.AnswerSpec.FractionSpec)?.isFractionToDecimal == false
     val showDecimal = mode in listOf(
         GameMode.FRACTION,
+        GameMode.MULTIPLICATION,
         GameMode.DIVISION,
         GameMode.MIXED,
         GameMode.PERCENTAGE,
@@ -126,7 +127,7 @@ fun GameScreen(
         GameMode.SPEED_ROUND,
         GameMode.WEAK_SPOTS,
         GameMode.MISTAKE_REVIEW
-    ) || problem?.topicTag == "sqrt-irrational" || problem?.answer?.contains(".") == true
+    ) || problem?.topicTag == "sqrt-irrational" || problem?.topicTag == "multiplication-decimal" || problem?.answer?.contains(".") == true
     val showScientific = mode in listOf(
         GameMode.APPROXIMATION,
         GameMode.SCIENTIFIC_NOTATION,

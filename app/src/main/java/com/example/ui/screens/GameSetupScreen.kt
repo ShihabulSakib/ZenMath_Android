@@ -62,6 +62,7 @@ import com.example.domain.Difficulty
 import com.example.domain.GameMode
 import com.example.domain.MathConstantSubtype
 import com.example.domain.MemoryDirection
+import com.example.domain.MultiplicationNumberType
 import com.example.domain.PhSubType
 import com.example.domain.SciNotationSubtype
 import com.example.domain.SquaresSubtype
@@ -77,6 +78,7 @@ fun GameSetupScreen(
     allowRemainder: Boolean,
     allowNegativeResults: Boolean,
     mixedOps: List<Boolean>,
+    multiplicationNumberType: MultiplicationNumberType = MultiplicationNumberType.INTEGERS_ONLY,
     squareRangeType: String,
     customSquareRange: Pair<Int, Int>,
     sqrtRangeType: String,
@@ -101,6 +103,7 @@ fun GameSetupScreen(
     onAllowRemainderChange: (Boolean) -> Unit,
     onAllowNegativeResultsChange: (Boolean) -> Unit,
     onMixedOpsChange: (List<Boolean>) -> Unit,
+    onMultiplicationNumberTypeChange: (MultiplicationNumberType) -> Unit = {},
     onSquareRangeTypeChange: (String) -> Unit,
     onCustomSquareRangeChange: (Pair<Int, Int>) -> Unit,
     onSqrtRangeTypeChange: (String) -> Unit,
@@ -339,6 +342,41 @@ fun GameSetupScreen(
                                     valueRange = 0f..2f,
                                     steps = 1
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // Multiplication or Mixed: 3-way Number Type Selector (Integers Only / Decimals Only / Mixed)
+                if (mode == GameMode.MULTIPLICATION || mode == GameMode.MIXED) {
+                    item {
+                        SectionHeader(title = "MULTIPLICATION NUMBER TYPE")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            MultiplicationNumberType.entries.forEach { numType ->
+                                val selected = multiplicationNumberType == numType
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(if (selected) colors.primary else colors.card)
+                                        .border(1.dp, if (selected) colors.primary else colors.cardBorder, RoundedCornerShape(14.dp))
+                                        .clickable { onMultiplicationNumberTypeChange(numType) }
+                                        .padding(horizontal = 6.dp)
+                                        .testTag("mult_number_type_${numType.key}"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = numType.label,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) colors.onPrimary else colors.textSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }

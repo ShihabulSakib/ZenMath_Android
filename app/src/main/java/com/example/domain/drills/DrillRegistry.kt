@@ -132,17 +132,19 @@ object DrillRegistry {
             mode = GameMode.MULTIPLICATION,
             category = DrillCategory.ARITHMETIC,
             title = "Multiplication",
-            summary = "Mental multiplication across 1 to 4 digit operands with difficulty scaling.",
-            details = "Generates integer products (a × b). On Easy difficulty, the second operand is constrained to a single digit (2–9) even when higher digit counts are selected, training N-digit × 1-digit distributive multiplication before full N-digit × N-digit cross-multiplication on Medium and Hard.",
+            summary = "Mental multiplication across 1 to 4 digit integer or decimal operands with difficulty scaling.",
+            details = "Generates integer or decimal products (a × b). Users can select 'Integers Only', 'Decimals Only', or 'Mixed (Int & Dec)'. Decimal multiplication covers Decimal × Integer (e.g. 3.4 × 7), Decimal × Decimal (e.g. 1.5 × 0.4), and Decimal × Power-of-10 / Small Decimals (e.g. 0.05 × 80, 1.25 × 0.2). On Easy integer difficulty, the second operand is constrained to a single digit (2–9) even when higher digit counts are selected, training N-digit × 1-digit distributive multiplication before full N-digit × N-digit cross-multiplication on Medium and Hard.",
             questionFormats = listOf(
                 QuestionFormat("N-Digit × 1-Digit (Easy)", "A × b", "46 × 7", "322", "Left-to-right distributive multiplication."),
-                QuestionFormat("Multi-Digit Product", "A × B", "38 × 64", "2432", "Full multi-digit mental multiplication.")
+                QuestionFormat("Multi-Digit Product", "A × B", "38 × 64", "2432", "Full multi-digit mental multiplication."),
+                QuestionFormat("Decimal × Integer / Decimal", "a.b × c / a.b × c.d", "2.4 × 1.2", "2.88", "Multiply whole numbers then place decimal point.")
             ),
             parameters = listOf(
+                DrillParam("Number Type", "Integers Only, Decimals Only, Mixed (Int & Dec)", "Integers Only"),
                 DrillParam("Digits", "1 to 4 digits", "1 digit"),
                 DrillParam("Difficulty", "Easy (2nd operand 1-digit), Medium (uniform), Hard (upper-bound digits)", "Medium")
             ),
-            answerChecking = "Exact integer match (AnswerSpec.Exact).",
+            answerChecking = "Exact integer match (AnswerSpec.Exact) for integer products; AbsoluteTolerance(±0.0001) exact decimal match for decimal products.",
             timingAndScoring = "Per-question countdown timer (default 20s).",
             supportsMcq = false
         ),
@@ -380,18 +382,22 @@ object DrillRegistry {
             mode = GameMode.SCIENTIFIC_NOTATION,
             category = DrillCategory.SCIENCE_MATH,
             title = "Scientific Notation",
-            summary = "Normalize decimals, apply exponent shift rules, multiply/divide, and take roots of powers of 10.",
-            details = "Covers four algebraic manipulations of scientific notation (m × 10ⁿ): (1) Normalize Decimal (convert 0.0045 or 450 × 10³ into standard 1 ≤ |m| < 10 form), (2) Shift Direction Rule (find the new exponent when shifting the decimal point), (3) Multiply & Divide ((a×10ᵐ) ×/÷ (b×10ⁿ)), and (4) Roots of 10ⁿ (√10²ⁿ or make exponent even before rooting). Entered via the dedicated '×10ⁿ' keypad key or 2×2 MCQ.",
+            summary = "Normalize decimals, apply exponent shift rules, pure 10ˣ laws, add/subtract/multiply/divide/reciprocal 10ˣ expressions, and take roots of powers of 10.",
+            details = "Covers nine algebraic manipulations of scientific notation (m × 10ⁿ) and powers of 10 (10ˣ): (1) Normalize Decimal (convert 0.0045 or 450 × 10³ into standard 1 ≤ |m| < 10 form), (2) Shift Direction Rule (find the new exponent when shifting the decimal point), (3) Multiply & Divide ((a×10ᵐ) ×/÷ (b×10ⁿ)), (4) Roots of 10ⁿ (√10²ⁿ or make exponent even before rooting), (5) Pure 10ˣ Laws (10ᵃ × 10ᵇ, 10ᵃ ÷ 10ᵇ, (10ᵃ)ᵇ → find resulting exponent), (6) Add & Subtract ((a×10ᵐ) ± (b×10ⁿ) with same or adjacent exponents), (7) Reciprocals (1 ÷ (a×10ⁿ)), (8) Multi-Term 10ˣ Fractions (((a×10ᵐ) × (b×10ⁿ)) ÷ (c×10ᵖ)), and (9) Decimal ×/÷ 10ˣ Shifting (e.g. 0.045 × 10⁴ = 450). Entered via the dedicated '×10ⁿ' keypad key or 2×2 MCQ.",
             questionFormats = listOf(
                 QuestionFormat("Normalize Decimal", "x → m×10ⁿ", "Normalize 0.00072", "7.2×10^-4", "Requires normalized mantissa 1 ≤ |m| < 10."),
                 QuestionFormat("Multiply & Divide", "(a×10ᵐ) × (b×10ⁿ)", "(4×10³) × (5×10⁻⁶)", "2×10^-2", "Multiply mantissas, add exponents, normalize."),
-                QuestionFormat("Roots of 10ⁿ", "√(10²ᵏ)", "√(10⁻⁸)", "1×10^-4", "Halve the even exponent.")
+                QuestionFormat("Roots of 10ⁿ", "√(10²ᵏ)", "√(10⁻⁸)", "1×10^-4", "Halve the even exponent."),
+                QuestionFormat("Pure 10ˣ Laws", "10ᵃ [×|÷] 10ᵇ = 10^?", "10⁴ ÷ 10⁻³ = 10^?", "7", "Apply exponent addition/subtraction/power rules."),
+                QuestionFormat("Add & Subtract", "(a×10ᵐ) ± (b×10ⁿ)", "(4.2×10⁴) + (8×10³)", "5×10^4", "Align to a common power of 10, combine mantissas, and normalize."),
+                QuestionFormat("Reciprocals & Multi-Term", "1 ÷ (a×10ⁿ) / (A×B)÷C", "1 ÷ (4×10⁻⁵)", "2.5×10^4", "Invert mantissa (1/4 = 0.25), flip exponent sign (+5), normalize."),
+                QuestionFormat("Decimal ×/÷ 10ˣ Shift", "x [×|÷] 10ⁿ", "0.045 × 10⁴ = ?", "450", "Shift decimal point right/left by n places.")
             ),
             parameters = listOf(
-                DrillParam("Subtype", "All Subtypes, Normalize Decimal, Shift Direction Rule, Multiply & Divide, Roots of 10ⁿ", "All Subtypes"),
+                DrillParam("Subtype", "All Subtypes, Normalize Decimal, Shift Direction Rule, Multiply & Divide, Roots of 10ⁿ, Pure 10ˣ Laws, Add & Subtract, Reciprocals, Multi-Term 10ˣ Fractions, Decimal ×/÷ 10ˣ Shifting", "All Subtypes"),
                 DrillParam("Answer Format", "Typed (with ×10ⁿ key) or 2×2 Multiple Choice", "Typed")
             ),
-            answerChecking = "ScientificValue (relative tolerance on mantissa + exponent check, enforcing 1 ≤ |m| < 10 on normalization drills) or Exact for exponent-only shifts.",
+            answerChecking = "ScientificValue (relative tolerance on mantissa + exponent check, enforcing 1 ≤ |m| < 10 on normalization drills), Exact for exponent-only shifts/laws, or AbsoluteTolerance for plain decimal shifts.",
             timingAndScoring = "Per-question countdown timer (default 20s).",
             supportsMcq = true
         ),

@@ -23,6 +23,7 @@ import com.example.domain.MathProblem
 import com.example.domain.MemoryDirection
 import com.example.domain.MistakeItem
 import com.example.domain.MonotonicClock
+import com.example.domain.MultiplicationNumberType
 import com.example.domain.PhSubType
 import com.example.domain.ProblemCodec
 import com.example.domain.QuestionGenerator
@@ -118,6 +119,9 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
 
     private val _mixedOps = MutableStateFlow(listOf(true, true, true, true)) // +, -, *, /
     val mixedOps: StateFlow<List<Boolean>> = _mixedOps.asStateFlow()
+
+    private val _multiplicationNumberType = MutableStateFlow(MultiplicationNumberType.INTEGERS_ONLY)
+    val multiplicationNumberType: StateFlow<MultiplicationNumberType> = _multiplicationNumberType.asStateFlow()
 
     private val _tableRange = MutableStateFlow(Pair(1, 10))
     val tableRange: StateFlow<Pair<Int, Int>> = _tableRange.asStateFlow()
@@ -356,6 +360,7 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
     fun setAllowRemainder(v: Boolean) { _allowRemainder.value = v }
     fun setAllowNegativeResults(v: Boolean) { _allowNegativeResults.value = v }
     fun setMixedOps(ops: List<Boolean>) { _mixedOps.value = ops }
+    fun setMultiplicationNumberType(type: MultiplicationNumberType) { _multiplicationNumberType.value = type }
     fun setTableRange(range: Pair<Int, Int>) { _tableRange.value = range }
     fun setSquareRangeType(type: String) { _squareRangeType.value = type }
     fun setCustomSquareRange(range: Pair<Int, Int>) { _customSquareRange.value = range }
@@ -883,13 +888,13 @@ class ZenMathViewModel(application: Application) : AndroidViewModel(application)
         val baseProblem: MathProblem = when (effectiveMode) {
             GameMode.ADDITION -> QuestionGenerator.generateStandardQuestion("+", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.SUBTRACTION -> QuestionGenerator.generateStandardQuestion("-", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
-            GameMode.MULTIPLICATION -> QuestionGenerator.generateStandardQuestion("*", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
+            GameMode.MULTIPLICATION -> QuestionGenerator.generateStandardQuestion("*", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value, _multiplicationNumberType.value)
             GameMode.DIVISION -> QuestionGenerator.generateStandardQuestion("/", digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
             GameMode.MIXED -> {
                 val ops = listOf("+", "-", "*", "/")
                 val enabled = ops.filterIndexed { i, _ -> _mixedOps.value.getOrElse(i) { true } }
                 val op = if (enabled.isNotEmpty()) enabled.random() else "+"
-                QuestionGenerator.generateStandardQuestion(op, digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value)
+                QuestionGenerator.generateStandardQuestion(op, digitsVal, diff, _allowRemainder.value, _allowNegativeResults.value, _multiplicationNumberType.value)
             }
             GameMode.MULTIPLICATION_TABLE -> QuestionGenerator.generateTableQuestion(_tableRange.value)
             GameMode.FACTOR_FINDING -> QuestionGenerator.generateFactorFindingQuestion(_tableRange.value)

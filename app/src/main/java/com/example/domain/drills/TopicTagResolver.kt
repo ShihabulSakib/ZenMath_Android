@@ -54,7 +54,7 @@ object TopicTagResolver {
         return when {
             tag == "addition" || tag == "+" -> GameMode.ADDITION
             tag == "subtraction" || tag == "-" || tag == "−" -> GameMode.SUBTRACTION
-            tag == "multiplication" || tag == "*" || tag == "×" -> GameMode.MULTIPLICATION
+            tag == "multiplication" || tag == "multiplication-decimal" || tag == "*" || tag == "×" -> GameMode.MULTIPLICATION
             tag == "division" || tag == "/" || tag == "÷" -> GameMode.DIVISION
             tag == "multiplication-table" -> GameMode.MULTIPLICATION_TABLE
             tag == "factor-finding" -> GameMode.FACTOR_FINDING
@@ -95,6 +95,7 @@ object TopicTagResolver {
             lower == "addition" -> "Addition"
             lower == "subtraction" -> "Subtraction"
             lower == "multiplication" -> "Multiplication"
+            lower == "multiplication-decimal" -> "Multiplication · Decimals"
             lower == "division" -> "Division"
             lower == "mixed" -> "Mixed Operations"
             lower == "multiplication-table" -> "Multiplication Tables"
@@ -115,6 +116,11 @@ object TopicTagResolver {
             lower == "sci-shift" -> "Sci. Notation · Shift Rule"
             lower == "sci-mul-div" -> "Sci. Notation · Multiply/Divide"
             lower == "sci-root-pow10" -> "Sci. Notation · Roots of 10ⁿ"
+            lower == "sci-pure-pow10" -> "Sci. Notation · Pure 10ˣ Laws"
+            lower == "sci-add-sub" -> "Sci. Notation · Add & Subtract"
+            lower == "sci-reciprocal" -> "Sci. Notation · Reciprocals"
+            lower == "sci-multi-term" -> "Sci. Notation · Multi-Term 10ˣ"
+            lower == "sci-num-shift" -> "Sci. Notation · Decimal ×/÷ 10ˣ"
             lower == "ph-conc-to-ph" -> "pH · [H⁺] → pH"
             lower == "ph-sci-to-ph" -> "pH · a×10⁻ⁿ M → pH"
             lower == "ph-to-conc" -> "pH · pH → [H⁺]"
