@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -34,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -45,6 +45,32 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ZenTheme
+
+internal data class KeypadDimensions(
+    val keyWidth: Dp,
+    val keyHeight: Dp,
+    val enterHeight: Dp
+)
+
+internal fun calculateKeypadDimensions(
+    totalWidth: Dp,
+    screenHeight: Dp,
+    horizontalPadding: Dp = 12.dp,
+    gap: Dp = 8.dp
+): KeypadDimensions {
+    val availableWidth = (totalWidth - horizontalPadding * 2 - gap * 3).coerceAtLeast(0.dp)
+    val keyWidth = (availableWidth / 4).coerceAtLeast(44.dp)
+    val maxByHeight = (screenHeight * 0.40f - 20.dp - gap * 3) / 4
+    val keyHeight = keyWidth
+        .coerceAtMost(maxByHeight)
+        .coerceAtLeast(44.dp)
+    val enterHeight = keyHeight * 2 + gap
+    return KeypadDimensions(
+        keyWidth = keyWidth,
+        keyHeight = keyHeight,
+        enterHeight = enterHeight
+    )
+}
 
 @Composable
 fun Keypad(
@@ -66,17 +92,20 @@ fun Keypad(
             .background(colors.keypadBg)
             .testTag("keypad_container")
     ) {
-        val totalWidth = maxWidth
         val horizontalPadding = 12.dp
         val gap = 8.dp
-        // 4 keys across: divide available width evenly so each key is ideally square,
-        // but cap by screen height so the keypad never crowds out the question on short/landscape screens.
-        val screenH = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
-        val maxByHeight = (screenH * 0.40f - 20.dp - gap * 3) / 4
-        val keySize = ((totalWidth - horizontalPadding * 2 - gap * 3) / 4)
-            .coerceAtMost(maxByHeight)
-            .coerceAtLeast(44.dp)
-        val enterHeight = keySize * 2 + gap
+        // 4 keys across: fill available width evenly so keys span edge-to-edge without right-side dead space,
+        // while capping key height by screen height so the keypad never crowds out the question.
+        val screenH = LocalConfiguration.current.screenHeightDp.dp
+        val dimensions = calculateKeypadDimensions(
+            totalWidth = maxWidth,
+            screenHeight = screenH,
+            horizontalPadding = horizontalPadding,
+            gap = gap
+        )
+        val keyWidth = dimensions.keyWidth
+        val keyHeight = dimensions.keyHeight
+        val enterHeight = dimensions.enterHeight
 
         Column(modifier = Modifier.fillMaxWidth()) {
             // Divider line
@@ -94,14 +123,14 @@ fun Keypad(
                     .padding(horizontal = horizontalPadding, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(gap)
             ) {
-                // Row 1: 1, 2, 3, backspace (all square)
+                // Row 1: 1, 2, 3, backspace
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(gap)
                 ) {
-                    KeyButton(text = "1", onClick = { onKey("1") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                    KeyButton(text = "2", onClick = { onKey("2") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                    KeyButton(text = "3", onClick = { onKey("3") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "1", onClick = { onKey("1") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "2", onClick = { onKey("2") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "3", onClick = { onKey("3") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
                     KeyButton(
                         icon = {
                             Icon(
@@ -112,24 +141,26 @@ fun Keypad(
                             )
                         },
                         onClick = { onKey("backspace") },
-                        size = keySize,
+                        width = keyWidth,
+                        height = keyHeight,
                         disabled = disabled,
                         hapticEnabled = hapticFeedbackEnabled
                     )
                 }
 
-                // Row 2: 4, 5, 6, - (all square)
+                // Row 2: 4, 5, 6, -
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(gap)
                 ) {
-                    KeyButton(text = "4", onClick = { onKey("4") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                    KeyButton(text = "5", onClick = { onKey("5") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                    KeyButton(text = "6", onClick = { onKey("6") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "4", onClick = { onKey("4") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "5", onClick = { onKey("5") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                    KeyButton(text = "6", onClick = { onKey("6") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
                     KeyButton(
                         text = "−",
                         onClick = { onKey("-") },
-                        size = keySize,
+                        width = keyWidth,
+                        height = keyHeight,
                         disabled = disabled || (!negativeEnabled && !isExponentActive),
                         enabledAlpha = if (negativeEnabled || isExponentActive) 1f else 0.25f,
                         hapticEnabled = hapticFeedbackEnabled,
@@ -146,36 +177,38 @@ fun Keypad(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(gap)
                     ) {
-                        // Row 3: 7, 8, 9 (all square)
+                        // Row 3: 7, 8, 9
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(gap)
                         ) {
-                            KeyButton(text = "7", onClick = { onKey("7") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                            KeyButton(text = "8", onClick = { onKey("8") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
-                            KeyButton(text = "9", onClick = { onKey("9") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                            KeyButton(text = "7", onClick = { onKey("7") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                            KeyButton(text = "8", onClick = { onKey("8") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                            KeyButton(text = "9", onClick = { onKey("9") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
                         }
 
-                        // Row 4: . (or dimmed), 0, / or ×10^n (all square)
+                        // Row 4: . (or dimmed), 0, / or ×10^n
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(gap)
                         ) {
                             KeyButton(
                                 text = ".",
                                 onClick = { onKey(".") },
-                                size = keySize,
+                                width = keyWidth,
+                                height = keyHeight,
                                 disabled = disabled || !showDecimal || isExponentActive,
                                 enabledAlpha = if (showDecimal && !isExponentActive) 1f else 0.25f,
                                 hapticEnabled = hapticFeedbackEnabled,
                                 modifier = Modifier.testTag("key_decimal")
                             )
 
-                            KeyButton(text = "0", onClick = { onKey("0") }, size = keySize, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
+                            KeyButton(text = "0", onClick = { onKey("0") }, width = keyWidth, height = keyHeight, disabled = disabled, hapticEnabled = hapticFeedbackEnabled)
 
                             if (showFraction) {
                                 KeyButton(
                                     text = "/",
                                     onClick = { onKey("/") },
-                                    size = keySize,
+                                    width = keyWidth,
+                                    height = keyHeight,
                                     disabled = disabled,
                                     hapticEnabled = hapticFeedbackEnabled,
                                     modifier = Modifier.testTag("key_fraction")
@@ -186,7 +219,8 @@ fun Keypad(
                                     annotatedText = sciLabel,
                                     fontSize = 17.sp,
                                     onClick = { onKey("sci") },
-                                    size = keySize,
+                                    width = keyWidth,
+                                    height = keyHeight,
                                     disabled = disabled || !showScientific,
                                     isHighlighted = isExponentActive,
                                     enabledAlpha = if (showScientific) 1f else 0.25f,
@@ -208,7 +242,7 @@ fun Keypad(
                             )
                         },
                         onClick = { onKey("enter") },
-                        width = keySize,
+                        width = keyWidth,
                         height = enterHeight,
                         disabled = disabled,
                         isPrimary = true,
